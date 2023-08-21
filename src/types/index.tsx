@@ -13,3 +13,11 @@ export interface ForumProps {
     onDelete: (msgRef: string) => void;
     onUpdate: (msgRef: string, msg: MessagesProps) => void;
 }
+
+export interface ForumCardProps {
+    post: MessagesProps;
+    onDelete: ForumProps['onDelete'];
+    onUpdate: ForumProps['onUpdate'];
+    selectedCard: (value: string) => void;
+    showModal: (value: boolean) =>  void;
+}

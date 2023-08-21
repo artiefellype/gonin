@@ -1,4 +1,5 @@
 import { auth } from '@/firebase/authentication';
+import Image from 'next/image';
 import React, { FormEvent } from 'react'
 import { FaRegRectangleXmark as CloseIcon, FaPlus as AddIcon } from "react-icons/fa6";
 
@@ -23,7 +24,7 @@ const ForumForm = ({setIsOpen, sendMessage,title,setTitle,description,setDescrip
           </div>
           <div className="flex flex-row w-full mb-4">
             <div className="rounded-full m-3 bg-gray-500 w-12 h-12">
-              <img className="rounded-full" src={auth.currentUser?.photoURL ?? ""} alt="user photo" />
+              <Image className="rounded-full" src={auth.currentUser?.photoURL ?? ""} alt={"user photo"} width={48} height={48} />
             </div>
             <div className="flex justify-center items-center">
               <h1 className="font-semibold text-base">{auth.currentUser?.displayName ?? "Anônimo"}</h1>

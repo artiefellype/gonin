@@ -5,19 +5,17 @@ import { User as FirebaseUser } from "firebase/auth";
 type User = {
   isAuth: boolean;
   user: FirebaseUser | null;
-}
+};
 // Define o tipo do contexto
 type UserContextType = {
-user: User | null;
-setUser: (user: User | null) => void;
+  user: User | null;
+  setUser: (user: User | null) => void;
 };
 
 // Cria o contexto com um valor inicial
 const userContext = createContext<UserContextType>({
-user: null,
-setUser: () => {},
+  user: null,
+  setUser: () => {},
 });
 
-export {userContext};
-
-
+export { userContext };

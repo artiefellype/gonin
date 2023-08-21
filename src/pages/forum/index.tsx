@@ -61,19 +61,22 @@ export default function Forum() {
     const itemRef = ref(db, "messages/" + msgRef);
 
     const newData = {
-        id: data.id,
-        title: data.title,
-        description: data.description,
-        user_id: data.user_id,
-        user_Name: data.user_Name,
-        user_photo_url: data.user_photo_url,
-        created_at: data.created_at,
+      id: data.id,
+      title: data.title,
+      description: data.description,
+      user_id: data.user_id,
+      user_Name: data.user_Name,
+      user_photo_url: data.user_photo_url,
+      created_at: data.created_at,
     };
 
     update(itemRef, newData)
       .then(() => {
         console.log("ATUALIZADO");
-        setMessages(prev => [...prev.filter(msg => msg.id !== data.id), newData]);
+        setMessages((prev) => [
+          ...prev.filter((msg) => msg.id !== data.id),
+          newData,
+        ]);
       })
       .catch((err) => {
         console.log("Houve um erro ao atualizar: ", err);
@@ -142,6 +145,7 @@ export default function Forum() {
   };
 
   const refreshPosts = () => {
+    setMessages([]);
     getMessagesR();
   };
 
