@@ -12,10 +12,9 @@ const logout = () => {
 }
 
 const entrarComGoogle = async () => {
-    await signInWithPopup(auth, googleProvider).then((result)=> {
+    await signInWithRedirect(auth, googleProvider).then((result)=> {
         const credential = GoogleAuthProvider.credentialFromResult(result);
         const token = credential?.accessToken;
-        const user = result.user;
         
     }).catch((err)=> {
         const errorCode = err.code;
