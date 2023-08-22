@@ -13,7 +13,7 @@ interface ForumFormProps {
 }
 const ForumForm = ({setIsOpen, sendMessage,title,setTitle,description,setDescription}: ForumFormProps) => {
   return (
-    <div className="absolute w-11/12 h-[450px] top-32 border shadow bg-white rounded-lg p-4 text-gray-700">
+    <div className="fixed w-11/12 h-[450px] top-32 border shadow bg-white rounded-lg p-4 text-gray-700">
           <div className="w-full h-6 flex justify-end">
             <button
               onClick={() => setIsOpen(false)}
