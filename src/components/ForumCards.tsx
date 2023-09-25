@@ -7,6 +7,7 @@ import {
   FaTrash as TrashIcon,
   FaCheck as CheckIcon,
   FaXmark as UncheckIcon,
+  FaHeart as LikeIcon,
 } from "react-icons/fa6";
 
 const ForumCards = ({
@@ -18,16 +19,20 @@ const ForumCards = ({
     created_at,
     user_Name,
     user_photo_url,
+    liked_list,
+    likesCount,
   },
   onDelete,
   onUpdate,
   selectedCard,
   showModal,
+  onLike,
 }: ForumCardProps) => {
   const [isOpen, setIsOpen] = useState(false);
 
   const [inputTitle, setInputTitle] = useState(title);
   const [inputDescription, setInputDescription] = useState(description);
+  const [liked, setLiked] = useState(liked_list);
 
   const handleUpdate = (postId: string) => {
     const newPost: MessagesProps = {
@@ -38,10 +43,32 @@ const ForumCards = ({
       title: inputTitle,
       description: inputDescription,
       created_at: created_at,
+      likesCount: likesCount,
+      liked_list: liked_list,
     };
+
+    console.log("FORUMCARDs 1: ", likesCount);
 
     onUpdate(postId, newPost);
     setIsOpen(false);
+  };
+
+  const handleLike = () => {
+    const newPost: MessagesProps = {
+      id: id,
+      user_id: user_id,
+      user_Name: user_Name,
+      user_photo_url: user_photo_url,
+      title: inputTitle,
+      description: inputDescription,
+      created_at: created_at,
+      likesCount: likesCount,
+      liked_list: liked_list,
+    };
+
+    console.log("FORUMCARDs 2: ", likesCount);
+
+    onLike(true, newPost);
   };
 
   return (
@@ -69,23 +96,27 @@ const ForumCards = ({
           </div>
           {auth.currentUser?.photoURL === user_photo_url && (
             <div className="absolute right-1 w-12 h-5 gap-2 flex">
-              <button onClick={(e) => {
-                e.stopPropagation()
-                setIsOpen(true)
-                }}>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsOpen(true);
+                }}
+              >
                 <EditIcon size={20} className="text-gray-500" />
               </button>
-              <button onClick={(e) => {
-                e.stopPropagation()
-                onDelete(id)
-                }}>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onDelete(id);
+                }}
+              >
                 <TrashIcon size={20} className="text-gray-500" />
               </button>
             </div>
           )}
         </div>
 
-        <div className="w-full h-4/6 flex justify-center items-center">
+        <div className="w-full h-4/6 flex justify-center items-center relative">
           {!isOpen ? (
             <div className="w-full h-5/6 break-words text-clip">
               <h2 className="font-semibold text-sm text-gray-800 line-clamp-1">
@@ -102,19 +133,19 @@ const ForumCards = ({
                 className="font-semibold text-sm text-gray-800 shadow border focus:outline-none focus:shadow-outline"
                 value={inputTitle}
                 onChange={(e) => setInputTitle(e.target.value)}
-                onClick={(e)=> e.stopPropagation()}
+                onClick={(e) => e.stopPropagation()}
               />
               <textarea
                 className="font-medium text-xs text-gray-500  w-full shadow border focus:outline-none focus:shadow-outline"
                 value={inputDescription}
                 onChange={(e) => setInputDescription(e.target.value)}
-                onClick={(e)=> e.stopPropagation()}
+                onClick={(e) => e.stopPropagation()}
               />
-              <div className="w-full h-5 flex justify-start flex-row">
+              <div className="w-full h-5 flex justify-end flex-row">
                 <button
                   onClick={(e) => {
-                    e.stopPropagation()
-                    setIsOpen(false)
+                    e.stopPropagation();
+                    setIsOpen(false);
                   }}
                   className="text-gray-200 border bg-red-600 w-9 h-7 flex justify-center items-center rounded-md"
                 >
@@ -122,8 +153,8 @@ const ForumCards = ({
                 </button>
                 <button
                   onClick={(e) => {
-                    e.stopPropagation()
-                    handleUpdate(id)
+                    e.stopPropagation();
+                    handleUpdate(id);
                   }}
                   className="text-gray-200 border bg-green-600 w-9 h-7 flex justify-center items-center rounded-md"
                 >
@@ -132,6 +163,26 @@ const ForumCards = ({
               </div>
             </div>
           )}
+          <div className="flex w-full absolute flex-row justify-start items-center mt-20 ">
+            <div className="flex flex-row gap-1">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleLike();
+                }}
+              >
+                {liked_list.indexOf(auth.currentUser?.photoURL!) !== -1 ? (
+                  <LikeIcon size={20} className=" fill-current text-red-600 " />
+                ) : (
+                  <LikeIcon size={20} className="text-gray-600" />
+                )}
+              </button>
+
+              <div className="text-gray-800 font-medium text-sm">
+                <p>{likesCount ? likesCount : 0}</p>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </>

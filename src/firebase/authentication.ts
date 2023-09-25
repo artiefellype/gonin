@@ -1,4 +1,3 @@
-import { addDoc, collection, getDocs, getFirestore, query, where } from "firebase/firestore";
 import { fireApp as app } from "./firebase";
 
 import { getAuth, signInWithPopup, signOut, signInWithRedirect, GoogleAuthProvider } from "firebase/auth";
@@ -24,9 +23,6 @@ const entrarComGoogle = async () => {
         // The AuthCredential type that was used.
         const credential = GoogleAuthProvider.credentialFromError(err);
 
-        console.log("error message: ",errorMessage)
-        console.log("\nerror code: ",errorCode)
-        console.log("Cred: ", credential)
     })
 }
 

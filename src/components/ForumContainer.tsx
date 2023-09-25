@@ -5,7 +5,12 @@ import ForumCardInfo from "./ForumCardInfo";
 import { FaRegRectangleXmark as CloseIcon } from "react-icons/fa6";
 import CardSkeleton from "./utils/CardSkeleton";
 
-const ForumContainer = ({ messages, onDelete, onUpdate }: ForumProps) => {
+const ForumContainer = ({
+  messages,
+  onDelete,
+  onUpdate,
+  onLike,
+}: ForumProps) => {
   const [showModal, setShowModal] = useState(false);
   const [selectedCard, setSelectedCard] = useState("");
 
@@ -26,7 +31,7 @@ const ForumContainer = ({ messages, onDelete, onUpdate }: ForumProps) => {
     return dateB - dateA;
   });
 
-  console.log("IsOpen: ", showModal, " Card: ", selectedCard);
+  //console.log("IsOpen: ", showModal, " Card: ", selectedCard);
 
   return (
     <div className="w-full min-h-screen flex flex-col items-center pt-10 gap-y-5 pb-5 relative">
@@ -40,6 +45,7 @@ const ForumContainer = ({ messages, onDelete, onUpdate }: ForumProps) => {
               onUpdate={onUpdate}
               showModal={setShowModal}
               selectedCard={setSelectedCard}
+              onLike={onLike}
             />
           );
         })
@@ -64,6 +70,7 @@ const ForumContainer = ({ messages, onDelete, onUpdate }: ForumProps) => {
                     onUpdate={onUpdate}
                     selectedCard={setSelectedCard}
                     showModal={setShowModal}
+                    onLike={onLike}
                   />
                 );
               } else {

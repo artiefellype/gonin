@@ -7,6 +7,7 @@ import {
   FaTrash as TrashIcon,
   FaCheck as CheckIcon,
   FaXmark as UncheckIcon,
+  FaHeart as LikeIcon,
 } from "react-icons/fa6";
 import ForumCardInfo from "./ForumCardInfo";
 
@@ -18,11 +19,14 @@ const ForumCards = ({
     description,
     created_at,
     user_Name,
+    liked_list,
+    likesCount,
     user_photo_url,
   },
   onDelete,
   onUpdate,
   showModal,
+  onLike,
 }: ForumCardProps) => {
   const [openEdit, setOpenEdit] = useState(false);
 
@@ -38,10 +42,32 @@ const ForumCards = ({
       title: inputTitle,
       description: inputDescription,
       created_at: created_at,
+      liked_list: liked_list,
+      likesCount: likesCount,
     };
+
+    console.log("FORUMCARDINFO: ", likesCount);
 
     onUpdate(postId, newPost);
     setOpenEdit(false);
+  };
+
+  const handleLike = () => {
+    const newPost: MessagesProps = {
+      id: id,
+      user_id: user_id,
+      user_Name: user_Name,
+      user_photo_url: user_photo_url,
+      title: inputTitle,
+      description: inputDescription,
+      created_at: created_at,
+      likesCount: likesCount,
+      liked_list: liked_list,
+    };
+
+    console.log("FORUMCARDs 2: ", likesCount);
+
+    onLike(true, newPost);
   };
 
   return (
@@ -113,6 +139,26 @@ const ForumCards = ({
               </div>
             </div>
           )}
+          <div className="flex w-full absolute flex-row justify-start items-center bottom-0 ">
+            <div className="flex flex-row gap-1 m-4">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleLike();
+                }}
+              >
+                {liked_list.indexOf(auth.currentUser?.photoURL!) !== -1 ? (
+                  <LikeIcon size={20} className=" fill-current text-red-600 " />
+                ) : (
+                  <LikeIcon size={20} className="text-gray-600" />
+                )}
+              </button>
+
+              <div className="text-gray-800 font-medium text-sm">
+                <p>{likesCount ? likesCount : 0}</p>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </>

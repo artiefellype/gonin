@@ -41,12 +41,13 @@ export default function Forum() {
 
             setMessages((prev) => {
               if (!prev.some((msg) => msg.id === (data as MessagesProps).id)) {
-                console.log("AQUI: ", data);
+                //console.log("AQUI: ", data);
                 return [...prev, data] as MessagesProps[];
               } else {
                 return prev;
               }
             });
+            console.log("EITA:", messages);
           });
         } else {
           console.log("No data available");
@@ -57,9 +58,13 @@ export default function Forum() {
       });
   };
 
-  const updateMessage = async (msgRef: string, data: MessagesProps) => {
+  const updateMessage = async (
+    msgRef: string,
+    data: MessagesProps,
+    d?: boolean
+  ) => {
     const itemRef = ref(db, "messages/" + msgRef);
-
+    console.log("ATUALIZANDO LIKE: ", d);
     const newData = {
       id: data.id,
       title: data.title,
@@ -68,11 +73,26 @@ export default function Forum() {
       user_Name: data.user_Name,
       user_photo_url: data.user_photo_url,
       created_at: data.created_at,
+      liked_list: data.liked_list,
+      likesCount: data.likesCount,
     };
+
+    if (d != undefined) {
+      if (data.liked_list.indexOf(auth.currentUser?.photoURL!) === -1) {
+        newData.liked_list.push(auth.currentUser?.photoURL!);
+        newData.likesCount = newData.likesCount + 1;
+      } else {
+        newData.liked_list = newData.liked_list.filter(
+          (item) => item != auth.currentUser?.photoURL!
+        );
+        newData.likesCount = newData.likesCount - 1;
+      }
+    }
+    console.log("ATUALIZANDO LIKE 2: ", newData.likesCount);
+    console.log("ATUALIZANDO LIKE bool 2: ", newData.liked_list);
 
     update(itemRef, newData)
       .then(() => {
-        console.log("ATUALIZADO");
         setMessages((prev) => [
           ...prev.filter((msg) => msg.id !== data.id),
           newData,
@@ -108,8 +128,8 @@ export default function Forum() {
     const newMessageRef = push(ref(db, "messages/"));
     const newMsgId = newMessageRef.key;
 
-    console.log("userName", userName);
-    console.log("userImage", userImage);
+    //console.log("userName", userName);
+    //console.log("userImage", userImage);
 
     if (title.length !== 0 && description.length !== 0) {
       await update(newMessageRef, {
@@ -119,6 +139,8 @@ export default function Forum() {
         user_id: uid,
         user_Name: userName,
         user_photo_url: userImage,
+        isLiked: false,
+        likesCount: 0,
         created_at: new Date().toLocaleString("pt-BR", {
           timeZone: "America/Sao_Paulo",
           year: "numeric",
@@ -144,6 +166,14 @@ export default function Forum() {
     }
   };
 
+  const handleLike = (isliked: boolean, data: MessagesProps) => {
+    if (data.liked_list.indexOf(auth.currentUser?.photoURL!) === -1) {
+      updateMessage(data.id, data, false);
+    } else {
+      updateMessage(data.id, data, true);
+    }
+  };
+
   const refreshPosts = () => {
     setMessages([]);
     getMessagesR();
@@ -162,6 +192,7 @@ export default function Forum() {
         messages={messages}
         onDelete={removeMessage}
         onUpdate={updateMessage}
+        onLike={handleLike}
       />
 
       {!isOpen ? (
