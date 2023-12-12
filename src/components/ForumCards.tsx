@@ -171,7 +171,7 @@ const ForumCards = ({
                   handleLike();
                 }}
               >
-                {liked_list.indexOf(auth.currentUser?.photoURL!) !== -1 ? (
+                {liked_list?.indexOf(auth.currentUser?.photoURL!) !== -1 ? (
                   <LikeIcon size={20} className=" fill-current text-red-600 " />
                 ) : (
                   <LikeIcon size={20} className="text-gray-600" />

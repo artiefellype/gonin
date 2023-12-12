@@ -78,7 +78,7 @@ export default function Forum() {
     };
 
     if (d != undefined) {
-      if (data.liked_list.indexOf(auth.currentUser?.photoURL!) === -1) {
+      if (data.liked_list?.indexOf(auth.currentUser?.photoURL!) === -1) {
         newData.liked_list.push(auth.currentUser?.photoURL!);
         newData.likesCount = newData.likesCount + 1;
       } else {
