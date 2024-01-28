@@ -15,13 +15,17 @@ const SignInScreen = ({loginWithGoogle, loading}: SignInScreenProps) => {
             <h1 className='text-3xl font-bold ml-2'>5chan</h1>
           </div>
           <div className='flex flex-col gap-2 items-center w-full'>
-            <h1>Sign In</h1>
+            
+            <p className='max-w-2xl text-center font-thin'>O fórum está em fase beta, algumas funcionalidades podem estar em desenvolvimento, e pode-se ocorrer pequenos contratempos.</p>
+            <h1 className='text-lg font-bold'>Sign In</h1>
             <button onClick={() => {
               loginWithGoogle()
               loading(true)
-              }} className='border-red-500 border-solid border-2 w-2/3 h-9 rounded-3xl flex flex-row justify-center items-center gap-2'> <FaGofore className="mb-[1px] bg-slate-200 text-gray-700 rounded-full" /> Continue com Google</button>
+              }} className='border-red-500 max-w-sm border-solid border-2 w-2/3 h-9 rounded-3xl flex flex-row justify-center items-center gap-2 hover:bg-red-500 transition-all duration-400 ease-in-out'> <FaGofore className="mb-[1px] bg-slate-200 text-gray-700 rounded-full" /> Continue com Google</button>
           </div>
+          
         </div>
+        
     </div>
   )
 }

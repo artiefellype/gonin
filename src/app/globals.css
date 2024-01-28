@@ -16,6 +16,12 @@
   }
 }
 
+html, body {
+  scroll-behavior: smooth;
+  overflow-x: hidden;
+  white-space: nowrap;
+}
+
 body {
   color: rgb(var(--foreground-rgb));
   background: linear-gradient(

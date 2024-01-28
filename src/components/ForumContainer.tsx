@@ -34,7 +34,7 @@ const ForumContainer = ({
   //console.log("IsOpen: ", showModal, " Card: ", selectedCard);
 
   return (
-    <div className="w-full min-h-screen flex flex-col items-center pt-10 gap-y-5 pb-5 relative">
+    <div className="w-full min-h-screen max-w-3xl flex flex-col items-center pt-10 gap-y-5 pb-5 relative">
       {sortedMessages.length !== 0 ? (
         sortedMessages.map((item) => {
           return (
