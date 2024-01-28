@@ -147,7 +147,7 @@ const ForumCards = ({
                   handleLike();
                 }}
               >
-                {liked_list.indexOf(auth.currentUser?.photoURL!) !== -1 ? (
+                {(liked_list?.indexOf(auth.currentUser?.photoURL!) !== -1 && liked_list?.length > 1) ? (
                   <LikeIcon size={20} className=" fill-current text-red-600 " />
                 ) : (
                   <LikeIcon size={20} className="text-gray-600" />
@@ -155,7 +155,7 @@ const ForumCards = ({
               </button>
 
               <div className="text-gray-800 font-medium text-sm">
-                <p>{likesCount ? likesCount : 0}</p>
+                <p>{Math.max(likesCount || 0, 0)}</p>
               </div>
             </div>
           </div>
