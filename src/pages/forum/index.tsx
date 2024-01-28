@@ -47,7 +47,6 @@ export default function Forum() {
                 return prev;
               }
             });
-            console.log("EITA:", messages);
           });
         } else {
           console.log("No data available");
@@ -64,7 +63,7 @@ export default function Forum() {
     d?: boolean
   ) => {
     const itemRef = ref(db, "messages/" + msgRef);
-    console.log("ATUALIZANDO LIKE: ", d);
+
     const newData = {
       id: data.id,
       title: data.title,
@@ -73,23 +72,23 @@ export default function Forum() {
       user_Name: data.user_Name,
       user_photo_url: data.user_photo_url,
       created_at: data.created_at,
-      liked_list: data.liked_list,
-      likesCount: data.likesCount,
+      liked_list: data.liked_list || [],
+      likesCount: data.likesCount || 0,
     };
 
     if (d != undefined) {
-      if (data.liked_list?.indexOf(auth.currentUser?.photoURL!) === -1) {
-        newData.liked_list.push(auth.currentUser?.photoURL!);
-        newData.likesCount = newData.likesCount + 1;
-      } else {
-        newData.liked_list = newData.liked_list.filter(
-          (item) => item != auth.currentUser?.photoURL!
-        );
-        newData.likesCount = newData.likesCount - 1;
-      }
+      if (data.liked_list === undefined) data.liked_list = [""]
+        if (data.liked_list?.indexOf(auth.currentUser?.photoURL!) === -1) {
+          newData.liked_list?.push(auth.currentUser?.photoURL!);
+          newData.likesCount = newData.likesCount + 1;
+        } else {
+          newData.liked_list = newData.liked_list?.filter(
+            (item) => item != auth.currentUser?.photoURL!
+          );
+          newData.likesCount = Math.max(newData.likesCount - 1, 0);
+        }
+      
     }
-    console.log("ATUALIZANDO LIKE 2: ", newData.likesCount);
-    console.log("ATUALIZANDO LIKE bool 2: ", newData.liked_list);
 
     update(itemRef, newData)
       .then(() => {
@@ -140,6 +139,7 @@ export default function Forum() {
         user_Name: userName,
         user_photo_url: userImage,
         isLiked: false,
+        liked_list: [""],
         likesCount: 0,
         created_at: new Date().toLocaleString("pt-BR", {
           timeZone: "America/Sao_Paulo",
@@ -167,7 +167,7 @@ export default function Forum() {
   };
 
   const handleLike = (isliked: boolean, data: MessagesProps) => {
-    if (data.liked_list.indexOf(auth.currentUser?.photoURL!) === -1) {
+    if (data.liked_list?.indexOf(auth.currentUser?.photoURL!) === -1) {
       updateMessage(data.id, data, false);
     } else {
       updateMessage(data.id, data, true);
