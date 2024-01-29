@@ -75,7 +75,8 @@ const ForumCards = ({
     <>
       <div
         className="w-5/6 h-52 bg-white rounded-lg p-4"
-        onClick={() => {
+        onClick={(e) => {
+          e.stopPropagation()
           selectedCard(id);
           showModal(true);
         }}
@@ -134,14 +135,16 @@ const ForumCards = ({
                 value={inputTitle}
                 onChange={(e) => setInputTitle(e.target.value)}
                 onClick={(e) => e.stopPropagation()}
+                maxLength={256}
               />
               <textarea
                 className="font-medium text-xs text-gray-500  w-full shadow border focus:outline-none focus:shadow-outline"
                 value={inputDescription}
                 onChange={(e) => setInputDescription(e.target.value)}
                 onClick={(e) => e.stopPropagation()}
+                maxLength={4096}
               />
-              <div className="w-full h-5 flex justify-end flex-row">
+              <div className="w-full flex justify-end flex-row pt-3 z-30 absolute">
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
@@ -163,13 +166,14 @@ const ForumCards = ({
               </div>
             </div>
           )}
-          <div className="flex w-full absolute flex-row justify-start items-center mt-20 ">
+          <div className="flex w-full h-5 absolute bottom-2 left-0 flex-row justify-start items-center">
             <div className="flex flex-row gap-1">
               <button
                 onClick={(e) => {
                   e.stopPropagation();
                   handleLike();
                 }}
+                className="w-5 h-5 z-10"
               >
                 {liked_list?.indexOf(auth.currentUser?.photoURL!) !== -1 ? (
                   <LikeIcon size={20} className=" fill-current text-red-600 " />

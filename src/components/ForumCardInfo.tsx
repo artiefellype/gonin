@@ -101,8 +101,8 @@ const ForumCards = ({
 
         <div className="w-full h-4/6 flex justify-center items-center pb-5">
           {!openEdit ? (
-            <div className="w-full h-5/6">
-              <h2 className="font-semibold text-sm text-gray-800 line-clamp-1 pb-3">
+            <div className="w-full h-5/6 max-h-96 overflow-y-scroll">
+              <h2 className="font-semibold text-sm text-gray-800 line-clamp-4 mb-3">
                 {title}
               </h2>
               <p className="font-medium text-xs text-gray-500">{description}</p>
@@ -124,13 +124,16 @@ const ForumCards = ({
               />
               <div className="w-full h-5 flex justify-start flex-row">
                 <button
-                  onClick={() => setOpenEdit(false)}
+                  onClick={(e) =>{
+                     e.preventDefault()
+                    setOpenEdit(false)}}
                   className="text-gray-200 border bg-red-600 w-9 h-7 flex justify-center items-center rounded-md"
                 >
                   <UncheckIcon size={18} />
                 </button>
                 <button
-                  onClick={() => {
+                  onClick={(e) => {
+                    e.preventDefault()
                     handleUpdate(id);
                     showModal(false);
                   }}
