@@ -117,7 +117,7 @@ const ForumCards = ({
           )}
         </div>
 
-        <div className="w-full h-4/6 flex justify-center items-center relative">
+        <div className="w-full h-4/6 flex justify-center items-center relative pl-3">
           {!isOpen ? (
             <div className="w-full h-5/6 break-words text-clip">
               <h2 className="font-semibold text-sm text-gray-800 line-clamp-1">
@@ -166,7 +166,7 @@ const ForumCards = ({
               </div>
             </div>
           )}
-          <div className="flex w-full h-5 absolute bottom-2 left-0 flex-row justify-start items-center">
+          <div className="flex w-full h-5 absolute bottom-2 left-0 flex-row justify-start items-center pl-3">
             <div className="flex flex-row gap-1">
               <button
                 onClick={(e) => {

@@ -13,7 +13,7 @@ interface ForumFormProps {
 }
 const ForumForm = ({setIsOpen, sendMessage,title,setTitle,description,setDescription}: ForumFormProps) => {
   return (
-    <div className="fixed w-11/12 h-[450px] top-32 border shadow bg-white rounded-lg p-4 text-gray-700">
+    <div className="fixed max-w-4xl w-11/12 h-[450px] top-44 border shadow bg-white rounded-lg p-4 text-gray-700 z-50">
           <div className="w-full h-6 flex justify-end">
             <button
               onClick={() => setIsOpen(false)}
@@ -43,6 +43,7 @@ const ForumForm = ({setIsOpen, sendMessage,title,setTitle,description,setDescrip
               onChange={(e) => {
                 setTitle(e.target.value);
               }}
+              maxLength={256}
             />
             <textarea
               className="shadow appearance-none border rounded w-full max-w-full min-h-[120px] py-2 px-3 text-gray-700 mb-3 leading-tight focus:outline-none focus:shadow-outline pb-24 break-words"
@@ -52,6 +53,7 @@ const ForumForm = ({setIsOpen, sendMessage,title,setTitle,description,setDescrip
               onChange={(e) => {
                 setDescription(e.target.value);
               }}
+              maxLength={4096}
             />
             <button
               className="bg-gray-700 w-1/2 h-8 border text-gray-100 rounded-md"

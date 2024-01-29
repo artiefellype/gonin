@@ -101,7 +101,7 @@ const ForumCards = ({
 
         <div className="w-full h-4/6 flex justify-center items-center pb-5">
           {!openEdit ? (
-            <div className="w-full h-5/6 max-h-96 overflow-y-scroll">
+            <div className="w-full h-5/6 max-h-96 overflow-y-auto">
               <h2 className="font-semibold text-sm text-gray-800 line-clamp-4 mb-3">
                 {title}
               </h2>
