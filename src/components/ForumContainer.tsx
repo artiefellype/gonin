@@ -53,8 +53,8 @@ const ForumContainer = ({
         <CardSkeleton />
       )}
       {showModal && (
-        <div className="fixed w-full h-full bg-[rgba(17,25,40,.75)] border-[rgba(255,255,255,.125)] backdrop-filter backdrop-blur-[16px] backdrop-saturate-[180%] inset-0 p-5 z-10">
-          <div className="w-full h-[550px] bg-white flex flex-col items-center pb-5 relative rounded-lg">
+        <div className="fixed w-full h-full bg-[rgba(17,25,40,.75)] border-[rgba(255,255,255,.125)] backdrop-filter backdrop-blur-[16px] backdrop-saturate-[180%] inset-0 p-5 z-10 flex justify-center">
+          <div className="w-full max-w-6xl h-fit overflow-y-hidden bg-white flex flex-col items-center pb-5 relative rounded-lg">
             <div className="w-full h-8 flex justify-end items-center pr-2">
               <button onClick={() => setShowModal(false)} className="">
                 <CloseIcon className="text-gray-700" size={24} />

@@ -114,11 +114,13 @@ const ForumCards = ({
                 className="font-semibold text-sm text-gray-800 shadow border focus:outline-none focus:shadow-outline"
                 value={inputTitle}
                 onChange={(e) => setInputTitle(e.target.value)}
+                maxLength={256}
               />
               <textarea
                 className="font-medium text-xs text-gray-500  w-full shadow border focus:outline-none focus:shadow-outline"
                 value={inputDescription}
                 onChange={(e) => setInputDescription(e.target.value)}
+                maxLength={4096}
               />
               <div className="w-full h-5 flex justify-start flex-row">
                 <button
