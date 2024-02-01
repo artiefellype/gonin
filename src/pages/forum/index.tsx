@@ -1,8 +1,7 @@
 "use client";
 import ForumContainer from "@/components/ForumContainer";
 import ForumHead from "@/components/ForumHead";
-import { FormEvent, useEffect, useState } from "react";
-import { auth } from "@/firebase/authentication";
+import { FormEvent, useContext, useEffect, useState } from "react";
 import { fireApp as app } from "@/firebase/firebase";
 import {
   child,
@@ -21,6 +20,10 @@ import {
   FaPlus as AddIcon,
 } from "react-icons/fa6";
 import ForumForm from "@/components/ForumForm";
+import { useUserContext } from "@/context/appContext";
+import { BaseAPI } from "@/services/baseAPI";
+import { useRouter } from "next/router";
+import { postsServices } from "@/services/postServices";
 
 export default function Forum() {
   const [title, setTitle] = useState("");
@@ -28,10 +31,27 @@ export default function Forum() {
   const [messages, setMessages] = useState<MessagesProps[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
-
+  const [teste, setTeste] = useState<MessagesProps[]>([])
+  const { user } = useUserContext()
+  const router = useRouter();
+  
   const db = getDatabase(app);
 
+  const fetchData = async () => {
+    console.log("USER: ", user)
+    
+    try {
+      const messages = await postsServices.getPosts();
+      setTeste(messages);
+      console.log("OPA 2: ", messages) // Atualiza o estado com as mensagens
+    } catch (error) {
+      console.error('Erro ao obter dados da API:', error);
+    }
+  };
+
   const getMessagesR = () => {
+
+
     const dbRef = ref(db);
     get(child(dbRef, "messages"))
       .then((snapshot) => {
@@ -78,12 +98,12 @@ export default function Forum() {
 
     if (d != undefined) {
       if (data.liked_list === undefined) data.liked_list = [""]
-        if (data.liked_list?.indexOf(auth.currentUser?.photoURL!) === -1) {
-          newData.liked_list?.push(auth.currentUser?.photoURL!);
+        if (data.liked_list?.indexOf(user?.auth?.currentUser?.photoURL!) === -1) {
+          newData.liked_list?.push(user?.auth?.currentUser?.photoURL!);
           newData.likesCount = newData.likesCount + 1;
         } else {
           newData.liked_list = newData.liked_list?.filter(
-            (item) => item != auth.currentUser?.photoURL!
+            (item) => item != user?.auth?.currentUser?.photoURL!
           );
           newData.likesCount = Math.max(newData.likesCount - 1, 0);
         }
@@ -121,9 +141,9 @@ export default function Forum() {
   const sendMessage = async (e: FormEvent) => {
     e.preventDefault();
 
-    const uid = auth.currentUser?.uid;
-    const userName = auth.currentUser?.displayName;
-    const userImage = auth.currentUser?.photoURL;
+    const uid = user?.auth?.currentUser?.uid;
+    const userName = user?.auth?.currentUser?.displayName;
+    const userImage = user?.auth?.currentUser?.photoURL;
     const newMessageRef = push(ref(db, "messages/"));
     const newMsgId = newMessageRef.key;
 
@@ -167,7 +187,7 @@ export default function Forum() {
   };
 
   const handleLike = (isliked: boolean, data: MessagesProps) => {
-    if (data.liked_list?.indexOf(auth.currentUser?.photoURL!) === -1) {
+    if (data.liked_list?.indexOf(user?.auth?.currentUser?.photoURL!) === -1) {
       updateMessage(data.id, data, false);
     } else {
       updateMessage(data.id, data, true);
@@ -180,8 +200,15 @@ export default function Forum() {
   };
 
   useEffect(() => {
+    fetchData()
     getMessagesR();
   }, []);
+
+  useEffect(()=> {
+    if(!user?.auth){
+      router.push('/login')
+    }
+  }, [user, router])
 
   return (
     <div

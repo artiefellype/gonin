@@ -1,4 +1,4 @@
-import { auth } from "@/firebase/authentication";
+import { useUserContext } from "@/context/appContext";
 import { ForumCardProps, ForumProps, MessagesProps } from "@/types";
 import Image from "next/image";
 import React, { useImperativeHandle, useState } from "react";
@@ -29,7 +29,8 @@ const ForumCards = ({
   onLike,
 }: ForumCardProps) => {
   const [isOpen, setIsOpen] = useState(false);
-
+  const { user } = useUserContext();
+  const auth = user?.auth
   const [inputTitle, setInputTitle] = useState(title);
   const [inputDescription, setInputDescription] = useState(description);
   const [liked, setLiked] = useState(liked_list);
@@ -95,7 +96,7 @@ const ForumCards = ({
             <h1 className="font-semibold text-base">{user_Name}</h1>
             <p className="font-light text-xs">{created_at}</p>
           </div>
-          {auth.currentUser?.photoURL === user_photo_url && (
+          {auth?.currentUser?.photoURL === user_photo_url && (
             <div className="absolute right-1 w-12 h-5 gap-2 flex">
               <button
                 onClick={(e) => {
@@ -175,7 +176,7 @@ const ForumCards = ({
                 }}
                 className="w-5 h-5 z-10"
               >
-                {liked_list?.indexOf(auth.currentUser?.photoURL!) !== -1 ? (
+                {liked_list?.indexOf(auth?.currentUser?.photoURL!) !== -1 ? (
                   <LikeIcon size={20} className=" fill-current text-red-600 " />
                 ) : (
                   <LikeIcon size={20} className="text-gray-600" />

@@ -1,4 +1,4 @@
-import { auth } from '@/firebase/authentication';
+import { useUserContext } from '@/context/appContext';
 import Image from 'next/image';
 import React, { FormEvent } from 'react'
 import { FaRegRectangleXmark as CloseIcon, FaPlus as AddIcon } from "react-icons/fa6";
@@ -12,6 +12,8 @@ interface ForumFormProps {
     setDescription: (value: string) => void,
 }
 const ForumForm = ({setIsOpen, sendMessage,title,setTitle,description,setDescription}: ForumFormProps) => {
+  const { user } = useUserContext()
+  const auth = user?.auth
   return (
     <div className="fixed max-w-4xl w-11/12 h-[450px] top-44 border shadow bg-white rounded-lg p-4 text-gray-700 z-50">
           <div className="w-full h-6 flex justify-end">
@@ -24,10 +26,10 @@ const ForumForm = ({setIsOpen, sendMessage,title,setTitle,description,setDescrip
           </div>
           <div className="flex flex-row w-full mb-4">
             <div className="rounded-full m-3 bg-gray-500 w-12 h-12">
-              <Image className="rounded-full" src={auth.currentUser?.photoURL ?? ""} alt={"user photo"} width={48} height={48} />
+              <Image className="rounded-full" src={auth?.currentUser?.photoURL ?? ""} alt={"user photo"} width={48} height={48} />
             </div>
             <div className="flex justify-center items-center">
-              <h1 className="font-semibold text-base">{auth.currentUser?.displayName ?? "Anônimo"}</h1>
+              <h1 className="font-semibold text-base">{auth?.currentUser?.displayName ?? "Anônimo"}</h1>
             </div>
           </div>
           <form

@@ -1,12 +1,14 @@
+import { useUserContext } from '@/context/appContext';
 import Image from 'next/image'
-import React from 'react'
+import React, { useEffect } from 'react'
 import { FaGofore } from 'react-icons/fa'
 
 interface SignInScreenProps {
   loginWithGoogle: ()=>void;
-  loading: (value: boolean) => void
+  loading: (value: boolean) => void;
 }
 const SignInScreen = ({loginWithGoogle, loading}: SignInScreenProps) => {
+  
   return (
     <div className='w-screen h-screen  flex justify-center items-center bg-animb bg-center'>
         <div className=' w-11/12 h-screen flex flex-col justify-around items-center relative'>
@@ -16,7 +18,7 @@ const SignInScreen = ({loginWithGoogle, loading}: SignInScreenProps) => {
           </div>
           <div className='flex flex-col gap-2 items-center w-full'>
             
-            <p className='max-w-2xl text-center font-thin'>O fórum está em fase beta, algumas funcionalidades podem estar em desenvolvimento, e pode-se ocorrer pequenos contratempos.</p>
+            <p className='max-w-2xl text-center font-thin'>O fórum está em fase beta, algumas funcionalidades podem estar em desenvolvimento</p>
             <h1 className='text-lg font-bold'>Sign In</h1>
             <button onClick={() => {
               loginWithGoogle()

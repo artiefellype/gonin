@@ -1,5 +1,6 @@
-import { logout } from "@/firebase/authentication";
-import React from "react";
+import { useUserContext } from "@/context/appContext";
+import { useRouter } from "next/router";
+import React, { useEffect } from "react";
 import {
   FaRightToBracket as LogoutIcon,
   FaMagnifyingGlass as SearchIcon,
@@ -10,6 +11,15 @@ interface ForumHeadProps {
 }
 
 export default function ForumHead({ refresh }: ForumHeadProps) {
+
+  const {signOut} = useUserContext()
+  const router = useRouter()
+
+  const handleSignOut = async ()=> {
+    await signOut()
+    router.push('/login')
+  }
+
   return (
     <>
       <div className="w-full h-20 bg-white flex justify-between p-4 items-center">
@@ -18,7 +28,7 @@ export default function ForumHead({ refresh }: ForumHeadProps) {
         </div>
         <div className="flex flex-row gap-2">
           {/* <SearchIcon size={26} className="text-gray-400" /> */}
-          <button type="button" onClick={logout}>
+          <button type="button" onClick={handleSignOut}>
             <LogoutIcon size={28} className="text-gray-400" />
           </button>
         </div>

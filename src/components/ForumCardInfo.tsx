@@ -1,4 +1,3 @@
-import { auth } from "@/firebase/authentication";
 import { ForumCardProps, ForumProps, MessagesProps } from "@/types";
 import Image from "next/image";
 import React, { useImperativeHandle, useState } from "react";
@@ -10,6 +9,7 @@ import {
   FaHeart as LikeIcon,
 } from "react-icons/fa6";
 import ForumCardInfo from "./ForumCardInfo";
+import { useUserContext } from "@/context/appContext";
 
 const ForumCards = ({
   post: {
@@ -29,9 +29,10 @@ const ForumCards = ({
   onLike,
 }: ForumCardProps) => {
   const [openEdit, setOpenEdit] = useState(false);
-
+  const { user } = useUserContext()
   const [inputTitle, setInputTitle] = useState(title);
   const [inputDescription, setInputDescription] = useState(description);
+  const auth = user?.auth
 
   const handleUpdate = (postId: string) => {
     const newPost: MessagesProps = {
@@ -87,7 +88,7 @@ const ForumCards = ({
             <h1 className="font-semibold text-base">{user_Name}</h1>
             <p className="font-light text-xs">{created_at}</p>
           </div>
-          {auth.currentUser?.photoURL === user_photo_url && (
+          {auth?.currentUser?.photoURL === user_photo_url && (
             <div className="absolute right-1 w-12 h-5 gap-2 flex">
               <button onClick={() => setOpenEdit(true)}>
                 <EditIcon size={20} className="text-gray-500" />
@@ -152,7 +153,7 @@ const ForumCards = ({
                   handleLike();
                 }}
               >
-                {(liked_list?.indexOf(auth.currentUser?.photoURL!) !== -1 && liked_list?.length > 1) ? (
+                {(liked_list?.indexOf(auth?.currentUser?.photoURL!) !== -1 && liked_list?.length > 1) ? (
                   <LikeIcon size={20} className=" fill-current text-red-600 " />
                 ) : (
                   <LikeIcon size={20} className="text-gray-600" />
