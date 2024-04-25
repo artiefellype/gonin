@@ -40,7 +40,6 @@ export const UserContextProvider = ({ children }: { children: ReactNode }) => {
     try {
       const credential = await signInWithPopup(auth, googleProvider)
 
-      console.log("CRED: ", credential)
       const token = credential.user.getIdTokenResult();
 
     } catch (err: any) {

@@ -48,7 +48,6 @@ const ForumCards = ({
       liked_list: liked_list,
     };
 
-    console.log("FORUMCARDs 1: ", likesCount);
 
     onUpdate(postId, newPost);
     setIsOpen(false);
@@ -67,7 +66,6 @@ const ForumCards = ({
       liked_list: liked_list,
     };
 
-    console.log("FORUMCARDs 2: ", likesCount);
 
     onLike(true, newPost);
   };
