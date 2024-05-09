@@ -1,5 +1,3 @@
-import { useUserContext } from "@/context/appContext";
-import Image from "next/image";
 import React, { useEffect } from "react";
 import { FcGoogle } from "react-icons/fc";
 import { BetaFlag } from "../utils/BetaFlag";
@@ -19,8 +17,9 @@ const SignInScreen = ({ loginWithGoogle, loading }: SignInScreenProps) => {
       <div className=" w-full max-w-sm lg:max-w-none lg:w-2/5 h-screen flex md:flex-col justify-center items-center text-slate-900 relative">
       
         <div className="flex flex-col w-full lg:w-1/2">
-          <div className="w-full pb-5 flex justify-center lg:justify-start">
-            <h1 className="text-3xl font-bold ">Login</h1>
+          <div className="w-full pb-12 flex justify-center flex-col lg:justify-start">
+            <h1 className="text-5xl font-bold ">Explore</h1>
+            <p className="text-lg font-light pl-1"> Descubra o 5chan agora</p>
 
           </div>
           <div className="w-full flex justify-center items-start flex-col gap-3 relative">
@@ -33,7 +32,7 @@ const SignInScreen = ({ loginWithGoogle, loading }: SignInScreenProps) => {
             >
               {" "}
               <FcGoogle className="mb-[1px] bg-slate-200 rounded-full" />{" "}
-              Continue com Google
+              Continue com o Google
             </button>
             <BetaFlag />
           </div>
@@ -43,13 +42,9 @@ const SignInScreen = ({ loginWithGoogle, loading }: SignInScreenProps) => {
         <img
           src={"/imgs/fivechan_logo.png"}
           alt={"background"}
-          className="bg-center w-48 h-48 absolute"
+          className="bg-center w-72 h-72 absolute"
         />
-        <img
-          src={"/imgs/background2.jpg"}
-          alt={"background"}
-          className="bg-center w-full h-full"
-        />
+        
       </div>
     </div>
   );
