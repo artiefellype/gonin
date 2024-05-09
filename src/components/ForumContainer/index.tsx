@@ -1,9 +1,9 @@
 import React, { useState } from "react";
-import ForumCards from "./ForumCards";
+import ForumCards from "../ForumCards";
 import { ForumProps, MessagesProps } from "@/types";
-import ForumCardInfo from "./ForumCardInfo";
+import ForumCardInfo from "../ForumCardInfo";
 import { FaRegRectangleXmark as CloseIcon } from "react-icons/fa6";
-import CardSkeleton from "./utils/CardSkeleton";
+import CardSkeleton from "../utils/CardSkeleton";
 
 const ForumContainer = ({
   messages,
@@ -31,7 +31,6 @@ const ForumContainer = ({
     return dateB - dateA;
   });
 
-  //console.log("IsOpen: ", showModal, " Card: ", selectedCard);
 
   return (
     <div className="w-full min-h-screen max-w-3xl flex flex-col items-center pt-10 gap-y-5 pb-5 relative">

@@ -8,7 +8,7 @@ import {
   FaXmark as UncheckIcon,
   FaHeart as LikeIcon,
 } from "react-icons/fa6";
-import ForumCardInfo from "./ForumCardInfo";
+import ForumCardInfo from ".";
 import { useUserContext } from "@/context/appContext";
 
 const ForumCards = ({
@@ -47,7 +47,6 @@ const ForumCards = ({
       likesCount: likesCount,
     };
 
-    console.log("FORUMCARDINFO: ", likesCount);
 
     onUpdate(postId, newPost);
     setOpenEdit(false);
@@ -66,7 +65,6 @@ const ForumCards = ({
       liked_list: liked_list,
     };
 
-    console.log("FORUMCARDs 2: ", likesCount);
 
     onLike(true, newPost);
   };

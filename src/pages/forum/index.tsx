@@ -1,6 +1,6 @@
 "use client";
 import ForumContainer from "@/components/ForumContainer";
-import ForumHead from "@/components/ForumHead";
+import ForumHead from "@/components/Head";
 import { FormEvent, useContext, useEffect, useState } from "react";
 import { fireApp as app } from "@/firebase/firebase";
 import {
@@ -38,12 +38,10 @@ export default function Forum() {
   const db = getDatabase(app);
 
   const fetchData = async () => {
-    console.log("USER: ", user)
     
     try {
       const messages = await postsServices.getPosts();
       setTeste(messages);
-      console.log("OPA 2: ", messages) // Atualiza o estado com as mensagens
     } catch (error) {
       console.error('Erro ao obter dados da API:', error);
     }
@@ -61,7 +59,6 @@ export default function Forum() {
 
             setMessages((prev) => {
               if (!prev.some((msg) => msg.id === (data as MessagesProps).id)) {
-                //console.log("AQUI: ", data);
                 return [...prev, data] as MessagesProps[];
               } else {
                 return prev;
@@ -69,7 +66,7 @@ export default function Forum() {
             });
           });
         } else {
-          console.log("No data available");
+          console.error("No data available");
         }
       })
       .catch((error) => {
@@ -118,7 +115,7 @@ export default function Forum() {
         ]);
       })
       .catch((err) => {
-        console.log("Houve um erro ao atualizar: ", err);
+        console.error("Houve um erro ao atualizar: ", err);
       });
 
     getMessagesR();
@@ -147,8 +144,6 @@ export default function Forum() {
     const newMessageRef = push(ref(db, "messages/"));
     const newMsgId = newMessageRef.key;
 
-    //console.log("userName", userName);
-    //console.log("userImage", userImage);
 
     if (title.length !== 0 && description.length !== 0) {
       await update(newMessageRef, {

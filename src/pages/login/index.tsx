@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { useUserContext } from '@/context/appContext';
-import SignInScreen from '@/components/SignInScreen';
+import SignInScreen from '@/components/SignIn';
 import Image from 'next/image';
 import { getAuth, onAuthStateChanged, User } from 'firebase/auth';
 
@@ -42,7 +42,7 @@ const Login = () => {
   return (
     isLoading ?
       (
-        <div className="bg-animb bg-center w-screen h-screen flex justify-center items-center">
+        <div className="bg-white bg-center w-screen h-screen flex justify-center items-center">
           <Image
             className="animate-bounce duration-3000 ease-in-out infinite"
             src={"/imgs/fivechan_logo.png"}
