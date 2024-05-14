@@ -3,7 +3,7 @@ import ForumCards from "../ForumCards";
 import { ForumProps, MessagesProps } from "@/types";
 import ForumCardInfo from "../ForumCardInfo";
 import { FaRegRectangleXmark as CloseIcon } from "react-icons/fa6";
-import CardSkeleton from "../utils/CardSkeleton";
+import CardSkeleton from "../atoms/CardSkeleton";
 
 const ForumContainer = ({
   messages,

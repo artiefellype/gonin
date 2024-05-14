@@ -1,6 +1,6 @@
 "use client";
 import ForumContainer from "@/components/ForumContainer";
-import ForumHead from "@/components/Head";
+import ForumHead from "@/components/layouts/header";
 import { FormEvent, useContext, useEffect, useState } from "react";
 import { fireApp as app } from "@/firebase/firebase";
 import {

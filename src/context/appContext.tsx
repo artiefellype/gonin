@@ -4,13 +4,13 @@ import { Auth, User as FirebaseUser, GoogleAuthProvider, getAuth, signInWithPopu
 import { onAuthStateChanged } from 'firebase/auth';
 import { fireApp as app } from '@/firebase/firebase';
 
-type User = {
+export type User = {
   isAuth: boolean;
   auth?: Auth;
   user: FirebaseUser | null;
 };
 
-type UserContextType = {
+export type UserContextType = {
   user: User | null;
   signIn: () => Promise<void>;
   signOut: () => Promise<void>;
