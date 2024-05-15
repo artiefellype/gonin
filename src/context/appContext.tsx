@@ -3,6 +3,7 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import { Auth, User as FirebaseUser, GoogleAuthProvider, getAuth, signInWithPopup, signInWithRedirect, signOut } from 'firebase/auth';
 import { onAuthStateChanged } from 'firebase/auth';
 import { fireApp as app } from '@/firebase/firebase';
+import { destroyCookie, setCookie } from 'nookies';
 
 export type User = {
   isAuth: boolean;
@@ -40,7 +41,13 @@ export const UserContextProvider = ({ children }: { children: ReactNode }) => {
     try {
       const credential = await signInWithPopup(auth, googleProvider)
 
-      const token = credential.user.getIdTokenResult();
+      const token = await credential.user.getIdTokenResult();
+
+        setCookie(null, 'token', token.token, {
+          maxAge: 30 * 24 * 60 * 60, // 30 dias
+          path: '/',
+        });
+  
 
     } catch (err: any) {
       const errorCode = err.code;
@@ -55,6 +62,7 @@ export const UserContextProvider = ({ children }: { children: ReactNode }) => {
 
   const signOutHandler = async () => {
     await  signOut(auth);
+    destroyCookie(null, 'token');
   };
 
   const contextValue: UserContextType = {

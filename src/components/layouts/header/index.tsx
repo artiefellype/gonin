@@ -3,16 +3,8 @@ import MenuButton from "@/components/molecules/MenuButton";
 import { User, useUserContext } from "@/context/appContext";
 import { useRouter } from "next/router";
 import React, { useEffect } from "react";
-import {
-  FaRightToBracket as LogoutIcon,
-  FaMagnifyingGlass as SearchIcon,
-} from "react-icons/fa6";
 
-interface ForumHeadProps {
-  refresh: () => void;
-}
-
-export default function ForumHead({ refresh }: ForumHeadProps) {
+export function Header() {
 
   const {signOut, user} = useUserContext()
   const router = useRouter()

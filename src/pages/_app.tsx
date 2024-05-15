@@ -1,3 +1,4 @@
+import { Header } from "@/components/layouts/header";
 import { UserContextProvider } from "@/context/appContext";
 import "@/styles/globals.css";
 import { AppProps } from "next/app";

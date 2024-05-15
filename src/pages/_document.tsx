@@ -1,34 +1,61 @@
-import { GetServerSideProps } from "next";
-import { Html, Head, Main, NextScript } from "next/document";
+import Document, {
+  DocumentContext,
+  Head,
+  Html,
+  Main,
+  NextScript,
+} from "next/document";
 
-export default function Document() {
-  return (
-    <Html lang="pt-br">
-      <Head>
+import { createCache, extractStyle, StyleProvider } from "@ant-design/cssinjs";
+
+const MyDocument = () => (
+  <Html lang="pt-br">
+    <Head>
       <meta
-          name="title"
-          content="5chan"
-        />
-        <meta
-          name="description"
-          content="Fórum público 5chan"
-        />
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <link rel="icon" href="/imgs/fivechan_logo.png" />
+        name="description"
+        content="Comunidade online de código aberto para compartilhar e discutir ideias."
+      />
+      <meta charSet="utf-8" />
+      <meta httpEquiv="X-UA-Compatible" content="IE=edge" />
+      <meta name="HandheldFriendly" content="true" />
+      <meta name="MobileOptimized" content="320" />
+      <meta name="theme-color" content="#374151" />
 
-        {/* Configuração PWA */}
+      <link rel="icon" href="/imgs/fivechan_logo.png" />
 
-        <meta name="background-color" content="#FCFCFC" />
-        <link rel="shortcut icon" href="/imgs/fivechan_logo.png" />
-        
+      <title>GONIN</title>
+    </Head>
+    <body>
+      <Main />
+      <NextScript />
+    </body>
+  </Html>
+);
 
-        {/* Splash Screens IPhone */}
-        
-      </Head>
-      <body>
-        <Main />
-        <NextScript />
-      </body>
-    </Html>
-  );
-}
+MyDocument.getInitialProps = async (ctx: DocumentContext) => {
+  const cache = createCache();
+  const originalRenderPage = ctx.renderPage;
+  ctx.renderPage = () =>
+    originalRenderPage({
+      enhanceApp: (App) => (props) =>
+        (
+          <StyleProvider cache={cache}>
+            <App {...props} />
+          </StyleProvider>
+        ),
+    });
+
+  const initialProps = await Document.getInitialProps(ctx);
+  const style = extractStyle(cache, true);
+  return {
+    ...initialProps,
+    styles: (
+      <>
+        {initialProps.styles}
+        <style dangerouslySetInnerHTML={{ __html: style }} />
+      </>
+    ),
+  };
+};
+
+export default MyDocument;

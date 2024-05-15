@@ -4,6 +4,7 @@ import { useUserContext } from '@/context/appContext';
 import SignInScreen from '@/components/SignIn';
 import Image from 'next/image';
 import { getAuth, onAuthStateChanged, User } from 'firebase/auth';
+import { setCookie } from 'nookies';
 
 const Login = () => {
   const { user, signIn} = useUserContext();

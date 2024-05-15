@@ -1,6 +1,6 @@
 "use client";
 import ForumContainer from "@/components/ForumContainer";
-import ForumHead from "@/components/layouts/header";
+import { Header } from "@/components/layouts/header";
 import { FormEvent, useContext, useEffect, useState } from "react";
 import { fireApp as app } from "@/firebase/firebase";
 import {
@@ -24,6 +24,8 @@ import { useUserContext } from "@/context/appContext";
 import { BaseAPI } from "@/services/baseAPI";
 import { useRouter } from "next/router";
 import { postsServices } from "@/services/postServices";
+import { GetServerSideProps } from "next";
+import { parseCookies } from "nookies";
 
 export default function Forum() {
   const [title, setTitle] = useState("");
@@ -199,17 +201,11 @@ export default function Forum() {
     getMessagesR();
   }, []);
 
-  useEffect(()=> {
-    if(!user?.auth){
-      router.push('/login')
-    }
-  }, [user, router])
-
   return (
     <div
       className={`w-screen min-h-screen bg-gray-200 relative flex justify-center items-center flex-col`}
     >
-      <ForumHead refresh={refreshPosts} />
+      <Header />
       <ForumContainer
         messages={messages}
         onDelete={removeMessage}
@@ -237,3 +233,20 @@ export default function Forum() {
     </div>
   );
 }
+
+export const getServerSideProps: GetServerSideProps = async (ctx) => {
+  const cookies = parseCookies(ctx);
+
+  if (!cookies.token) {
+    return {
+      redirect: {
+        destination: '/login',
+        permanent: false,
+      },
+    };
+  }
+
+  return {
+    props: {},
+  };
+};
