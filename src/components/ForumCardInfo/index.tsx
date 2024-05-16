@@ -9,7 +9,7 @@ import {
   FaHeart as LikeIcon,
 } from "react-icons/fa6";
 import ForumCardInfo from ".";
-import { useUserContext } from "@/context/appContext";
+import { useUserContext } from "@/context";
 
 const ForumCards = ({
   post: {

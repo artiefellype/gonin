@@ -1,7 +1,7 @@
 import React, { ButtonHTMLAttributes } from 'react'
 import Image from 'next/image'
 import { FaEllipsisH as Dots } from "react-icons/fa";
-import { User } from '@/context/appContext';
+import { User } from '@/context';
 
 export interface MenuButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   user?: User;

@@ -1,4 +1,4 @@
-import { useUserContext } from "@/context/appContext";
+import { useUserContext } from "@/context";
 import { ForumCardProps, ForumProps, MessagesProps } from "@/types";
 import Image from "next/image";
 import React, { useImperativeHandle, useState } from "react";
