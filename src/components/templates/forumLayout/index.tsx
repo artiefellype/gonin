@@ -31,7 +31,7 @@ export const ForumLayout = ({children}: Props) => {
 
   return (
       <Layout>
-        <div className='w-screen bg-background'>
+        <div className='w-screen bg-background flex flex-col items-center'>
         <Header/>
         <SideOptions items={items}>
           {children}

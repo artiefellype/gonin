@@ -3,7 +3,7 @@ import ForumCards from "../ForumCards";
 import { ForumProps, MessagesProps } from "@/types";
 import ForumCardInfo from "../ForumCardInfo";
 import { FaRegRectangleXmark as CloseIcon } from "react-icons/fa6";
-import CardSkeleton from "../atoms/CardSkeleton";
+import CardSkeleton from "../../atoms/CardSkeleton";
 
 const ForumContainer = ({
   messages,
@@ -33,7 +33,7 @@ const ForumContainer = ({
 
 
   return (
-    <div className="w-full min-h-screen max-w-3xl flex flex-col items-center pt-10 gap-y-5 pb-5 relative">
+    <div className="w-full min-h-screen max-w-4xl flex flex-col items-center pt-10 gap-y-5 pb-5 relative">
       {sortedMessages.length !== 0 ? (
         sortedMessages.map((item) => {
           return (

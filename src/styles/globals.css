@@ -24,3 +24,7 @@ body {
   color: rgb(var(--foreground-rgb));
   background-color: var(--background-color);
 }
+
+.ant-menu-item-selected {
+  background-color: #F8F8F8 !important;
+}

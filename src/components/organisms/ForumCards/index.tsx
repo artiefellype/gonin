@@ -73,7 +73,7 @@ const ForumCards = ({
   return (
     <>
       <div
-        className="w-5/6 h-52 bg-white rounded-lg p-4"
+        className="w-full max-w-2xl h-52 bg-white rounded-lg p-4"
         onClick={(e) => {
           e.stopPropagation()
           selectedCard(id);

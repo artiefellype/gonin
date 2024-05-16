@@ -71,10 +71,11 @@ export const SideOptions = ({ children, items }: Props) => {
   }, [items]);
 
   return (
-    <Layout className="mx-96">
+    <Layout className="max-w-7xl w-full">
       <Sider 
         trigger={null} 
-        width={200}
+        width={250}
+        style={{ }}
         >
         <div className="h-full w-full bg-background pt-10">
           <Menu
@@ -82,6 +83,7 @@ export const SideOptions = ({ children, items }: Props) => {
             defaultSelectedKeys={[activePath]}
             defaultOpenKeys={[activePath]}
             className=" border-none rounded-lg"
+            style={{backgroundColor: '#D6D6D6', borderRight: 0, borderLeft: 0}}
             items={sideBarItemsm}
           />
         </div>
@@ -89,7 +91,8 @@ export const SideOptions = ({ children, items }: Props) => {
       </Sider>
       <Layout>
         <Content
-          className={`min-h-screen bg-background relative flex justify-center items-center flex-col`}
+          className={`min-h-screen relative flex justify-center items-center flex-col`}
+          style={{ backgroundColor: '#D6D6D6', paddingLeft: '2rem', paddingRight: '2rem'}}
         >
           {children}
         </Content>

@@ -15,8 +15,8 @@ export function Header() {
   }
 
   return (
-    <>
-      <div className="w-full h-[72px] bg-whiteColor flex justify-between p-4 items-center px-96">
+    <div className="w-full bg-whiteColor flex items-center justify-center">
+      <div className="w-full max-w-7xl h-[72px] flex justify-between p-4 items-center">
         <div className=" flex md:justify-center">
           <h1 className="font-extrabold text-3xl text-primary ">GONIN</h1>
         </div>
@@ -38,6 +38,6 @@ export function Header() {
         </div>
       </div>
       
-    </>
+    </div>
   );
 }

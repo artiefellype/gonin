@@ -7,6 +7,7 @@ import Document, {
 } from "next/document";
 
 import { createCache, extractStyle, StyleProvider } from "@ant-design/cssinjs";
+import { ConfigProvider } from 'antd';
 
 const MyDocument = () => (
   <Html lang="pt-br">

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import { useUserContext } from "@/context";
-import SignInScreen from "@/components/SignIn";
+import SignInScreen from "@/components/pages/SignIn";
 import Image from "next/image";
 import { getAuth, onAuthStateChanged, User } from "firebase/auth";
 
