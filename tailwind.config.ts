@@ -14,6 +14,12 @@ const config: Config = {
           'conic-gradient(from 180deg at 50% 50%, var(--tw-gradient-stops))',
         'animb': "url('/imgs/cute-four-leaf.png')"
       },
+      colors: {
+        primary: '#374151',
+        secondary: '#CECECE',
+        whiteColor: '#F8F8F8',
+        background: '#D6D6D6',
+      },
     },
   },
   plugins: [],

@@ -1,3 +1,4 @@
+import { useUserContext } from "@/context";
 import { ForumCardProps, ForumProps, MessagesProps } from "@/types";
 import Image from "next/image";
 import React, { useImperativeHandle, useState } from "react";
@@ -8,8 +9,6 @@ import {
   FaXmark as UncheckIcon,
   FaHeart as LikeIcon,
 } from "react-icons/fa6";
-import ForumCardInfo from ".";
-import { useUserContext } from "@/context/appContext";
 
 const ForumCards = ({
   post: {
@@ -19,20 +18,24 @@ const ForumCards = ({
     description,
     created_at,
     user_Name,
+    user_photo_url,
     liked_list,
     likesCount,
-    user_photo_url,
   },
   onDelete,
   onUpdate,
+  selectedCard,
   showModal,
   onLike,
 }: ForumCardProps) => {
-  const [openEdit, setOpenEdit] = useState(false);
-  const { user } = useUserContext()
+  const [isOpen, setIsOpen] = useState(false);
+  const { user } = useUserContext();
+  const auth = user?.auth
   const [inputTitle, setInputTitle] = useState(title);
   const [inputDescription, setInputDescription] = useState(description);
-  const auth = user?.auth
+  const [liked, setLiked] = useState(liked_list);
+
+  console.log("ISRE>", auth)
 
   const handleUpdate = (postId: string) => {
     const newPost: MessagesProps = {
@@ -43,13 +46,13 @@ const ForumCards = ({
       title: inputTitle,
       description: inputDescription,
       created_at: created_at,
-      liked_list: liked_list,
       likesCount: likesCount,
+      liked_list: liked_list,
     };
 
 
     onUpdate(postId, newPost);
-    setOpenEdit(false);
+    setIsOpen(false);
   };
 
   const handleLike = () => {
@@ -71,7 +74,14 @@ const ForumCards = ({
 
   return (
     <>
-      <div className="w-full min-h-max  rounded-lg p-4">
+      <div
+        className="w-full max-w-2xl h-52 bg-white rounded-lg p-4"
+        onClick={(e) => {
+          e.stopPropagation()
+          selectedCard(id);
+          showModal(true);
+        }}
+      >
         <div className="flex flex-row text-gray-800 relative">
           <div className="rounded-full m-3 bg-gray-500 w-12 h-12">
             <Image
@@ -86,25 +96,37 @@ const ForumCards = ({
             <h1 className="font-semibold text-base">{user_Name}</h1>
             <p className="font-light text-xs">{created_at}</p>
           </div>
-          {auth?.currentUser?.photoURL === user_photo_url && (
+          {auth?.currentUser?.uid === user_id && (
             <div className="absolute right-1 w-12 h-5 gap-2 flex">
-              <button onClick={() => setOpenEdit(true)}>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsOpen(true);
+                }}
+              >
                 <EditIcon size={20} className="text-gray-500" />
               </button>
-              <button onClick={() => onDelete(id)}>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onDelete(id);
+                }}
+              >
                 <TrashIcon size={20} className="text-gray-500" />
               </button>
             </div>
           )}
         </div>
 
-        <div className="w-full h-4/6 flex justify-center items-center pb-5">
-          {!openEdit ? (
-            <div className="w-full h-5/6 max-h-96 overflow-y-auto">
-              <h2 className="font-semibold text-sm text-gray-800 line-clamp-4 mb-3">
+        <div className="w-full h-4/6 flex justify-center items-center relative pl-3">
+          {!isOpen ? (
+            <div className="w-full h-5/6 break-words text-clip">
+              <h2 className="font-semibold text-sm text-gray-800 line-clamp-1">
                 {title}
               </h2>
-              <p className="font-medium text-xs text-gray-500">{description}</p>
+              <p className="font-medium text-xs text-gray-500 line-clamp-3">
+                {description}
+              </p>
             </div>
           ) : (
             <div className="w-full h-5/6 break-words text-clip">
@@ -113,28 +135,30 @@ const ForumCards = ({
                 className="font-semibold text-sm text-gray-800 shadow border focus:outline-none focus:shadow-outline"
                 value={inputTitle}
                 onChange={(e) => setInputTitle(e.target.value)}
+                onClick={(e) => e.stopPropagation()}
                 maxLength={256}
               />
               <textarea
                 className="font-medium text-xs text-gray-500  w-full shadow border focus:outline-none focus:shadow-outline"
                 value={inputDescription}
                 onChange={(e) => setInputDescription(e.target.value)}
+                onClick={(e) => e.stopPropagation()}
                 maxLength={4096}
               />
-              <div className="w-full h-5 flex justify-start flex-row">
+              <div className="w-full flex justify-end flex-row pt-3 z-30 absolute">
                 <button
-                  onClick={(e) =>{
-                     e.preventDefault()
-                    setOpenEdit(false)}}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setIsOpen(false);
+                  }}
                   className="text-gray-200 border bg-red-600 w-9 h-7 flex justify-center items-center rounded-md"
                 >
                   <UncheckIcon size={18} />
                 </button>
                 <button
                   onClick={(e) => {
-                    e.preventDefault()
+                    e.stopPropagation();
                     handleUpdate(id);
-                    showModal(false);
                   }}
                   className="text-gray-200 border bg-green-600 w-9 h-7 flex justify-center items-center rounded-md"
                 >
@@ -143,15 +167,16 @@ const ForumCards = ({
               </div>
             </div>
           )}
-          <div className="flex w-full absolute flex-row justify-start items-center bottom-0 ">
-            <div className="flex flex-row gap-1 m-4">
+          <div className="flex w-full h-5 absolute bottom-2 left-0 flex-row justify-start items-center pl-3">
+            <div className="flex flex-row gap-1">
               <button
                 onClick={(e) => {
                   e.stopPropagation();
                   handleLike();
                 }}
+                className="w-5 h-5 z-10"
               >
-                {(liked_list?.indexOf(auth?.currentUser?.photoURL!) !== -1 && liked_list?.length > 1) ? (
+                {liked_list?.indexOf(auth?.currentUser?.photoURL!) !== -1 ? (
                   <LikeIcon size={20} className=" fill-current text-red-600 " />
                 ) : (
                   <LikeIcon size={20} className="text-gray-600" />
@@ -159,7 +184,7 @@ const ForumCards = ({
               </button>
 
               <div className="text-gray-800 font-medium text-sm">
-                <p>{Math.max(likesCount || 0, 0)}</p>
+                <p>{likesCount ? likesCount : 0}</p>
               </div>
             </div>
           </div>

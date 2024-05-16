@@ -1,4 +1,5 @@
 import { GetServerSideProps } from "next";
+import { parseCookies } from "nookies";
 import { Fragment } from "react";
 
 export default function LandPage() {
@@ -11,10 +12,22 @@ export default function LandPage() {
 
 // AUTHENTICAÇÂO A NIVEL DE SERVER SIDE
 export const getServerSideProps: GetServerSideProps = async (ctx) => {
-  return {
-    redirect: {
-      destination: "/login",
-      permanent: false,
-    },
-  };
+  const cookies = parseCookies(ctx);
+
+  if (!cookies.token) {
+    return {
+      redirect: {
+        destination: '/login',
+        permanent: false,
+      },
+    };
+  }else {
+    return {
+      redirect: {
+        destination: '/forum',
+        permanent: false,
+      },
+    };
+  }
 };
+

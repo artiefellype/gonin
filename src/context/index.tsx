@@ -1,16 +1,31 @@
 // userProvider.tsx
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { Auth, User as FirebaseUser, GoogleAuthProvider, getAuth, signInWithPopup, signInWithRedirect, signOut } from 'firebase/auth';
-import { onAuthStateChanged } from 'firebase/auth';
-import { fireApp as app } from '@/firebase/firebase';
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  ReactNode,
+} from "react";
+import {
+  Auth,
+  User as FirebaseUser,
+  GoogleAuthProvider,
+  getAuth,
+  signInWithPopup,
+  signInWithRedirect,
+  signOut,
+} from "firebase/auth";
+import { onAuthStateChanged } from "firebase/auth";
+import { fireApp as app } from "@/firebase/firebase";
+import { destroyCookie, setCookie } from "nookies";
 
-type User = {
+export type User = {
   isAuth: boolean;
   auth?: Auth;
   user: FirebaseUser | null;
 };
 
-type UserContextType = {
+export type UserContextType = {
   user: User | null;
   signIn: () => Promise<void>;
   signOut: () => Promise<void>;
@@ -18,11 +33,10 @@ type UserContextType = {
 
 export const UserFiveContext = createContext({} as UserContextType);
 
-
 export const UserContextProvider = ({ children }: { children: ReactNode }) => {
-  const [user, setUser] = useState<User | null>({ isAuth: false, user: null  });
+  const [user, setUser] = useState<User | null>({ isAuth: false, user: null });
   const googleProvider = new GoogleAuthProvider();
-  const auth = getAuth(app)
+  const auth = getAuth(app);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (authUser) => {
@@ -38,23 +52,27 @@ export const UserContextProvider = ({ children }: { children: ReactNode }) => {
 
   const signInHandler = async () => {
     try {
-      const credential = await signInWithPopup(auth, googleProvider)
+      const credential = await signInWithPopup(auth, googleProvider);
 
-      const token = credential.user.getIdTokenResult();
+      const token = await credential.user.getIdTokenResult();
 
+      setCookie(null, "token", token.token, {
+        maxAge: 30 * 24 * 60 * 60, // 30 dias
+        path: "/",
+      });
     } catch (err: any) {
       const errorCode = err.code;
       const errorMessage = err.message;
       const email = err.customData.email;
       const credential = GoogleAuthProvider.credentialFromError(err);
 
-      console.error(errorCode, ": ", errorMessage)
+      console.error(errorCode, ": ", errorMessage);
     }
-
   };
 
   const signOutHandler = async () => {
-    await  signOut(auth);
+    await signOut(auth);
+    destroyCookie(null, "token");
   };
 
   const contextValue: UserContextType = {
@@ -63,8 +81,11 @@ export const UserContextProvider = ({ children }: { children: ReactNode }) => {
     signOut: signOutHandler,
   };
 
-  return <UserFiveContext.Provider value={contextValue}>{children}</UserFiveContext.Provider>
-  
+  return (
+    <UserFiveContext.Provider value={contextValue}>
+      {children}
+    </UserFiveContext.Provider>
+  );
 };
 
 export const useUserContext = () => useContext(UserFiveContext);

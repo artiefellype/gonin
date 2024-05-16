@@ -1,5 +1,5 @@
-import { UserContextProvider } from "@/context/appContext";
-import "@/styles/globals.css";
+import { UserContextProvider } from "@/context";
+import "../styles/globals.css"
 import { AppProps } from "next/app";
 
 

@@ -1,6 +1,6 @@
 import React, { useEffect } from "react";
 import { FcGoogle } from "react-icons/fc";
-import { BetaFlag } from "../utils/BetaFlag";
+import { BetaFlag } from "../../atoms/BetaFlag";
 
 interface SignInScreenProps {
   loginWithGoogle: () => void;
@@ -14,12 +14,12 @@ const SignInScreen = ({ loginWithGoogle, loading }: SignInScreenProps) => {
           alt={"background"}
           className="bg-center w-24 h-24 absolute top-4 left-4 lg:hidden"
         />
-      <div className=" w-full max-w-sm lg:max-w-none lg:w-2/5 h-screen flex md:flex-col justify-center items-center text-slate-900 relative">
+      <div className=" w-full max-w-[300px] lg:max-w-none lg:w-2/5 h-screen flex md:flex-col justify-center items-center text-slate-900 relative">
       
         <div className="flex flex-col w-full lg:w-1/2">
           <div className="w-full pb-12 flex justify-center flex-col lg:justify-start">
-            <h1 className="text-5xl font-bold ">Explore</h1>
-            <p className="text-lg font-light pl-1"> Descubra o 5chan agora</p>
+            <h1 className="text-3xl font-bold ">Explore</h1>
+            <p className="text-base font-light pl-1"> Descubra o Gonin agora</p>
 
           </div>
           <div className="w-full flex justify-center items-start flex-col gap-3 relative">
@@ -28,7 +28,7 @@ const SignInScreen = ({ loginWithGoogle, loading }: SignInScreenProps) => {
                 loginWithGoogle();
                 loading(true);
               }}
-              className="border-red-500 lg:max-w-sm border-solid border-2 w-full h-11 rounded-3xl flex flex-row justify-center items-center gap-2 hover:text-slate-200 hover:bg-red-500 transition-all duration-400 ease-in-out"
+              className="border-red-500 text-base lg:max-w-[300px] border-solid border-2 w-full h-11 rounded-3xl flex flex-row justify-center items-center gap-2 hover:text-slate-200 hover:bg-red-500 transition-all duration-400 ease-in-out"
             >
               {" "}
               <FcGoogle className="mb-[1px] bg-slate-200 rounded-full" />{" "}

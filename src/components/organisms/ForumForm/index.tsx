@@ -1,4 +1,4 @@
-import { useUserContext } from '@/context/appContext';
+import { useUserContext } from '@/context';
 import Image from 'next/image';
 import React, { FormEvent } from 'react'
 import { FaRegRectangleXmark as CloseIcon, FaPlus as AddIcon } from "react-icons/fa6";
