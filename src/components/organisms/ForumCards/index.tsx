@@ -35,6 +35,8 @@ const ForumCards = ({
   const [inputDescription, setInputDescription] = useState(description);
   const [liked, setLiked] = useState(liked_list);
 
+  console.log("ISRE>", auth)
+
   const handleUpdate = (postId: string) => {
     const newPost: MessagesProps = {
       id: id,
@@ -94,7 +96,7 @@ const ForumCards = ({
             <h1 className="font-semibold text-base">{user_Name}</h1>
             <p className="font-light text-xs">{created_at}</p>
           </div>
-          {auth?.currentUser?.photoURL === user_photo_url && (
+          {auth?.currentUser?.uid === user_id && (
             <div className="absolute right-1 w-12 h-5 gap-2 flex">
               <button
                 onClick={(e) => {
