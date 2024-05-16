@@ -92,7 +92,7 @@ export const SideOptions = ({ children, items }: Props) => {
       <Layout>
         <Content
           className={`min-h-screen relative flex justify-center items-center flex-col`}
-          style={{ backgroundColor: '#D6D6D6', paddingLeft: '2rem', paddingRight: '2rem'}}
+          style={{ backgroundColor: '#D6D6D6', paddingLeft: '1rem', paddingRight: '1rem'}}
         >
           {children}
         </Content>
