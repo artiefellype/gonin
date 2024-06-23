@@ -7,6 +7,7 @@ import { Layout } from "antd";
 import React from "react";
 import { HiHome } from "react-icons/hi";
 import { MdExplore } from "react-icons/md";
+import { FaComments } from "react-icons/fa";
 
 const { Content } = Layout
 
@@ -21,6 +22,13 @@ export const ForumLayout = ({ children }: Props) => {
       icon: HiHome,
       key: "forum",
       path: `/forum`,
+      show: true,
+    },
+    {
+      label: "TÓPICOS",
+      icon: FaComments,
+      key: "topics",
+      path: `/topics`,
       show: true,
     },
     {
@@ -42,7 +50,7 @@ export const ForumLayout = ({ children }: Props) => {
       </div>
 
       {/* mobile */}
-      <div className="w-screen bg-background flex flex-col items-center">
+      <div className="w-screen bg-background flex flex-col md:hidden items-center">
         <Header isMobile={true}/>
         <Layout>
           <Content
