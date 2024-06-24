@@ -17,6 +17,8 @@ export interface UserProps {
     id: string;
     photoURL: string;
     posts: string[];
+    member: boolean;
+    tag: string;
     uid: string;
 }
 
@@ -29,6 +31,7 @@ export interface PostProps {
     description: string;
     likeCount: number;
     commentCount: number;
+    tags: string[];
     createdAt: string;
 }
 
@@ -47,6 +50,7 @@ export interface ForumProps {
 
 export interface HomeProps {
     posts: PostProps[]
+    loading?: boolean
 }
 
 export interface ForumCardProps {

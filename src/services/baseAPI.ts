@@ -1,4 +1,4 @@
-import { getAuth, onAuthStateChanged } from 'firebase/auth';
+import { getAuth, onAuthStateChanged } from "firebase/auth";
 import {
   getFirestore,
   collection,
@@ -9,9 +9,17 @@ import {
   deleteDoc,
   getDocs,
   CollectionReference,
-  DocumentReference
-} from 'firebase/firestore';
-import { fireApp } from '@/firebase/firebase';
+  DocumentReference,
+  query,
+  where,
+  DocumentData,
+  orderBy,
+  startAfter,
+  limit,
+  QueryDocumentSnapshot,
+} from "firebase/firestore";
+import { fireApp } from "@/firebase/firebase";
+import { PostProps, UserProps } from "@/types";
 
 export class BaseAPI {
   private auth;
@@ -28,7 +36,7 @@ export class BaseAPI {
         if (user) {
           resolve(user);
         } else {
-          reject('Usuário não autenticado');
+          reject("Usuário não autenticado");
         }
       });
     });
@@ -37,12 +45,18 @@ export class BaseAPI {
   async get(collectionName: string, subcollectionName?: string) {
     try {
       const user = await this.getUser();
-      let collectionRef: CollectionReference | DocumentReference = collection(this.db, collectionName);
+      let collectionRef: CollectionReference | DocumentReference = collection(
+        this.db,
+        collectionName
+      );
 
       if (subcollectionName) {
         collectionRef = doc(this.db, collectionName).withConverter({
           toFirestore: (data) => data,
-          fromFirestore: (snapshot) => ({ id: snapshot.id, ...snapshot.data() })
+          fromFirestore: (snapshot) => ({
+            id: snapshot.id,
+            ...snapshot.data(),
+          }),
         });
         collectionRef = collection(collectionRef, subcollectionName);
       }
@@ -109,7 +123,11 @@ export class BaseAPI {
   }
 
   // Obter subcolecoes
-  async getSubcollection(collectionName: string, docId: string, subcollectionName: string) {
+  async getSubcollection(
+    collectionName: string,
+    docId: string,
+    subcollectionName: string
+  ) {
     try {
       const user = await this.getUser();
       const docRef = doc(this.db, collectionName, docId);
@@ -130,7 +148,7 @@ export class BaseAPI {
   async getUserById(userId: string) {
     try {
       const user = await this.getUser();
-      const docRef = doc(this.db, 'users', userId);
+      const docRef = doc(this.db, "users", userId);
       const docSnap = await getDoc(docRef);
 
       if (docSnap.exists()) {
@@ -142,4 +160,61 @@ export class BaseAPI {
       throw error;
     }
   }
+
+  async countPostsByTag(tag: string) {
+    try {
+      const postsRef = collection(this.db, "posts");
+      const q = query(postsRef, where("tags", "array-contains", tag));
+      const querySnapshot = await getDocs(q);
+      return querySnapshot.size;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async getPostsByTag (tag: string, lastDoc: DocumentData | null = null, pageSize: number) {
+    try {
+      const postsCollectionRef = collection(this.db, "posts");
+      let q;
+
+      if (lastDoc) {
+        q = query(
+          postsCollectionRef,
+          where("tags", "array-contains", tag),
+          orderBy("createdAt"),
+          startAfter(lastDoc),
+          limit(pageSize)
+        );
+      } else {
+        q = query(
+          postsCollectionRef,
+          where("tags", "array-contains", tag),
+          orderBy("createdAt"),
+          limit(pageSize)
+        );
+      }
+
+      const querySnapshot = await getDocs(q);
+      const posts: PostProps[] = [];
+      const baseAPI = new BaseAPI();
+
+      for (const doc of querySnapshot.docs) {
+        const postData = { id: doc.id, ...doc.data() } as PostProps;
+
+        if (postData.userId) {
+          const user = await baseAPI.getUserById(postData.userId) as UserProps;
+          posts.push({ ...postData, user });
+        } else {
+          console.error(`Post with id ${postData.id} does not have a userId`);
+          posts.push(postData);
+        }
+      }
+
+      const lastVisible = querySnapshot.docs[querySnapshot.docs.length - 1];
+
+      return { posts, lastVisible };
+    } catch (error: any) {
+      throw new Error(`Erro ao buscar posts por tag: ${error.message}`);
+    }
+  };
 }

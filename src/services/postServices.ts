@@ -1,5 +1,6 @@
 import { PostProps } from "@/types";
 import { BaseAPI } from "./baseAPI";
+import { DocumentData } from "firebase/firestore";
 
 export class postsServices {
     static getPosts = async (): Promise<any[]> => {
@@ -34,4 +35,23 @@ export class postsServices {
       throw error;
     }
   }
+
+  static getPostTagQuantity = async (tag: string): Promise<number> => {
+    try {
+      const response = await (new BaseAPI()).countPostsByTag(tag);
+      return response as number;
+    } catch (err) {
+      throw err
+    }
+  }
+
+  static getPostsByTag = async (tag: string, lastDoc: DocumentData | null, pageSize: number = 10): Promise<any> => {
+    try {
+      const response = await (new BaseAPI()).getPostsByTag(tag, lastDoc, pageSize )
+      return response as any
+    } catch (error) {
+      throw error
+    }
+  }
+
 }

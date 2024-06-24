@@ -3,7 +3,7 @@ import React from "react";
 const CardSkeleton = () => {
   return (
     <>
-      <div className="border border-white shadow w-5/6 h-52  rounded-lg p-4 bg-white">
+      <div className="border border-white shadow w-full md:max-w-2xl h-52  rounded-lg p-4 bg-white">
         <div className="animate-pulse flex space-x-4">
           <div className="rounded-full bg-slate-400 h-10 w-10"></div>
           <div className="flex-1 space-y-6 py-1">
@@ -17,7 +17,9 @@ const CardSkeleton = () => {
           </div>
         </div>
       </div>
-      <div className="border border-white shadow w-5/6 h-52  rounded-lg p-4 bg-white">
+
+      
+      <div className="border border-white shadow w-full md:max-w-2xl h-52  rounded-lg p-4 bg-white">
         <div className="animate-pulse flex space-x-4">
           <div className="rounded-full bg-slate-400 h-10 w-10"></div>
           <div className="flex-1 space-y-6 py-1">

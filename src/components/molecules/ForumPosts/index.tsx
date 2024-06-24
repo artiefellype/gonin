@@ -24,10 +24,6 @@ export const ForumPosts = ({ post }: PostCardProps) => {
   const auth = user?.auth;
   const [inputTitle, setInputTitle] = useState(post.title);
   const [inputDescription, setInputDescription] = useState(post.description);
-  //const [liked, setLiked] = useState(liked_list);
-
-
-  
 
   return (
     <>
@@ -44,9 +40,9 @@ export const ForumPosts = ({ post }: PostCardProps) => {
 
         <div className="flex flex-col pt-2 w-full">
           <div className="flex">
-            <div className="flex flex-row gap-3 justify-center items-center">
+            <div className="flex md:flex-row md:m-0 mb-3 flex-col md:gap-3 justify-center items-center">
               <h1 className="text-base font-bold">{post.user.displayName}</h1>
-              <p className="font-light text-xs">{formatDate(post.createdAt)}</p>
+              <p className="font-light text-xs text-left">{formatDate(post.createdAt)}</p>
             </div>
 
             {auth?.currentUser?.uid === post.userId && (
