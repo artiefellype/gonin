@@ -15,7 +15,7 @@ interface Props {
   children: React.ReactNode;
 }
 
-export const ForumLayout = ({ children }: Props) => {
+export const LayoutForum = ({ children }: Props) => {
   const items: MenuItemsProps[] = [
     {
       label: "INICIO",

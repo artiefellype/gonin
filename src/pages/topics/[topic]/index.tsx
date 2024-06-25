@@ -1,5 +1,5 @@
 import { TopicPage } from '@/components/pages/TopicPage';
-import { ForumLayout } from '@/components/templates/ForumLayout';
+import { LayoutForum } from '@/components/templates/LayoutForum';
 import { useRouter } from 'next/router';
 import React from 'react'
 
@@ -9,9 +9,9 @@ import React from 'react'
   const { topic } = router.query;
   
   return (
-    <ForumLayout>
+    <LayoutForum>
       <TopicPage tag={topic as string}/>
-    </ForumLayout>
+    </LayoutForum>
   )
 }
 

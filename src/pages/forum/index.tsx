@@ -1,13 +1,13 @@
 
 import { ForumPage } from '@/components/pages/ForumPage'
-import { ForumLayout } from '@/components/templates/ForumLayout'
+import { LayoutForum } from '@/components/templates/LayoutForum'
 import React from 'react'
 
 const Forum = () => {
   return (
-    <ForumLayout>
+    <LayoutForum>
       <ForumPage />
-    </ForumLayout>
+    </LayoutForum>
   )
 }
 
