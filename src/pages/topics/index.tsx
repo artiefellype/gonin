@@ -1,4 +1,4 @@
-import { TopicsPage } from '@/components/pages/Topics'
+import { TopicsPage } from '@/components/pages/TopicsPage'
 import { ForumLayout } from '@/components/templates/ForumLayout'
 import React from 'react'
 

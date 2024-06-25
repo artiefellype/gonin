@@ -6,7 +6,7 @@ import { postsServices } from "@/services/postServices";
 import { GetServerSideProps } from "next";
 import { parseCookies } from "nookies";
 
-const ForumPage = () => {
+export const ForumPage = () => {
   const [posts, setPosts] = useState<PostProps[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
 
@@ -54,5 +54,3 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
     props: {},
   };
 };
-
-export default ForumPage

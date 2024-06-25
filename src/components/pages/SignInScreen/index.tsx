@@ -49,3 +49,4 @@ export const SignInScreen = ({ loginWithGoogle, loading }: SignInScreenProps) =>
     </div>
   );
 };
+

@@ -3,7 +3,7 @@ import { useRouter } from "next/router";
 import { useUserContext } from "@/context";
 import Image from "next/image";
 import { getAuth, onAuthStateChanged, User } from "firebase/auth";
-import { SignInScreen } from "@/components/pages/SignIn";
+import { SignInScreen } from "@/components/pages/SignInScreen";
 
 const Login = () => {
   const { user, signIn } = useUserContext();

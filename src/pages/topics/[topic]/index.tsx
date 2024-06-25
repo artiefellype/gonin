@@ -1,4 +1,4 @@
-import { TopicPage } from '@/components/pages/Topic';
+import { TopicPage } from '@/components/pages/TopicPage';
 import { ForumLayout } from '@/components/templates/ForumLayout';
 import { useRouter } from 'next/router';
 import React from 'react'
