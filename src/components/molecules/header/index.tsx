@@ -1,15 +1,15 @@
-import MenuButton from "@/components/atoms/MenuButton";
 import { User, useUserContext } from "@/context";
 import { useRouter } from "next/router";
-import React, { useEffect } from "react";
+import React from "react";
 import Image from "next/image";
 import { CustomPopover } from "@/components/atoms/CustomPopover";
+import { MenuButton } from "@/components/atoms/MenuButton";
 
 interface Props {
   isMobile: boolean;
 }
 
-export function Header({ isMobile }: Props) {
+export const Header = ({ isMobile }: Props) => {
   const { signOut, user } = useUserContext();
   const router = useRouter();
 

@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React from "react";
 import { FcGoogle } from "react-icons/fc";
 import { BetaFlag } from "../../atoms/BetaFlag";
 
@@ -6,7 +6,7 @@ interface SignInScreenProps {
   loginWithGoogle: () => void;
   loading: (value: boolean) => void;
 }
-const SignInScreen = ({ loginWithGoogle, loading }: SignInScreenProps) => {
+export const SignInScreen = ({ loginWithGoogle, loading }: SignInScreenProps) => {
   return (
     <div className="w-screen h-screen flex justify-center items-center bg-slate-200 relative">
       <img
@@ -49,5 +49,3 @@ const SignInScreen = ({ loginWithGoogle, loading }: SignInScreenProps) => {
     </div>
   );
 };
-
-export default SignInScreen;

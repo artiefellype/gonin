@@ -19,7 +19,7 @@ import { postsServices } from "@/services/postServices";
 import { GetServerSideProps } from "next";
 import { parseCookies } from "nookies";
 
-export function ForumPage() {
+export const ForumPage = () => {
   const [posts, setPosts] = useState<PostProps[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
 

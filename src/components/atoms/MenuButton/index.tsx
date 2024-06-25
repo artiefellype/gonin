@@ -7,7 +7,7 @@ export interface MenuButtonProps extends ButtonHTMLAttributes<HTMLButtonElement>
   user?: User;
 }
 
-const MenuButton = ({user, ...rest}: MenuButtonProps) => {
+export const MenuButton = ({user, ...rest}: MenuButtonProps) => {
 
   return (
     <button 
@@ -36,5 +36,3 @@ const MenuButton = ({user, ...rest}: MenuButtonProps) => {
     </button>
   )
 }
-
-export default MenuButton

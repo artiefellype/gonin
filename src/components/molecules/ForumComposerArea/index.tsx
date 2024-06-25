@@ -1,22 +1,21 @@
 import React, { useEffect, useRef, useState } from "react";
-import { FaPaperclip } from "react-icons/fa";
 import { FaMarker } from "react-icons/fa6";
 import Image from "next/image";
 import { PostProps, UserProps } from "@/types";
 import { useUserContext } from "@/context";
 import { UserServices } from "@/services/userServices";
-import FileSelectorInput from "@/components/atoms/FileSelectorInput";
 import { FaTimes } from "react-icons/fa";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { storage } from "@/firebase/firebase";
 import { postsServices } from "@/services/postServices";
-import LoadingSpinner from "@/components/atoms/LoadingSpinner";
+import { LoadingSpinner } from "@/components/atoms/LoadingSpinner";
+import { FileSelectorInput } from "@/components/atoms/FileSelectorInput";
 
 interface ForumComposerProps {
   tag: string;
   fetchNewPosts: () => Promise<void>;
 }
-const ForumComposerArea = ({ tag, fetchNewPosts }: ForumComposerProps) => {
+export const ForumComposerArea = ({ tag, fetchNewPosts }: ForumComposerProps) => {
   const [loadingUser, setLoadingUser] = useState(false);
   const { user } = useUserContext();
   const [userInfo, setUserInfo] = useState<UserProps>();
@@ -219,4 +218,3 @@ const ForumComposerArea = ({ tag, fetchNewPosts }: ForumComposerProps) => {
   );
 };
 
-export default ForumComposerArea;

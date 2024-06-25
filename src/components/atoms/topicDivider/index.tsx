@@ -4,7 +4,7 @@ import React from 'react'
 interface DividerProps {
     tag: string
 }
-const TopicDivider = ({tag}: DividerProps) => {
+export const TopicDivider = ({tag}: DividerProps) => {
   return (
     <>
     <h2 className='font-bold text-lg text-primary'>{getTitleFromTag(tag)}</h2>
@@ -12,5 +12,3 @@ const TopicDivider = ({tag}: DividerProps) => {
     </>
   )
 }
-
-export default TopicDivider
