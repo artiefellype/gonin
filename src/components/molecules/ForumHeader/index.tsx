@@ -9,7 +9,7 @@ interface Props {
   isMobile: boolean;
 }
 
-export const Header = ({ isMobile }: Props) => {
+export const ForumHeader = ({ isMobile }: Props) => {
   const { signOut, user } = useUserContext();
   const router = useRouter();
 
@@ -75,4 +75,4 @@ export const Header = ({ isMobile }: Props) => {
       </div>
     </div>
   );
-}
+};

@@ -1,4 +1,3 @@
-import { Header } from "@/components/molecules/Header";
 import {
   MenuItemsProps,
   SideOptions,
@@ -8,6 +7,7 @@ import React from "react";
 import { HiHome } from "react-icons/hi";
 import { MdExplore } from "react-icons/md";
 import { FaComments } from "react-icons/fa";
+import { ForumHeader } from "@/components/molecules/ForumHeader";
 
 const { Content } = Layout
 
@@ -45,13 +45,13 @@ export const ForumLayout = ({ children }: Props) => {
 
       {/* desk */}
       <div className="w-screen bg-background hidden md:flex flex-col items-center">
-        <Header isMobile={false}  />
+        <ForumHeader isMobile={false}  />
         <SideOptions items={items}>{children}</SideOptions>
       </div>
 
       {/* mobile */}
       <div className="w-screen bg-background flex flex-col md:hidden items-center">
-        <Header isMobile={true}/>
+        <ForumHeader isMobile={true}/>
         <Layout>
           <Content
             className={`min-h-screen relative flex md:hidden justify-center items-center flex-col`}
