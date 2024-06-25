@@ -1,6 +1,6 @@
 import React from "react";
 
-export const LoadingSpinner = () => {
+export const LoadingSpinner: React.FC<any> = () => {
   return (
     <div role="status">
       <svg
