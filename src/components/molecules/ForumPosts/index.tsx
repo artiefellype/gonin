@@ -28,7 +28,14 @@ export const ForumPosts = ({
   const [likedCount, setLikedCount] = useState(post.likeCount);
   const [isLikeDisabled, setIsLikeDisabled] = useState(false);
 
-  if (!post.user) return;
+  useEffect(() => {
+    const handleUserLiked = async () => {
+      const hasUserLiked = await hasLiked(post.id, auth?.currentUser?.uid!!);
+      setLiked(hasUserLiked);
+    };
+
+    handleUserLiked();
+  }, []);
 
   const handleLike = () => {
     setIsLikeDisabled(true);
@@ -40,14 +47,7 @@ export const ForumPosts = ({
     setTimeout(() => setIsLikeDisabled(false), 500);
   };
 
-  const handleUserLiked = async () => {
-    const hasUserLiked = await hasLiked(post.id, auth?.currentUser?.uid!!);
-    setLiked(hasUserLiked);
-  };
-
-  useEffect(() => {
-    handleUserLiked();
-  }, []);
+  if (!post.user) return;
 
   return (
     <>
