@@ -1,5 +1,5 @@
 
-import { Divider } from "@/components/atoms/Divider";
+import { CustomDivider} from "@/components/atoms/CustomDivider";
 import { ForumComposerArea } from "@/components/molecules/ForumComposerArea";
 import ForumContainer from "@/components/organisms/ForumContainer";
 import { postsServices } from "@/services/postServices";
@@ -50,7 +50,7 @@ export const TopicPage = ({ tag }: TopicPageProps) => {
   return (
     <div className="md:w-full w-screen px-3 md:px-0 min-h-screen  md:max-w-4xl flex flex-col items-center pt-10 gap-y-2 pb-5 relative">
       <ForumComposerArea tag={tag} fetchNewPosts={fetchPosts} />
-      <Divider tag={tag} />
+      <CustomDivider tag={tag}/>
       <ForumContainer
         posts={posts as PostProps[]}
         loading={loading}
