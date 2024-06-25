@@ -17,7 +17,7 @@ const MenuButton = ({user, ...rest}: MenuButtonProps) => {
         
         <div className='w-10 h-10 flex justify-center items-center'>
         <Image 
-            src={user?.user?.photoURL!! || ""}
+            src={user?.user?.photoURL!! || "/imgs/default_perfil.jpg"}
             alt={'perfil photo'} 
             width={40} 
             height={40}

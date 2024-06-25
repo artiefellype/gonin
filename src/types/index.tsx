@@ -1,14 +1,3 @@
-export interface MessagesProps {
-    id: string;
-    user_id: string;
-    user_Name: string;
-    user_photo_url: string;
-    title: string;
-    description: string;
-    created_at: string;
-    liked_list: string[];
-    likesCount: number;
-} // REMOVE
 
 export interface UserProps {
     createdAt: string;
@@ -25,7 +14,7 @@ export interface UserProps {
 export interface PostProps {
     id: string;
     userId: string;
-    user: UserProps;
+    user?: UserProps;
     mediaFile: string;
     title: string;
     description: string;
@@ -41,33 +30,10 @@ export interface PostCommentsProps {
     content: string;
 }
 
-export interface ForumProps {
-    messages: MessagesProps[]
-    onDelete: (msgRef: string) => void;
-    onUpdate: (msgRef: string, msg: MessagesProps) => void;
-    onLike: (value: boolean, data: MessagesProps) =>  void;
-} // REMOVE
-
-export interface HomeProps {
-    posts: PostProps[]
-    loading?: boolean
-}
-
-export interface ForumCardProps {
-    post: MessagesProps;
-    onDelete: ForumProps['onDelete'];
-    onUpdate: ForumProps['onUpdate'];
-    selectedCard: (value: string) => void;
-    showModal: (value: boolean) =>  void;
-    onLike: (value: boolean, data: MessagesProps) =>  void;
-} // REMOVE
 
 export interface PostCardProps {
     post: PostProps;
-    // onDelete: ForumProps['onDelete'];
-    // onUpdate: ForumProps['onUpdate'];
-    // selectedCard: (value: string) => void;
-    // showModal: (value: boolean) =>  void;
-    // onLike: (value: boolean, data: MessagesProps) =>  void;
+    fetch: () => Promise<void>
+    onDelete: (id: string) => void;
 }
 

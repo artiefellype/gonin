@@ -1,5 +1,5 @@
-import CustomPopover from "@/components/atoms/CustomPopover";
-import MenuButton from "@/components/atoms/MenuButton";
+import CustomPopover from "@/components/atoms/customPopover";
+import MenuButton from "@/components/atoms/menuButton";
 import { User, useUserContext } from "@/context";
 import { useRouter } from "next/router";
 import React, { useEffect } from "react";

@@ -1,5 +1,5 @@
 "use client";
-import ForumContainer from "@/components/organisms/ForumContainer";
+import ForumContainer from "@/components/organisms/forumContainer";
 import { FormEvent, useContext, useEffect, useState } from "react";
 import { fireApp as app } from "@/firebase/firebase";
 import {
@@ -11,30 +11,31 @@ import {
   remove,
   update,
 } from "firebase/database";
-import { MessagesProps, PostProps } from "@/types";
+import { PostProps } from "@/types";
 import { FaRegRectangleXmark, FaPlus as AddIcon } from "react-icons/fa6";
-import ForumForm from "@/components/organisms/ForumForm";
+import ForumForm from "@/components/organisms/forumForm";
 import { useUserContext } from "@/context";
 import { postsServices } from "@/services/postServices";
 import { GetServerSideProps } from "next";
 import { parseCookies } from "nookies";
 
 export function ForumPage() {
- 
-  const [isOpen, setIsOpen] = useState(false);
-  const { user } = useUserContext();
-
-  const [ posts, setPosts ] = useState<PostProps[]>([]);
-  const [ loading, setLoading ] = useState<boolean>(); 
+  const [posts, setPosts] = useState<PostProps[]>([]);
+  const [loading, setLoading] = useState<boolean>(false);
 
   const fetchPosts = async () => {
-    setLoading(true)
+    setLoading(true);
     try {
       const fetchedPosts = await postsServices.getPosts();
-      setPosts(fetchedPosts);
-      setLoading(false)
+      const updatedPosts = fetchedPosts.filter(
+        (newPost) =>
+          !posts.some((existingPost) => newPost.id === existingPost.id)
+      );
+      setPosts((prevPosts) => [...prevPosts, ...updatedPosts]);
+      setLoading(false);
     } catch (err: any) {
-      console.error("ERROR: ", err.message)
+      console.error("ERROR: ", err.message);
+      setLoading(false);
     }
   };
 
@@ -45,31 +46,7 @@ export function ForumPage() {
   return (
     <>
       <div className="pt-10"></div>
-      <ForumContainer
-        posts={posts}
-        loading={loading}
-        // onDelete={removeMessage}
-        // onUpdate={updateMessage}
-        // onLike={handleLike}
-      />
-
-      {/* {!isOpen ? (
-        <button
-          onClick={() => setIsOpen(true)}
-          className="fixed rounded-full bg-gray-700 w-14 h-14 right-8 bottom-8 flex justify-center items-center "
-        >
-          <AddIcon size={30} />
-        </button>
-      ) : (
-        <ForumForm
-          setIsOpen={setIsOpen}
-          sendMessage={sendMessage}
-          title={title}
-          setTitle={setTitle}
-          description={description}
-          setDescription={setDescription}
-        />
-      )} */}
+      <ForumContainer posts={posts} loading={loading} fetch={fetchPosts} setPosts={setPosts} />
     </>
   );
 }

@@ -2,6 +2,7 @@ import { initializeApp } from 'firebase/app';
 import dotenv from 'dotenv';
 import { getDatabase } from 'firebase/database';
 import { getFirestore } from 'firebase/firestore';
+import { getStorage } from 'firebase/storage';
 dotenv.config();
 
 const firebaseConfig = {
@@ -17,5 +18,6 @@ const firebaseConfig = {
 const fireApp = initializeApp(firebaseConfig);
 const db = getDatabase(fireApp);
 const firestore = getFirestore(fireApp);
+const storage = getStorage(fireApp)
 
-export { fireApp, db, firestore };
+export { fireApp, db, firestore, storage };

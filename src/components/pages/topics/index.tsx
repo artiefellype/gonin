@@ -1,4 +1,4 @@
-import { ForumTopic, TopicProps } from "@/components/molecules/ForumTopic";
+import { ForumTopic, TopicProps } from "@/components/molecules/forumTopic";
 import { postsServices } from "@/services/postServices";
 import { GetServerSideProps } from "next";
 import { parseCookies } from "nookies";

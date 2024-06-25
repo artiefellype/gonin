@@ -6,8 +6,9 @@ import { DocumentData, QueryDocumentSnapshot } from "firebase/firestore";
 const PostsPage = () => {
   const [posts, setPosts] = useState<any[]>([]);
   const [error, setError] = useState<string | null>(null);
-    const [lastDoc, setLastDoc] = useState<QueryDocumentSnapshot<DocumentData> | null>(null);
-    const [loading, setLoading] = useState(false);
+  const [lastDoc, setLastDoc] =
+    useState<QueryDocumentSnapshot<DocumentData> | null>(null);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     const fetchPosts = async () => {
@@ -24,18 +25,12 @@ const PostsPage = () => {
 
   useEffect(() => {
     const fetchPosts = async (reset = false) => {
-      
       try {
-        //const { posts: newPosts, lastVisible } = await postsServices.getPostsByTag(tag, reset ? null : lastDoc, PAGE_SIZE);
         const response = await postsServices.getPostsByTag(
-          'discussao',
+          "discussao",
           reset ? null : lastDoc,
           10
         );
-
-        console.log("RESP: ", response);
-        // setPosts((prevPosts) => (reset ? newPosts : [...prevPosts, ...newPosts]));
-        // setLastDoc(lastVisible);
       } catch (err: any) {
         setError(err.message);
       }

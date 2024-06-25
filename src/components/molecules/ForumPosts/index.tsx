@@ -1,10 +1,7 @@
-import CustomPopover from "@/components/atoms/CustomPopover";
+import CustomPopover from "@/components/atoms/customPopover";
 import { useUserContext } from "@/context";
 import { formatDate } from "@/services/utils/formaters";
 import {
-  ForumCardProps,
-  ForumProps,
-  MessagesProps,
   PostCardProps,
 } from "@/types";
 import Image from "next/image";
@@ -18,12 +15,11 @@ import {
 } from "react-icons/fa6";
 import { FaEllipsisH as Dots } from "react-icons/fa";
 
-export const ForumPosts = ({ post }: PostCardProps) => {
-  const [isOpen, setIsOpen] = useState(false);
+export const ForumPosts = ({ post, fetch, onDelete }: PostCardProps) => {
   const { user } = useUserContext();
   const auth = user?.auth;
-  const [inputTitle, setInputTitle] = useState(post.title);
-  const [inputDescription, setInputDescription] = useState(post.description);
+
+  if(!post.user) return
 
   return (
     <>
@@ -49,17 +45,18 @@ export const ForumPosts = ({ post }: PostCardProps) => {
               <div className="absolute right-1 w-12 h-5 gap-2 flex">
                 <CustomPopover
                   trigger={
-                    <button className=" flex justify-center items-center">
+                    <button className=" flex justify-center items-center p-2 rounded-full hover:bg-secondary">
                       <Dots className="fill-primary" size={20} />
                     </button>
                   }
                   content={
-                    <div className="flex flex-col ">
+                    <div className="flex flex-col bg-primary rounded-md ">
                       <button
-                        className="bg-whiteColor text-primary px-4 py-2 hover:bg-secondary"
-                        onClick={() => console.log("CLICOU")}
+                        className=" text-whiteColor px-4 py-2 hover:bg-slate-600 rounded-md flex flex-row gap-2 justify-start items-center"
+                        onClick={() => onDelete(post.id)}
                       >
-                        Editar
+                        <TrashIcon size={12} className="fill-whiteColor"/>
+                        <p>Excluir</p>
                       </button>
                     </div>
                   }

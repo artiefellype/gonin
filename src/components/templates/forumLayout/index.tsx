@@ -2,7 +2,7 @@ import { Header } from "@/components/molecules/header";
 import {
   MenuItemsProps,
   SideOptions,
-} from "@/components/molecules/SideOptions";
+} from "@/components/molecules/sideOptions";
 import { Layout } from "antd";
 import React from "react";
 import { HiHome } from "react-icons/hi";

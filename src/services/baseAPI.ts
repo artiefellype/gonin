@@ -17,9 +17,11 @@ import {
   startAfter,
   limit,
   QueryDocumentSnapshot,
+  addDoc,
 } from "firebase/firestore";
-import { fireApp } from "@/firebase/firebase";
+import { fireApp, storage } from "@/firebase/firebase";
 import { PostProps, UserProps } from "@/types";
+import { deleteObject, ref, getStorage } from "firebase/storage";
 
 export class BaseAPI {
   private auth;
@@ -86,6 +88,23 @@ export class BaseAPI {
     }
   }
 
+  async addSubCollection(
+    collectionName: any,
+    docId: any,
+    subCollectionName: any
+  ) {
+    try {
+      const subCollectionRef = collection(
+        doc(this.db, collectionName, docId),
+        subCollectionName
+      );
+      const subDocRef = await addDoc(subCollectionRef, {});
+      return subDocRef;
+    } catch (error) {
+      throw error;
+    }
+  }
+
   async update(collectionName: string, docId: string, newData: any) {
     try {
       const user = await this.getUser();
@@ -100,7 +119,39 @@ export class BaseAPI {
     try {
       const user = await this.getUser();
       const docRef = doc(this.db, collectionName, docId);
+
+      const docSnapshot = await getDoc(docRef);
+      if (!docSnapshot.exists()) {
+        throw new Error("Documento não encontrado");
+      }
+
+      const imageData = docSnapshot.data().mediaFile;
+
+      await this.removeSubCollection(docRef, "comments");
+      await this.removeSubCollection(docRef, "likes");
+
+      if (imageData) {
+        const storageRef = getStorage();
+        const imageStorageRef = ref(storageRef, imageData);
+        await deleteObject(imageStorageRef);
+      }
+
       await deleteDoc(docRef);
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async removeSubCollection(
+    docRef: DocumentReference,
+    subCollectionName: string
+  ) {
+    try {
+      const subCollectionRef = collection(docRef, subCollectionName);
+      const snapshot = await getDocs(subCollectionRef);
+      snapshot.forEach(async (doc) => {
+        await deleteDoc(doc.ref);
+      });
     } catch (error) {
       throw error;
     }
@@ -172,7 +223,11 @@ export class BaseAPI {
     }
   }
 
-  async getPostsByTag (tag: string, lastDoc: DocumentData | null = null, pageSize: number) {
+  async getPostsByTag(
+    tag: string,
+    lastDoc: DocumentData | null = null,
+    pageSize: number
+  ) {
     try {
       const postsCollectionRef = collection(this.db, "posts");
       let q;
@@ -202,7 +257,9 @@ export class BaseAPI {
         const postData = { id: doc.id, ...doc.data() } as PostProps;
 
         if (postData.userId) {
-          const user = await baseAPI.getUserById(postData.userId) as UserProps;
+          const user = (await baseAPI.getUserById(
+            postData.userId
+          )) as UserProps;
           posts.push({ ...postData, user });
         } else {
           console.error(`Post with id ${postData.id} does not have a userId`);
@@ -216,5 +273,5 @@ export class BaseAPI {
     } catch (error: any) {
       throw new Error(`Erro ao buscar posts por tag: ${error.message}`);
     }
-  };
+  }
 }
