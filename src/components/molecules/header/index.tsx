@@ -1,9 +1,9 @@
-import CustomPopover from "@/components/atoms/customPopover";
 import MenuButton from "@/components/atoms/menuButton";
 import { User, useUserContext } from "@/context";
 import { useRouter } from "next/router";
 import React, { useEffect } from "react";
 import Image from "next/image";
+import { CustomPopover } from "@/components/atoms/customPopover";
 
 interface Props {
   isMobile: boolean;

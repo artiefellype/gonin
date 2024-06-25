@@ -1,25 +1,17 @@
-import CustomPopover from "@/components/atoms/customPopover";
 import { useUserContext } from "@/context";
 import { formatDate } from "@/services/utils/formaters";
-import {
-  PostCardProps,
-} from "@/types";
+import { PostCardProps } from "@/types";
 import Image from "next/image";
-import React, { useImperativeHandle, useState } from "react";
-import {
-  FaPenToSquare as EditIcon,
-  FaTrash as TrashIcon,
-  FaCheck as CheckIcon,
-  FaXmark as UncheckIcon,
-  FaHeart as LikeIcon,
-} from "react-icons/fa6";
+import React from "react";
+import { FaTrash as TrashIcon, FaHeart as LikeIcon } from "react-icons/fa6";
 import { FaEllipsisH as Dots } from "react-icons/fa";
+import { CustomPopover } from "@/components/atoms/customPopover";
 
 export const ForumPosts = ({ post, fetch, onDelete }: PostCardProps) => {
   const { user } = useUserContext();
   const auth = user?.auth;
 
-  if(!post.user) return
+  if (!post.user) return;
 
   return (
     <>
@@ -38,7 +30,9 @@ export const ForumPosts = ({ post, fetch, onDelete }: PostCardProps) => {
           <div className="flex">
             <div className="flex md:flex-row md:m-0 mb-3 flex-col md:gap-3 justify-center items-center">
               <h1 className="text-base font-bold">{post.user.displayName}</h1>
-              <p className="font-light text-xs text-left">{formatDate(post.createdAt)}</p>
+              <p className="font-light text-xs text-left">
+                {formatDate(post.createdAt)}
+              </p>
             </div>
 
             {auth?.currentUser?.uid === post.userId && (
@@ -55,7 +49,7 @@ export const ForumPosts = ({ post, fetch, onDelete }: PostCardProps) => {
                         className=" text-whiteColor px-4 py-2 hover:bg-slate-600 rounded-md flex flex-row gap-2 justify-start items-center"
                         onClick={() => onDelete(post.id)}
                       >
-                        <TrashIcon size={12} className="fill-whiteColor"/>
+                        <TrashIcon size={12} className="fill-whiteColor" />
                         <p>Excluir</p>
                       </button>
                     </div>
@@ -77,13 +71,15 @@ export const ForumPosts = ({ post, fetch, onDelete }: PostCardProps) => {
                 {post.description}
               </p>
 
-              { post.mediaFile && <Image
-                className="rounded-md "
-                src={post.mediaFile}
-                alt={"user photo"}
-                width={500}
-                height={520}
-              />}
+              {post.mediaFile && (
+                <Image
+                  className="rounded-md "
+                  src={post.mediaFile}
+                  alt={"user photo"}
+                  width={500}
+                  height={520}
+                />
+              )}
             </div>
           </div>
 
@@ -104,7 +100,9 @@ export const ForumPosts = ({ post, fetch, onDelete }: PostCardProps) => {
                 <LikeIcon size={20} className=" fill-current text-red-600 " />
               </button>
 
-              <div className="text-gray-800 font-medium text-sm">{post.likeCount}</div>
+              <div className="text-gray-800 font-medium text-sm">
+                {post.likeCount}
+              </div>
             </div>
           </div>
         </div>

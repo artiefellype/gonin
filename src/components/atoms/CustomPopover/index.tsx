@@ -6,7 +6,7 @@ interface PopoverProps {
   content: React.ReactNode;
 }
 
-const Popover = ({ trigger, content }: PopoverProps) => {
+export const CustomPopover = ({ trigger, content }: PopoverProps) => {
   const [popoverVisible, setPopoverVisible] = useState(false);
   const popoverRef = useRef<HTMLDivElement>(null);
 
@@ -47,5 +47,3 @@ const Popover = ({ trigger, content }: PopoverProps) => {
     </div>
   );
 };
-
-export default Popover;
