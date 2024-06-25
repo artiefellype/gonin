@@ -1,11 +1,9 @@
-import { TopicDivider } from "@/components/atoms/TopicDivider";
+
+import { Divider } from "@/components/atoms/Divider";
 import { ForumComposerArea } from "@/components/molecules/ForumComposerArea";
 import ForumContainer from "@/components/organisms/ForumContainer";
-import { useUserContext } from "@/context";
 import { postsServices } from "@/services/postServices";
-import { UserServices } from "@/services/userServices";
-import { getTitleFromTag } from "@/services/utils/mappers";
-import { PostProps, UserProps } from "@/types";
+import { PostProps } from "@/types";
 import { DocumentData } from "firebase/firestore";
 import React, { useEffect, useRef, useState } from "react";
 
@@ -52,7 +50,7 @@ export const TopicPage = ({ tag }: TopicPageProps) => {
   return (
     <div className="md:w-full w-screen px-3 md:px-0 min-h-screen  md:max-w-4xl flex flex-col items-center pt-10 gap-y-2 pb-5 relative">
       <ForumComposerArea tag={tag} fetchNewPosts={fetchPosts} />
-      <TopicDivider tag={tag} />
+      <Divider tag={tag} />
       <ForumContainer
         posts={posts as PostProps[]}
         loading={loading}
