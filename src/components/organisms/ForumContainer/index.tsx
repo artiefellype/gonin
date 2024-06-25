@@ -70,7 +70,7 @@ const ForumContainer = ({ posts, loading, fetch, setPosts }: HomeProps) => {
           );
         })
       ) : (
-        <div>Vazio</div>
+        <div className="mt-4 font-semibold text-base text-center">Nada para ver aqui :/</div>
       )}
     </div>
   );

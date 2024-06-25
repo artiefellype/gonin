@@ -5,6 +5,7 @@ import { PostProps } from "@/types";
 import { postsServices } from "@/services/postServices";
 import { GetServerSideProps } from "next";
 import { parseCookies } from "nookies";
+import Link from "next/link";
 
 export const ForumPage = () => {
   const [posts, setPosts] = useState<PostProps[]>([]);
@@ -33,10 +34,18 @@ export const ForumPage = () => {
   return (
     <>
       <div className="pt-10"></div>
-      <ForumContainer posts={posts} loading={loading} fetch={fetchPosts} setPosts={setPosts} />
+      <Link href={"/topics"} className="w-full h-8 my-4 flex justify-center items-center">
+      <button className="w-full h-8 bg-slate-700  rounded-2xl max-w-[250px] text-whiteColor font-semibold text-sm px-4 py-1 hover:bg-slate-600">Comece uma nova discussão</button>
+      </Link>
+      <ForumContainer
+        posts={posts}
+        loading={loading}
+        fetch={fetchPosts}
+        setPosts={setPosts}
+      />
     </>
   );
-}
+};
 
 export const getServerSideProps: GetServerSideProps = async (ctx) => {
   const cookies = parseCookies(ctx);
