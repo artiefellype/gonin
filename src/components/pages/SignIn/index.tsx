@@ -1,6 +1,6 @@
 import React, { useEffect } from "react";
 import { FcGoogle } from "react-icons/fc";
-import { BetaFlag } from "../../atoms/betaFlag";
+import { BetaFlag } from "../../atoms/BetaFlag";
 
 interface SignInScreenProps {
   loginWithGoogle: () => void;

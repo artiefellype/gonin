@@ -3,7 +3,7 @@ import { User, useUserContext } from "@/context";
 import { useRouter } from "next/router";
 import React, { useEffect } from "react";
 import Image from "next/image";
-import { CustomPopover } from "@/components/atoms/customPopover";
+import { CustomPopover } from "@/components/atoms/CustomPopover";
 
 interface Props {
   isMobile: boolean;

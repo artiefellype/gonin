@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { ForumPosts } from "../../molecules/forumPosts";
-import CardSkeleton from "../../atoms/cardSkeleton";
+import CardSkeleton from "../../atoms/CardSkeleton";
 import { postsServices } from "@/services/postServices";
 import { PostProps } from "@/types";
 

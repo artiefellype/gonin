@@ -1,4 +1,3 @@
-// components/Popover.tsx
 import React, { useEffect, useRef, useState } from 'react';
 
 interface PopoverProps {

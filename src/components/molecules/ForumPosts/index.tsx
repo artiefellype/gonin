@@ -5,7 +5,7 @@ import Image from "next/image";
 import React from "react";
 import { FaTrash as TrashIcon, FaHeart as LikeIcon } from "react-icons/fa6";
 import { FaEllipsisH as Dots } from "react-icons/fa";
-import { CustomPopover } from "@/components/atoms/customPopover";
+import { CustomPopover } from "@/components/atoms/CustomPopover";
 
 export const ForumPosts = ({ post, fetch, onDelete }: PostCardProps) => {
   const { user } = useUserContext();
