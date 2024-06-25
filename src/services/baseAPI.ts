@@ -18,6 +18,7 @@ import {
   limit,
   QueryDocumentSnapshot,
   addDoc,
+  increment,
 } from "firebase/firestore";
 import { fireApp, storage } from "@/firebase/firebase";
 import { PostProps, UserProps } from "@/types";
@@ -91,14 +92,15 @@ export class BaseAPI {
   async addSubCollection(
     collectionName: any,
     docId: any,
-    subCollectionName: any
+    subCollectionName: any,
+    content?: any
   ) {
     try {
       const subCollectionRef = collection(
         doc(this.db, collectionName, docId),
         subCollectionName
       );
-      const subDocRef = await addDoc(subCollectionRef, {});
+      const subDocRef = await addDoc(subCollectionRef, content ? content : {});
       return subDocRef;
     } catch (error) {
       throw error;
@@ -272,6 +274,49 @@ export class BaseAPI {
       return { posts, lastVisible };
     } catch (error: any) {
       throw new Error(`Erro ao buscar posts por tag: ${error.message}`);
+    }
+  }
+
+  async likePost(docId: string, userId: string) {
+    try {
+      const postRef = doc(this.db, "posts", docId);
+
+      const likesCollectionRef = collection(postRef, "likes");
+
+      const q = query(likesCollectionRef, where("userId", "==", userId));
+      const querySnapshot = await getDocs(q);
+
+      if (!querySnapshot.empty) {
+        querySnapshot.forEach(async (docSnapshot) => {
+          await deleteDoc(docSnapshot.ref);
+        });
+        await updateDoc(postRef, {
+          likeCount: increment(-1),
+        });
+      } else {
+        await addDoc(likesCollectionRef, {
+          userId: userId,
+        });
+        await updateDoc(postRef, {
+          likeCount: increment(1),
+        });
+      }
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async checkIfUserLiked(postId: string, userId: string): Promise<boolean> {
+    try {
+      const postRef = doc(this.db, "posts", postId);
+      const likesCollectionRef = collection(postRef, "likes");
+
+      const q = query(likesCollectionRef, where("userId", "==", userId));
+      const querySnapshot = await getDocs(q);
+
+      return !querySnapshot.empty;
+    } catch (error) {
+      throw error;
     }
   }
 }

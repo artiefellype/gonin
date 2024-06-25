@@ -84,7 +84,7 @@ export const TopicsPage = () => {
   ];
 
   return (
-    <div className="md:w-full w-screen px-3 md:px-0 md:max-w-4xl gap-4 flex flex-wrap items-start justify-center pt-10 gap-y-5 pb-5 relative">
+    <div className="md:w-full w-screen px-3 md:px-0 md:max-w-4xl gap-4 flex flex-wrap justify-start items-start pt-10 gap-y-5 pb-5 relative">
       {topicsData.map((item) => {
         return (
           <ForumTopic key={item.title} icon={item.icon} title={item.title} link={item.link} />

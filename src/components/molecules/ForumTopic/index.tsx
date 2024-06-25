@@ -19,6 +19,7 @@ export const ForumTopic = (item: TopicProps) => {
         alt={item.title + 'from StorySet'}
         width={60}
         height={60}
+        loading="lazy"
       />
       <h2 className="font-bold text-lg text-primary">{item.title}</h2>
     </button>

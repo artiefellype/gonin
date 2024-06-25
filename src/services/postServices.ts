@@ -131,4 +131,22 @@ export class postsServices {
       throw error;
     }
   };
+
+  static likePost = async (postId: string, userId: string): Promise<void> => {
+    try {
+      const response = await new BaseAPI().likePost(postId, userId);
+      return response as any
+    } catch (error) {
+      throw error
+    }
+  };
+
+  static hasUserLikedPost = async (postId: string, userId: string):Promise<boolean> => {
+    try {
+      const response = await new BaseAPI().checkIfUserLiked(postId, userId);
+      return response as boolean
+    } catch (error) {
+      throw error
+    }
+  }
 }

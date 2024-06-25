@@ -24,6 +24,26 @@ const ForumContainer = ({ posts, loading, fetch, setPosts }: HomeProps) => {
     } 
   };
 
+  const handleLikePost = async (postId: string, id: string) => {
+    try {
+      await postsServices.likePost(postId, id);
+    } catch (error: any) {
+      console.error(error.message);
+    } 
+  }
+
+  const handleHasUserLiked = async (postId: string, userId: string): Promise<boolean> => {
+    try {
+      const response = await postsServices.hasUserLikedPost(postId, userId);
+      if(response== undefined) console.log("UNDEFINED RESPONSE IN HANDLER")
+      return response
+    } catch (error: any) {
+      console.error(error.message);
+      return false
+      
+    } 
+  }
+
   useEffect(() => {
     const sortedPosts = posts.slice().sort((a, b) => {
       const dateA = new Date(a.createdAt).getTime();
@@ -44,6 +64,8 @@ const ForumContainer = ({ posts, loading, fetch, setPosts }: HomeProps) => {
               post={item}
               fetch={fetch}
               onDelete={handleDeletePost}
+              onLike={handleLikePost}
+              hasLiked={handleHasUserLiked}
             />
           );
         })

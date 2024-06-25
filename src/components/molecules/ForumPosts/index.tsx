@@ -1,17 +1,53 @@
 import { useUserContext } from "@/context";
 import { formatDate } from "@/services/utils/formaters";
-import { PostCardProps } from "@/types";
+import { PostProps } from "@/types";
 import Image from "next/image";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { FaTrash as TrashIcon, FaHeart as LikeIcon } from "react-icons/fa6";
 import { FaEllipsisH as Dots } from "react-icons/fa";
 import { CustomPopover } from "@/components/atoms/CustomPopover";
 
-export const ForumPosts = ({ post, fetch, onDelete }: PostCardProps) => {
+export interface PostCardProps {
+  post: PostProps;
+  fetch: () => Promise<void>;
+  onDelete: (id: string) => void;
+  onLike: (postId: string, userId: string) => void;
+  hasLiked: (postId: string, userId: string) => Promise<boolean>;
+}
+
+export const ForumPosts = ({
+  post,
+  fetch,
+  onDelete,
+  onLike,
+  hasLiked,
+}: PostCardProps) => {
   const { user } = useUserContext();
   const auth = user?.auth;
+  const [liked, setLiked] = useState(false);
+  const [likedCount, setLikedCount] = useState(post.likeCount);
+  const [isLikeDisabled, setIsLikeDisabled] = useState(false);
 
   if (!post.user) return;
+
+  const handleLike = () => {
+    setIsLikeDisabled(true);
+    onLike(post.id, auth?.currentUser?.uid!!);
+    setLiked(!liked);
+    if (liked) setLikedCount(likedCount < 1 ? 0 : likedCount - 1);
+    else setLikedCount(likedCount + 1);
+    console.log("LIKED COUNT: ", likedCount);
+    setTimeout(() => setIsLikeDisabled(false), 500);
+  };
+
+  const handleUserLiked = async () => {
+    const hasUserLiked = await hasLiked(post.id, auth?.currentUser?.uid!!);
+    setLiked(hasUserLiked);
+  };
+
+  useEffect(() => {
+    handleUserLiked();
+  }, []);
 
   return (
     <>
@@ -88,20 +124,20 @@ export const ForumPosts = ({ post, fetch, onDelete }: PostCardProps) => {
               <button
                 onClick={(e) => {
                   e.stopPropagation();
-                  //handleLike();
+                  handleLike();
                 }}
                 className="w-5 h-5 z-10"
+                disabled={isLikeDisabled}
               >
-                {/* {liked_list?.indexOf(auth?.currentUser?.photoURL!) !== -1 ? (
-                <LikeIcon size={20} className=" fill-current text-red-600 " />
-              ) : (
-                <LikeIcon size={20} className="text-gray-600" />
-              )} */}
-                <LikeIcon size={20} className=" fill-current text-red-600 " />
+                {liked ? (
+                  <LikeIcon size={20} className=" fill-current text-red-600 " />
+                ) : (
+                  <LikeIcon size={20} className="text-gray-600" />
+                )}
               </button>
 
               <div className="text-gray-800 font-medium text-sm">
-                {post.likeCount}
+                {likedCount}
               </div>
             </div>
           </div>
