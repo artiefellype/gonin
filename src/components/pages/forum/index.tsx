@@ -1,25 +1,12 @@
 "use client";
 import ForumContainer from "@/components/organisms/ForumContainer";
-import { FormEvent, useContext, useEffect, useState } from "react";
-import { fireApp as app } from "@/firebase/firebase";
-import {
-  child,
-  get,
-  getDatabase,
-  push,
-  ref,
-  remove,
-  update,
-} from "firebase/database";
+import { useEffect, useState } from "react";
 import { PostProps } from "@/types";
-import { FaRegRectangleXmark, FaPlus as AddIcon } from "react-icons/fa6";
-import ForumForm from "@/components/organisms/ForumForm";
-import { useUserContext } from "@/context";
 import { postsServices } from "@/services/postServices";
 import { GetServerSideProps } from "next";
 import { parseCookies } from "nookies";
 
-export const ForumPage = () => {
+const ForumPage = () => {
   const [posts, setPosts] = useState<PostProps[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
 
@@ -67,3 +54,5 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
     props: {},
   };
 };
+
+export default ForumPage

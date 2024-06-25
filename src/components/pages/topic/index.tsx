@@ -5,6 +5,8 @@ import ForumContainer from "@/components/organisms/ForumContainer";
 import { postsServices } from "@/services/postServices";
 import { PostProps } from "@/types";
 import { DocumentData } from "firebase/firestore";
+import { GetServerSideProps } from "next";
+import { parseCookies } from "nookies";
 import React, { useEffect, useRef, useState } from "react";
 
 interface TopicPageProps {
@@ -59,4 +61,22 @@ export const TopicPage = ({ tag }: TopicPageProps) => {
       />
     </div>
   );
+};
+
+
+export const getServerSideProps: GetServerSideProps = async (ctx) => {
+  const cookies = parseCookies(ctx);
+
+  if (!cookies.token) {
+    return {
+      redirect: {
+        destination: "/login",
+        permanent: false,
+      },
+    };
+  }
+
+  return {
+    props: {},
+  };
 };
