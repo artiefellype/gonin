@@ -8,8 +8,8 @@ import { FaTimes } from "react-icons/fa";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { storage } from "@/firebase/firebase";
 import { postsServices } from "@/services/postServices";
-import { FileSelectorInput } from "@/components/atoms/FileSelectorInput";
 import { SpinLoad } from "@/components/atoms/SpinLoad";
+import { InputFile } from "@/components/atoms/InputFile";
 
 interface ForumComposerProps {
   tag: string;
@@ -186,7 +186,7 @@ export const ForumComposerArea = ({ tag, fetchNewPosts }: ForumComposerProps) =>
 
         <div className="flex w-full h-7 flex-row justify-between items-center mt-auto">
           <div className="flex flex-row gap-1">
-            <FileSelectorInput onFileSelect={handleFileSelect} />
+            <InputFile onFileSelect={handleFileSelect} />
             <button
               onClick={(e) => {
                 e.stopPropagation();

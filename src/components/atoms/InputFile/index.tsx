@@ -5,7 +5,7 @@ interface FileInputProps {
     onFileSelect: (file: File) => void;
   }
 
-export const FileSelectorInput = ({onFileSelect}:FileInputProps) => {
+export const InputFile = ({onFileSelect}:FileInputProps) => {
     const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
