@@ -5,12 +5,12 @@ import Image from "next/image";
 import { PostProps, UserProps } from "@/types";
 import { useUserContext } from "@/context";
 import { UserServices } from "@/services/userServices";
-import FileSelectorInput from "@/components/atoms/fileSelectorInput";
+import FileSelectorInput from "@/components/atoms/FileSelectorInput";
 import { FaTimes } from "react-icons/fa";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { storage } from "@/firebase/firebase";
 import { postsServices } from "@/services/postServices";
-import LoadingSpinner from "@/components/atoms/loadingSpinner";
+import LoadingSpinner from "@/components/atoms/LoadingSpinner";
 
 interface ForumComposerProps {
   tag: string;

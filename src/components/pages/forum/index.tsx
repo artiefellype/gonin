@@ -1,5 +1,5 @@
 "use client";
-import ForumContainer from "@/components/organisms/forumContainer";
+import ForumContainer from "@/components/organisms/ForumContainer";
 import { FormEvent, useContext, useEffect, useState } from "react";
 import { fireApp as app } from "@/firebase/firebase";
 import {
@@ -13,7 +13,7 @@ import {
 } from "firebase/database";
 import { PostProps } from "@/types";
 import { FaRegRectangleXmark, FaPlus as AddIcon } from "react-icons/fa6";
-import ForumForm from "@/components/organisms/forumForm";
+import ForumForm from "@/components/organisms/ForumForm";
 import { useUserContext } from "@/context";
 import { postsServices } from "@/services/postServices";
 import { GetServerSideProps } from "next";

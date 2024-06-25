@@ -1,6 +1,6 @@
-import TopicDivider from "@/components/atoms/topicDivider";
-import ForumComposerArea from "@/components/molecules/forumComposerArea";
-import ForumContainer from "@/components/organisms/forumContainer";
+import TopicDivider from "@/components/atoms/TopicDivider";
+import ForumComposerArea from "@/components/molecules/ForumComposerArea";
+import ForumContainer from "@/components/organisms/ForumContainer";
 import { useUserContext } from "@/context";
 import { postsServices } from "@/services/postServices";
 import { UserServices } from "@/services/userServices";

@@ -1,5 +1,5 @@
-import { TopicsPage } from '@/components/pages/topics'
-import { ForumLayout } from '@/components/templates/forumLayout'
+import { TopicsPage } from '@/components/pages/Topics'
+import { ForumLayout } from '@/components/templates/ForumLayout'
 import React from 'react'
 
 const Topics = () => {

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { ForumPosts } from "../../molecules/forumPosts";
+import { ForumPosts } from "../../molecules/ForumPosts";
 import CardSkeleton from "../../atoms/CardSkeleton";
 import { postsServices } from "@/services/postServices";
 import { PostProps } from "@/types";

@@ -1,4 +1,4 @@
-import MenuButton from "@/components/atoms/menuButton";
+import MenuButton from "@/components/atoms/MenuButton";
 import { User, useUserContext } from "@/context";
 import { useRouter } from "next/router";
 import React, { useEffect } from "react";
