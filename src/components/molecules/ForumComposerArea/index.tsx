@@ -8,8 +8,8 @@ import { FaTimes } from "react-icons/fa";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { storage } from "@/firebase/firebase";
 import { postsServices } from "@/services/postServices";
-import { LoadingSpinner } from "@/components/atoms/LoadingSpinner";
 import { FileSelectorInput } from "@/components/atoms/FileSelectorInput";
+import { SpinLoad } from "@/components/atoms/SpinLoad";
 
 interface ForumComposerProps {
   tag: string;
@@ -202,7 +202,7 @@ export const ForumComposerArea = ({ tag, fetchNewPosts }: ForumComposerProps) =>
           </div>
           <div className="pr-3 h-7 flex flex-row gap-2">
             {isSubmitting && (
-              <LoadingSpinner />
+              <SpinLoad />
             )}
             <button
               className="px-4 py-1 z-10 bg-slate-500 hover:bg-slate-600 transition-colors delay-75 text-whiteColor font-bold text-sm rounded-xl disabled:opacity-50 disabled:cursor-not-allowed"
