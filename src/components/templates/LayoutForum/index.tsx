@@ -9,7 +9,7 @@ import { MdExplore } from "react-icons/md";
 import { FaComments } from "react-icons/fa";
 import { ForumHeader } from "@/components/molecules/ForumHeader";
 import { ForumFooter } from "@/components/molecules/ForumFooter";
-
+import Head from "next/head";
 
 const { Content } = Layout;
 
@@ -44,6 +44,9 @@ export const LayoutForum = ({ children }: Props) => {
 
   return (
     <Layout>
+      <Head>
+        <title>Tópicos</title>
+      </Head>
       {/* desk */}
       <div className="w-screen bg-background hidden md:flex flex-col items-center">
         <ForumHeader isMobile={false} />

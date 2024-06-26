@@ -3,6 +3,8 @@ import { ForumPosts } from "../../molecules/ForumPosts";
 import CardSkeleton from "../../atoms/CardSkeleton";
 import { postsServices } from "@/services/postServices";
 import { PostProps } from "@/types";
+import { UserServices } from "@/services/userServices";
+import { useUserContext } from "@/context";
 
 interface HomeProps {
   posts: PostProps[]
@@ -13,12 +15,21 @@ interface HomeProps {
 
 const ForumContainer = ({ posts, loading, fetch, setPosts }: HomeProps) => {
   const [foundPosts, setFoundPosts] = useState(posts);
+  const { user } = useUserContext()
+
+
+  console.log("USER: ", user)
 
   const handleDeletePost = async (id: string) => {
     try {
       const updatedPosts = posts.filter((post) => post.id !== id);
       setPosts(updatedPosts)
+      const userInfo = await UserServices.getUserById(user?.user?.uid!!)
+      const updatedUserPosts = userInfo.posts.filter((postId: string) => postId !== id);
+      userInfo.posts = updatedUserPosts;
+      await UserServices.updateUser(userInfo)
       await postsServices.deletePost(id);
+
     } catch (error: any) {
       console.error(error.message);
     } 

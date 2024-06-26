@@ -64,6 +64,9 @@ export const UserContextProvider = ({ children }: { children: ReactNode }) => {
           email: credential.user.email,
           photoURL: credential.user.photoURL,
           createdAt: new Date().toISOString(),
+          tag: '',
+          posts: [],
+          member: false
         });
       }
 

@@ -117,6 +117,21 @@ export class BaseAPI {
     }
   }
 
+  async updateUser(user: UserProps) {
+    try {
+      const userRef = doc(this.db, "users", user.uid);
+      await updateDoc(userRef, { 
+        displayName: user.displayName,
+        tag: user.tag,
+        member: user.member,
+        photoURL: user.photoURL,
+        posts: user.posts
+       });
+    } catch (error) {
+      throw error;
+    }
+  }
+
   async remove(collectionName: string, docId: string) {
     try {
       const user = await this.getUser();

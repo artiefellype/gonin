@@ -15,7 +15,10 @@ interface ForumComposerProps {
   tag: string;
   fetchNewPosts: () => Promise<void>;
 }
-export const ForumComposerArea = ({ tag, fetchNewPosts }: ForumComposerProps) => {
+export const ForumComposerArea = ({
+  tag,
+  fetchNewPosts,
+}: ForumComposerProps) => {
   const [loadingUser, setLoadingUser] = useState(false);
   const { user } = useUserContext();
   const [userInfo, setUserInfo] = useState<UserProps>();
@@ -90,6 +93,11 @@ export const ForumComposerArea = ({ tag, fetchNewPosts }: ForumComposerProps) =>
 
       await postsServices.addPostEmptyCommentsCollection(postDocRef);
       await postsServices.addPostEmptyLikesCollection(postDocRef);
+
+      if (userInfo) {
+        userInfo.posts.push(postId);
+        await UserServices.updateUser(userInfo);
+      }
 
       setText("");
       setSelectedFile(null);
@@ -201,9 +209,7 @@ export const ForumComposerArea = ({ tag, fetchNewPosts }: ForumComposerProps) =>
             </button>
           </div>
           <div className="pr-3 h-7 flex flex-row gap-2">
-            {isSubmitting && (
-              <SpinLoad />
-            )}
+            {isSubmitting && <SpinLoad />}
             <button
               className="px-4 py-1 z-10 bg-slate-500 hover:bg-slate-600 transition-colors delay-75 text-whiteColor font-bold text-sm rounded-xl disabled:opacity-50 disabled:cursor-not-allowed"
               disabled={isSubmitting || !(text.trim() || selectedFile)}
@@ -217,4 +223,3 @@ export const ForumComposerArea = ({ tag, fetchNewPosts }: ForumComposerProps) =>
     </div>
   );
 };
-

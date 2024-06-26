@@ -43,7 +43,6 @@ export const ForumPosts = ({
     setLiked(!liked);
     if (liked) setLikedCount(likedCount < 1 ? 0 : likedCount - 1);
     else setLikedCount(likedCount + 1);
-    console.log("LIKED COUNT: ", likedCount);
     setTimeout(() => setIsLikeDisabled(false), 500);
   };
 
