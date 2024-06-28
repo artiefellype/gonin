@@ -14,6 +14,7 @@ export const ForumCommentsArea = ({ comments, loading }: ForumCommentsArea) => {
     <div className="w-full md:max-w-2xl h-auto bg-white rounded-lg p-2 flex flex-col relative">
       {!loading && (
         comments.map((comment => <ForumComment
+          key={comment.createdAt}
           userPhotoURL={comment.user?.photoURL!!}
           userName={comment.user?.displayName!!}
           commentCreatedDate={comment.createdAt}

@@ -63,7 +63,7 @@ export const ForumCommentComposerArea = ({
           </div>
         )}
 
-        <div className="flex flex-col pt-3 w-full">
+        {!loading && <div className="flex flex-col pt-3 w-full">
           <div className="flex mb-2 flex-col justify-start ">
             <textarea
               ref={textareaRef}
@@ -88,7 +88,31 @@ export const ForumCommentComposerArea = ({
               ENVIAR
             </button>
           </div>
+        </div>}
+
+        {loading && (
+          <div className="flex flex-col pt-3 w-full">
+          <div className="gap-2 flex flex-col mt-2 justify-start">
+                  <div className="h-5 w-full bg-slate-400 rounded animate-pulse"></div>
+                  <div className="h-5 w-full bg-slate-400 rounded animate-pulse"></div>
+                </div>
+
+          <div className="flex w-full h-7 flex-row justify-end items-center mt-auto">
+            {isSubmitting && <SpinLoad />}
+            <button
+              className="px-4 py-1 z-10 bg-slate-500 hover:bg-slate-600 transition-colors delay-75 text-whiteColor font-bold text-sm rounded-xl disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={isSubmitting || !text.trim()}
+              onClick={() => {
+                if (text == "") return;
+                handleSubmitComment();
+              }}
+            >
+              
+            </button>
+          </div>
         </div>
+                
+              )}
       </div>
     </div>
   );

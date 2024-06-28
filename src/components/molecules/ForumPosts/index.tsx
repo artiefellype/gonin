@@ -32,6 +32,7 @@ export const ForumPosts = ({
   const [liked, setLiked] = useState(false);
   const [likedCount, setLikedCount] = useState(post.likeCount);
   const [isLikeDisabled, setIsLikeDisabled] = useState(false);
+  const [errorImage, setErrorImage] = useState(false)
   const router = useRouter()
 
   useEffect(() => {
@@ -51,6 +52,12 @@ export const ForumPosts = ({
     else setLikedCount(likedCount + 1);
     setTimeout(() => setIsLikeDisabled(false), 500);
   };
+
+  const defaultImageContainerOnError = <div className="w-full h-56 p-4 bg-slate-400 flex flex-col justify-center items-center rounded gap-3">
+    
+    <span className="font-light text-xl text-whiteColor text-center">(╥﹏╥)</span>
+    <span className="font-medium text-xs text-whiteColor text-center">Não foi possível carregar a imagem</span>
+  </div>
 
   if (!post.user) return;
 
@@ -121,6 +128,7 @@ export const ForumPosts = ({
                 {post.description}
               </p>
 
+              {!errorImage && <>
               {post.mediaFile && (
                 <Image
                   className="rounded-md "
@@ -128,8 +136,16 @@ export const ForumPosts = ({
                   alt={"user photo"}
                   width={500}
                   height={520}
+                  onError={(e: React.SyntheticEvent<HTMLImageElement, Event>) => {
+                    const target = e.target as HTMLImageElement;
+                    target.style.display = "none"; // Oculta a imagem em caso de erro
+                    setErrorImage(true)
+                  }}
                 />
               )}
+              </>}
+              
+              {errorImage && defaultImageContainerOnError}
             </div>
           </div>
 

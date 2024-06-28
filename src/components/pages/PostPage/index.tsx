@@ -31,8 +31,8 @@ export const PostPage = ({ postId }: PostPageProps) => {
   const auth = user?.auth;
   const router = useRouter();
   const [post, setPost] = useState<PostProps>();
-  const [loading, setLoading] = useState(false);
-  const [loadingComments, setLoadingComments] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [loadingComments, setLoadingComments] = useState(true);
   const [liked, setLiked] = useState<boolean>();
   const [likedCount, setLikedCount] = useState(0);
   const [isLikeDisabled, setIsLikeDisabled] = useState(false);
@@ -162,7 +162,7 @@ export const PostPage = ({ postId }: PostPageProps) => {
   }, [post]);
 
   return (
-    <div className="w-full h-auto mt-10 mb-10 flex flex-col justify-start items-center gap-1 text-primary">
+    <div className="w-full min-h-screen h-auto mt-10 mb-10 flex flex-col justify-start items-center gap-1 text-primary">
       <div className="w-full md:max-w-2xl min-h-[10rem] h-auto bg-white rounded-lg p-2 flex flex-row relative">
         {!loading && (
           <div className="flex rounded-full m-2 bg-gray-500 w-full max-w-[2.5rem] h-10">
