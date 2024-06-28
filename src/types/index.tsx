@@ -21,6 +21,7 @@ export interface PostProps {
   commentCount: number;
   tags: string[];
   createdAt: string;
+  pinned: boolean;
 }
 
 export interface PostCommentsProps {

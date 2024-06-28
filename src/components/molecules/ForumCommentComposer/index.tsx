@@ -43,7 +43,7 @@ export const ForumCommentComposerArea = ({
   }, [text]);
 
   return (
-    <div className="w-full md:max-w-2xl h-auto bg-white rounded-lg p-2 flex flex-row relative">
+    <div className="w-screen md:w-full md:max-w-2xl h-auto bg-white rounded-lg p-2 flex flex-row relative">
       <div className="w-full md:max-w-2xl h-auto bg-white rounded-lg p-2 flex flex-row">
         {!loading && (
           <div className="flex rounded-full m-2 bg-gray-500 w-full max-w-[2.5rem] h-10">

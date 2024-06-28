@@ -9,18 +9,18 @@ export interface ForumCommentsArea {
 }
 
 export const ForumCommentsArea = ({ comments, loading }: ForumCommentsArea) => {
- 
   return (
     <div className="w-full md:max-w-2xl h-auto bg-white rounded-lg p-2 flex flex-col relative">
-      {!loading && (
-        comments.map((comment => <ForumComment
-          key={comment.createdAt}
-          userPhotoURL={comment.user?.photoURL!!}
-          userName={comment.user?.displayName!!}
-          commentCreatedDate={comment.createdAt}
-          commentContent={comment.content}
-        />))
-      )}
+      {!loading &&
+        comments.map((comment) => (
+          <ForumComment
+            key={comment.createdAt}
+            userPhotoURL={comment.user?.photoURL!!}
+            userName={comment.user?.displayName!!}
+            commentCreatedDate={comment.createdAt}
+            commentContent={comment.content}
+          />
+        ))}
       {loading && (
         <div className="w-full h-screen mt-10 flex flex-col justify-start items-center gap-1">
           <div className="flex rounded-full m-2 w-full max-w-[2.5rem] h-10 animate-pulse">

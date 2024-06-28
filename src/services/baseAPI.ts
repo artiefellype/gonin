@@ -69,7 +69,9 @@ export class BaseAPI {
         collectionRef = collection(collectionRef, subcollectionName);
       }
 
-      const querySnapshot = await getDocs(collectionRef);
+      const q = query(collectionRef, orderBy('createdAt', 'desc'));
+
+      const querySnapshot = await getDocs(q);
 
       const data: any[] = [];
       querySnapshot.forEach((doc) => {

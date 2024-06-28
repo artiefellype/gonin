@@ -43,6 +43,7 @@ export const PostPage = ({ postId }: PostPageProps) => {
   const [userOwnerPhotoURL, setUserOwnerPhotoURL] = useState(
     "/imgs/default_perfil.jpg"
   );
+  const [errorImage, setErrorImage] = useState(false);
 
   const fetchPost = async () => {
     setLoading(true);
@@ -162,8 +163,19 @@ export const PostPage = ({ postId }: PostPageProps) => {
     }
   }, [post]);
 
+  const defaultImageContainerOnError = (
+    <div className="w-full h-56 p-4 bg-slate-400 flex flex-col justify-center items-center rounded gap-3">
+      <span className="font-light text-xl text-whiteColor text-center">
+        (╥﹏╥)
+      </span>
+      <span className="font-medium text-xs text-whiteColor text-center">
+        Não foi possível carregar a imagem
+      </span>
+    </div>
+  );
+
   return (
-    <div className="w-full min-h-screen h-auto mt-10 mb-10 flex flex-col justify-start items-center gap-1 text-primary">
+    <div className="w-screen md:w-full min-h-screen h-auto mt-10 mb-10 flex flex-col justify-start items-center gap-1 text-primary">
       <div className="w-full md:max-w-2xl min-h-[10rem] h-auto bg-white rounded-lg p-2 flex flex-row relative">
         {!loading && (
           <div className="flex rounded-full m-2 bg-gray-500 w-full max-w-[2.5rem] h-10">
@@ -182,28 +194,27 @@ export const PostPage = ({ postId }: PostPageProps) => {
           </div>
         )}
 
-        <div className="flex flex-col pt-2 w-full">
+        <div className="flex flex-col pt-2 w-full md:w-screen">
           <div className="flex">
             {!loading && (
               <div className="flex md:flex-row md:m-0 mb-3 flex-col md:gap-3 justify-center items-center">
-              <h1 className="text-base font-bold w-auto text-left flex flex-row justify-center items-center gap-1">
-              {userOwnerInfo?.displayName}{" "}
-              {userOwnerInfo?.tag ? (
-                  <span
-                    
-                    className="mt-1 "
-                  ><FaRocket className="animate-blinkAnimation" /></span>
-                ) : (
-                  ""
-                )}
-              </h1>
-              <p className="font-light text-xs text-left md:w-auto w-full">
-                {formatDate(post?.createdAt!!)}
-              </p>
-            </div>
+                <h1 className="text-base font-bold w-auto text-left flex flex-row justify-center items-center gap-1">
+                  {userOwnerInfo?.displayName}{" "}
+                  {userOwnerInfo?.tag ? (
+                    <span className="mt-1 ">
+                      <FaRocket className="animate-blinkAnimation" />
+                    </span>
+                  ) : (
+                    ""
+                  )}
+                </h1>
+                <p className="font-light text-xs text-left md:w-auto w-full">
+                  {formatDate(post?.createdAt!!)}
+                </p>
+              </div>
             )}
             {loading && (
-              <div className="flex md:flex-row md:m-0 mb-3 flex-col md:gap-3 justify-center items-center">
+              <div className="flex w-full md:flex-row md:m-0 mb-3 flex-col md:gap-3 justify-center items-center">
                 <div className="h-5 w-28 bg-slate-400 rounded animate-pulse"></div>
                 <div className="h-5 w-16 bg-slate-400 rounded animate-pulse"></div>
               </div>
@@ -250,19 +261,32 @@ export const PostPage = ({ postId }: PostPageProps) => {
                     {post?.description}
                   </p>
 
-                  {post?.mediaFile && (
-                    <Image
-                      className="rounded-md "
-                      src={post.mediaFile}
-                      alt={"user photo"}
-                      width={500}
-                      height={520}
-                    />
+                  {!errorImage && (
+                    <>
+                      {post?.mediaFile && (
+                        <Image
+                          className="rounded-md "
+                          src={post.mediaFile}
+                          alt={"user photo"}
+                          width={500}
+                          height={520}
+                          onError={(
+                            e: React.SyntheticEvent<HTMLImageElement, Event>
+                          ) => {
+                            const target = e.target as HTMLImageElement;
+                            target.style.display = "none";
+                            setErrorImage(true);
+                          }}
+                        />
+                      )}
+                    </>
                   )}
+
+                  {errorImage && defaultImageContainerOnError}
                 </>
               )}
               {loading && (
-                <div className="gap-2 flex flex-col mt-2">
+                <div className="gap-2 w-full  flex flex-col mt-2">
                   <div className="h-5 w-full bg-slate-400 rounded animate-pulse"></div>
                   <div className="h-5 w-full bg-slate-400 rounded animate-pulse"></div>
                   <div className="h-5 w-full bg-slate-400 rounded animate-pulse"></div>
@@ -350,7 +374,7 @@ export const PostPage = ({ postId }: PostPageProps) => {
           </div>
         ))}
       {loadingComments && (
-        <div className="w-full md:max-w-2xl h-auto bg-white rounded-lg p-2 flex flex-col relative">
+        <div className="w-screen md:max-w-2xl h-auto bg-white rounded-lg p-2 flex flex-col relative">
           <div className="w-full  mt-1 flex flex-row justify-start items-start gap-1">
             <div className="flex rounded-full m-2 w-full max-w-[2.5rem] h-10 animate-pulse">
               <div className="w-10 h-10 rounded-full bg-slate-400"></div>

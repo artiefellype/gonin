@@ -42,7 +42,7 @@ export const ForumComment = ({
 
           <div className=" flex justify-center items-center">
             <div className="w-full break-words text-clip mb-3">
-              <p className="font-normal text-sm text-gray-500 mb-2">
+              <p className="font-normal text-sm text-gray-500 mb-2 whitespace-pre-wrap">
                 {commentContent}
               </p>
             </div>

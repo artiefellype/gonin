@@ -7,29 +7,30 @@ import { UserServices } from "@/services/userServices";
 import { useUserContext } from "@/context";
 
 interface HomeProps {
-  posts: PostProps[]
-  loading?: boolean
-  fetch: () => Promise<void>
-  setPosts: (posts: PostProps[]) => void
+  posts: PostProps[];
+  loading?: boolean;
+  fetch: () => Promise<void>;
+  setPosts: (posts: PostProps[]) => void;
 }
 
 const ForumContainer = ({ posts, loading, fetch, setPosts }: HomeProps) => {
   const [foundPosts, setFoundPosts] = useState(posts);
-  const { user } = useUserContext()
+  const { user } = useUserContext();
 
   const handleDeletePost = async (id: string) => {
     try {
       const updatedPosts = posts.filter((post) => post.id !== id);
-      setPosts(updatedPosts)
-      const userInfo = await UserServices.getUserById(user?.user?.uid!!)
-      const updatedUserPosts = userInfo.posts.filter((postId: string) => postId !== id);
+      setPosts(updatedPosts);
+      const userInfo = await UserServices.getUserById(user?.user?.uid!!);
+      const updatedUserPosts = userInfo.posts.filter(
+        (postId: string) => postId !== id
+      );
       userInfo.posts = updatedUserPosts;
-      await UserServices.updateUser(userInfo)
+      await UserServices.updateUser(userInfo);
       await postsServices.deletePost(id);
-
     } catch (error: any) {
       console.error(error.message);
-    } 
+    }
   };
 
   const handleLikePost = async (postId: string, id: string) => {
@@ -37,27 +38,39 @@ const ForumContainer = ({ posts, loading, fetch, setPosts }: HomeProps) => {
       await postsServices.likePost(postId, id);
     } catch (error: any) {
       console.error(error.message);
-    } 
-  }
+    }
+  };
 
-  const handleHasUserLiked = async (postId: string, userId: string): Promise<boolean> => {
+  const handleHasUserLiked = async (
+    postId: string,
+    userId: string
+  ): Promise<boolean> => {
     try {
       const response = await postsServices.hasUserLikedPost(postId, userId);
-      if(response== undefined) console.error("UNDEFINED RESPONSE IN HANDLER")
-      return response
+      if (response == undefined) console.error("UNDEFINED RESPONSE IN HANDLER");
+      return response;
     } catch (error: any) {
       console.error(error.message);
-      return false
-      
-    } 
-  }
+      return false;
+    }
+  };
 
   useEffect(() => {
     const sortedPosts = posts.slice().sort((a, b) => {
-      const dateA = new Date(a.createdAt).getTime();
-      const dateB = new Date(b.createdAt).getTime();
-      return dateB - dateA;
+      const aPinned = a.pinned !== undefined ? a.pinned : false;
+      const bPinned = b.pinned !== undefined ? b.pinned : false;
+
+      if (bPinned && !aPinned) {
+        return 1;
+      } else if (!bPinned && aPinned) {
+        return -1;
+      } else {
+        const dateA = new Date(a.createdAt).getTime();
+        const dateB = new Date(b.createdAt).getTime();
+        return dateB - dateA;
+      }
     });
+
     setFoundPosts(sortedPosts);
   }, [posts]);
 
@@ -78,7 +91,9 @@ const ForumContainer = ({ posts, loading, fetch, setPosts }: HomeProps) => {
           );
         })
       ) : (
-        <div className="mt-4 font-semibold text-base text-center">Nada para ver aqui :/</div>
+        <div className="mt-4 font-semibold text-base text-center">
+          Nada para ver aqui :/
+        </div>
       )}
     </div>
   );

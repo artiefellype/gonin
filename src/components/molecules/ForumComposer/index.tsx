@@ -64,10 +64,11 @@ export const ForumComposerArea = ({
   const handleSubmit = async () => {
     setIsSubmitting(true);
     let mediaFileUrl = "";
+    const uniqueId = Date.now(); 
 
     try {
       if (selectedFile) {
-        const fileRef = ref(storage, `forum-images/${selectedFile.name}`);
+        const fileRef = ref(storage, `forum-images/${uniqueId}-${selectedFile.name}`);
         await uploadBytes(fileRef, selectedFile);
         mediaFileUrl = await getDownloadURL(fileRef);
       }
@@ -81,6 +82,7 @@ export const ForumComposerArea = ({
         likeCount: 0,
         commentCount: 0,
         tags: [tag],
+        pinned: false,
         createdAt: new Date().toISOString(),
       };
 

@@ -69,7 +69,7 @@ export const ForumPosts = ({
   const tagStyle = tagStyleMap[post.tags[0]] || {
     backgroundColor: "#EDF2F7",
     color: "#4A5568",
-  }; // Estilo padrão
+  }; // Estilo padrão 
   console.log("POSTs: ", post.tags[0]);
 
   if (!post.user) return;
@@ -147,7 +147,6 @@ export const ForumPosts = ({
               )}
             </div>
 
-            {/* POR PARA CLICAR AQUI E ABRIR A PAGINA DO POST */}
             <div className=" flex justify-center items-center">
               <div className="w-full break-words text-clip mb-3">
                 {post.title && (
@@ -155,7 +154,7 @@ export const ForumPosts = ({
                     {post.title}
                   </h2>
                 )}
-                <p className="font-normal text-sm text-gray-500 mb-2">
+                <p className="font-normal text-sm text-gray-500 mb-2 whitespace-pre-wrap">
                   {post.description}
                 </p>
 
