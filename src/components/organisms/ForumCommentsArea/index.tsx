@@ -15,6 +15,7 @@ export const ForumCommentsArea = ({ comments, loading }: ForumCommentsArea) => {
         comments.map((comment) => (
           <ForumComment
             key={comment.createdAt}
+            userTag={comment.user?.tag!!}
             userPhotoURL={comment.user?.photoURL!!}
             userName={comment.user?.displayName!!}
             commentCreatedDate={comment.createdAt}
