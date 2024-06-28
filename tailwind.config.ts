@@ -19,6 +19,16 @@ const config: Config = {
         secondary: '#CECECE',
         whiteColor: '#F8F8F8',
         background: '#D6D6D6',
+        
+      },
+      keyframes: {
+        blink: {
+          '0%, 100%': { fill: '#ba01ff' },
+          '50%': { fill: '#228dff' },
+        },
+      },
+      animation: {
+        blinkAnimation: 'blink 1.5s infinite',
       },
     },
   },

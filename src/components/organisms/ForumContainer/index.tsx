@@ -43,7 +43,7 @@ const ForumContainer = ({ posts, loading, fetch, setPosts }: HomeProps) => {
   const handleHasUserLiked = async (postId: string, userId: string): Promise<boolean> => {
     try {
       const response = await postsServices.hasUserLikedPost(postId, userId);
-      if(response== undefined) console.log("UNDEFINED RESPONSE IN HANDLER")
+      if(response== undefined) console.error("UNDEFINED RESPONSE IN HANDLER")
       return response
     } catch (error: any) {
       console.error(error.message);

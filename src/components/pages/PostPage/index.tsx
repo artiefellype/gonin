@@ -21,6 +21,7 @@ import { UserServices } from "@/services/userServices";
 import { SpinLoad } from "@/components/atoms/SpinLoad";
 import { ForumCommentComposerArea } from "@/components/molecules/ForumCommentComposer";
 import { ForumCommentsArea } from "@/components/organisms/ForumCommentsArea";
+import { FaRocket } from "react-icons/fa6";
 
 export interface PostPageProps {
   postId: string;
@@ -185,13 +186,21 @@ export const PostPage = ({ postId }: PostPageProps) => {
           <div className="flex">
             {!loading && (
               <div className="flex md:flex-row md:m-0 mb-3 flex-col md:gap-3 justify-center items-center">
-                <h1 className="text-base font-bold">
-                  {userOwnerInfo?.displayName}
-                </h1>
-                <p className="font-light text-xs text-left">
-                  {formatDate(post?.createdAt!!)}
-                </p>
-              </div>
+              <h1 className="text-base font-bold w-auto text-left flex flex-row justify-center items-center gap-1">
+              {userOwnerInfo?.displayName}{" "}
+              {userOwnerInfo?.tag ? (
+                  <span
+                    
+                    className="mt-1 "
+                  ><FaRocket className="animate-blinkAnimation" /></span>
+                ) : (
+                  ""
+                )}
+              </h1>
+              <p className="font-light text-xs text-left md:w-auto w-full">
+                {formatDate(post?.createdAt!!)}
+              </p>
+            </div>
             )}
             {loading && (
               <div className="flex md:flex-row md:m-0 mb-3 flex-col md:gap-3 justify-center items-center">
