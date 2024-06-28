@@ -150,7 +150,7 @@ export const ForumPosts = ({
             <div className=" flex justify-center items-center">
               <div className="w-full break-words text-clip mb-3">
                 {post.title && (
-                  <h2 className="font-semibold mb-2 text-base text-gray-800">
+                  <h2 className="font-semibold mb-2 text-base text-gray-800 ">
                     {post.title}
                   </h2>
                 )}

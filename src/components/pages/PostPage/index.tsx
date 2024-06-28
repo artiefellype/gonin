@@ -257,7 +257,7 @@ export const PostPage = ({ postId }: PostPageProps) => {
                     </h2>
                   )}
 
-                  <p className="font-normal text-sm text-gray-500 mb-2">
+                  <p className="font-normal text-sm text-gray-500 mb-2 whitespace-pre-wrap">
                     {post?.description}
                   </p>
 
