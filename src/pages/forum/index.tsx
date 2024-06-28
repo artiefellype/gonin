@@ -1,7 +1,8 @@
-import { ForumPage } from "@/components/pages/ForumPage";
-import { LayoutForum } from "@/components/templates/LayoutForum";
-import Head from "next/head";
-import React from "react";
+
+import { ForumPage } from '@/components/pages/ForumPage'
+import { LayoutForum } from '@/components/templates/LayoutForum'
+import Head from 'next/head'
+import React from 'react'
 
 const Forum = () => {
   return (
@@ -11,7 +12,7 @@ const Forum = () => {
       </Head>
       <ForumPage />
     </LayoutForum>
-  );
-};
+  )
+}
 
-export default Forum;
+export default Forum

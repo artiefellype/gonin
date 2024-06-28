@@ -21,7 +21,12 @@ import {
   increment,
 } from "firebase/firestore";
 import { fireApp, storage } from "@/firebase/firebase";
-import { PostProps, UserProps } from "@/types";
+import {
+  PostCommentsProps,
+  PostCommentWithUserProps,
+  PostProps,
+  UserProps,
+} from "@/types";
 import { deleteObject, ref, getStorage } from "firebase/storage";
 
 export class BaseAPI {
@@ -120,13 +125,13 @@ export class BaseAPI {
   async updateUser(user: UserProps) {
     try {
       const userRef = doc(this.db, "users", user.uid);
-      await updateDoc(userRef, { 
+      await updateDoc(userRef, {
         displayName: user.displayName,
         tag: user.tag,
         member: user.member,
         photoURL: user.photoURL,
-        posts: user.posts
-       });
+        posts: user.posts,
+      });
     } catch (error) {
       throw error;
     }
@@ -190,7 +195,56 @@ export class BaseAPI {
     }
   }
 
-  // Obter subcolecoes
+  async addCommentToPost(postId: string, comment: PostCommentsProps) {
+    try {
+      const postRef = doc(this.db, "posts", postId);
+      const commentsCollectionRef = collection(postRef, "comments");
+
+      const docRef = await addDoc(commentsCollectionRef, comment);
+
+      await updateDoc(docRef, { id: docRef.id });
+
+      await updateDoc(postRef, {
+        commentCount: increment(1),
+      });
+    } catch (error) {
+      console.error("Error adding comment: ", error);
+    }
+  }
+
+  async getCommentsForPost(
+    postId: string
+  ): Promise<PostCommentWithUserProps[]> {
+    try {
+      const postRef = doc(this.db, "posts", postId);
+      const commentsCollectionRef = collection(postRef, "comments");
+      const commentsQuery = query(commentsCollectionRef, orderBy("createdAt", "desc"));
+      const querySnapshot = await getDocs(commentsQuery);
+  
+      const comments: PostCommentsProps[] = querySnapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      })) as PostCommentsProps[];
+  
+      const commentsWithUser: PostCommentWithUserProps[] = await Promise.all(
+        comments.map(async (comment) => {
+          const userRef = doc(this.db, "users", comment.user_id);
+          const userDoc = await getDoc(userRef);
+          if (userDoc.exists()) {
+            const user = userDoc.data() as UserProps;
+            return { ...comment, user };
+          }
+          return comment as PostCommentWithUserProps;
+        })
+      );
+  
+      return commentsWithUser;
+    } catch (error) {
+      console.error("Error fetching comments: ", error);
+      return [];
+    }
+  }
+
   async getSubcollection(
     collectionName: string,
     docId: string,

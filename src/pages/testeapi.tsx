@@ -24,19 +24,15 @@ const PostsPage = () => {
   }, []);
 
   useEffect(() => {
-    const fetchPosts = async (reset = false) => {
+    const fetchPostComments = async () => {
       try {
-        const response = await postsServices.getPostsByTag(
-          "discussao",
-          reset ? null : lastDoc,
-          10
-        );
-      } catch (err: any) {
-        setError(err.message);
+        const response = await postsServices.getAllComments('ID')
+      } catch (error:any) {
+        console.error(error.message)
       }
     };
 
-    fetchPosts(true);
+    fetchPostComments();
   }, []);
 
   return (

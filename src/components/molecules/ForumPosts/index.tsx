@@ -3,9 +3,14 @@ import { formatDate } from "@/services/utils/formaters";
 import { PostProps } from "@/types";
 import Image from "next/image";
 import React, { useEffect, useState } from "react";
-import { FaTrash as TrashIcon, FaHeart as LikeIcon } from "react-icons/fa6";
+import {
+  FaTrash as TrashIcon,
+  FaHeart as LikeIcon,
+  FaComment as CommentIcon,
+} from "react-icons/fa6";
 import { FaEllipsisH as Dots } from "react-icons/fa";
 import { CustomPopover } from "@/components/atoms/CustomPopover";
+import { useRouter } from "next/router";
 
 export interface PostCardProps {
   post: PostProps;
@@ -27,6 +32,7 @@ export const ForumPosts = ({
   const [liked, setLiked] = useState(false);
   const [likedCount, setLikedCount] = useState(post.likeCount);
   const [isLikeDisabled, setIsLikeDisabled] = useState(false);
+  const router = useRouter()
 
   useEffect(() => {
     const handleUserLiked = async () => {
@@ -50,7 +56,13 @@ export const ForumPosts = ({
 
   return (
     <>
-      <div className="w-full md:max-w-2xl min-h-[10rem] h-auto bg-white rounded-lg p-2 flex flex-row relative">
+      {}
+      <div
+        className="w-full md:max-w-2xl min-h-[10rem] h-auto bg-white rounded-lg p-2 flex flex-row relative transition-colors hover:bg-gray-200 hover:cursor-pointer"
+        onClick={() => {
+          router.push(`/post/${post.id}`)
+        }}
+      >
         <div className="flex rounded-full m-2 bg-gray-500 w-full max-w-[2.5rem] h-10">
           <Image
             className="rounded-full "
@@ -82,7 +94,10 @@ export const ForumPosts = ({
                     <div className="flex flex-col bg-primary rounded-md ">
                       <button
                         className=" text-whiteColor px-4 py-2 hover:bg-slate-600 rounded-md flex flex-row gap-2 justify-start items-center"
-                        onClick={() => onDelete(post.id)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onDelete(post.id);
+                        }}
                       >
                         <TrashIcon size={12} className="fill-whiteColor" />
                         <p>Excluir</p>
@@ -118,26 +133,49 @@ export const ForumPosts = ({
             </div>
           </div>
 
-          <div className="flex w-full h-5 flex-row justify-start items-center mt-auto">
-            <div className="flex flex-row gap-1">
+          <div className="flex w-full h-5 flex-row justify-start items-center mt-auto gap-2">
+            <div className="flex flex-row gap-2 justify-center items-center">
               <button
                 onClick={(e) => {
                   e.stopPropagation();
                   handleLike();
                 }}
-                className="w-5 h-5 z-10"
+                className="w-7 h-7 z-10 flex flex-row gap-1 justify-center items-center rounded-full"
                 disabled={isLikeDisabled}
               >
                 {liked ? (
-                  <LikeIcon size={20} className=" fill-current text-red-600 " />
+                  <LikeIcon
+                    size={20}
+                    className="fill-current text-red-600 transition-transform hover:scale-110"
+                  />
                 ) : (
-                  <LikeIcon size={20} className="text-gray-600" />
+                  <LikeIcon
+                    size={20}
+                    className="text-gray-600 transition-transform hover:scale-110"
+                  />
                 )}
+                <div className="text-gray-800 font-medium text-sm">
+                  {likedCount}
+                </div>
               </button>
-
-              <div className="text-gray-800 font-medium text-sm">
-                {likedCount}
-              </div>
+            </div>
+            <div className="flex flex-row gap-2 justify-center items-center">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleLike();
+                }}
+                className="w-7 h-7 z-10 flex flex-row gap-1 justify-center items-center rounded-full"
+                disabled={isLikeDisabled}
+              >
+                <CommentIcon
+                  size={20}
+                  className=" fill-current text-gray-600 transition-transform hover:scale-110"
+                />
+                <div className="text-gray-800 font-medium text-sm">
+                  {post.commentCount}
+                </div>
+              </button>
             </div>
           </div>
         </div>

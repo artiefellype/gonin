@@ -27,4 +27,9 @@ export interface PostCommentsProps {
   id: string;
   user_id: string;
   content: string;
+  createdAt: string;
+}
+
+export interface PostCommentWithUserProps extends PostCommentsProps {
+  user?: UserProps | null;
 }

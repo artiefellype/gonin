@@ -1,6 +1,6 @@
 
 import { CustomDivider} from "@/components/atoms/CustomDivider";
-import { ForumComposerArea } from "@/components/molecules/ForumComposerArea";
+import { ForumComposerArea } from "@/components/molecules/ForumComposer";
 import ForumContainer from "@/components/organisms/ForumContainer";
 import { postsServices } from "@/services/postServices";
 import { PostProps } from "@/types";

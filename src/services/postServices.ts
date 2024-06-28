@@ -1,4 +1,4 @@
-import { PostProps } from "@/types";
+import { PostCommentsProps, PostProps } from "@/types";
 import { BaseAPI } from "./baseAPI";
 import { DocumentData } from "firebase/firestore";
 
@@ -145,6 +145,23 @@ export class postsServices {
     try {
       const response = await new BaseAPI().checkIfUserLiked(postId, userId);
       return response as boolean
+    } catch (error) {
+      throw error
+    }
+  }
+
+  static addComment = async (postId: string, comment: PostCommentsProps) => {
+    try {
+      await new BaseAPI().addCommentToPost(postId,comment);
+    } catch (error) {
+      throw error
+    }
+  }
+
+  static getAllComments = async (postId: string): Promise<PostCommentsProps[]> => {
+    try {
+      const response = await new BaseAPI().getCommentsForPost(postId);
+      return response
     } catch (error) {
       throw error
     }

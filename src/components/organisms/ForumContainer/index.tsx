@@ -17,9 +17,6 @@ const ForumContainer = ({ posts, loading, fetch, setPosts }: HomeProps) => {
   const [foundPosts, setFoundPosts] = useState(posts);
   const { user } = useUserContext()
 
-
-  console.log("USER: ", user)
-
   const handleDeletePost = async (id: string) => {
     try {
       const updatedPosts = posts.filter((post) => post.id !== id);
