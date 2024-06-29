@@ -1,12 +1,17 @@
-import { ForumPage } from '@/components/pages/forum'
-import { ForumLayout } from '@/components/templates/forumLayout'
+
+import { ForumPage } from '@/components/pages/ForumPage'
+import { LayoutForum } from '@/components/templates/LayoutForum'
+import Head from 'next/head'
 import React from 'react'
 
 const Forum = () => {
   return (
-    <ForumLayout>
+    <LayoutForum>
+      <Head>
+        <title>GONIN</title>
+      </Head>
       <ForumPage />
-    </ForumLayout>
+    </LayoutForum>
   )
 }
 

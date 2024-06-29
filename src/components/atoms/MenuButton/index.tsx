@@ -7,7 +7,7 @@ export interface MenuButtonProps extends ButtonHTMLAttributes<HTMLButtonElement>
   user?: User;
 }
 
-const MenuButton = ({user, ...rest}: MenuButtonProps) => {
+export const MenuButton = ({user, ...rest}: MenuButtonProps) => {
 
   return (
     <button 
@@ -17,7 +17,7 @@ const MenuButton = ({user, ...rest}: MenuButtonProps) => {
         
         <div className='w-10 h-10 flex justify-center items-center'>
         <Image 
-            src={user?.user?.photoURL!! || ""}
+            src={user?.user?.photoURL!! || "/imgs/default_perfil.jpg"}
             alt={'perfil photo'} 
             width={40} 
             height={40}
@@ -36,5 +36,3 @@ const MenuButton = ({user, ...rest}: MenuButtonProps) => {
     </button>
   )
 }
-
-export default MenuButton

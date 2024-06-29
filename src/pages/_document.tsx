@@ -24,7 +24,6 @@ const MyDocument = () => (
 
       <link rel="icon" href="/imgs/fivechan_logo.png" />
 
-      <title>GONIN</title>
     </Head>
     <body>
       <Main />

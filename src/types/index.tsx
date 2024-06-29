@@ -1,27 +1,36 @@
-export interface MessagesProps {
-    id: string;
-    user_id: string;
-    user_Name: string;
-    user_photo_url: string;
-    title: string;
-    description: string;
-    created_at: string;
-    liked_list: string[];
-    likesCount: number;
+export interface UserProps {
+  createdAt: string;
+  displayName: string;
+  email: string;
+  id: string;
+  photoURL: string;
+  posts: string[];
+  member: boolean;
+  tag: string;
+  uid: string;
 }
 
-export interface ForumProps {
-    messages: MessagesProps[]
-    onDelete: (msgRef: string) => void;
-    onUpdate: (msgRef: string, msg: MessagesProps) => void;
-    onLike: (value: boolean, data: MessagesProps) =>  void;
+export interface PostProps {
+  id: string;
+  userId: string;
+  user?: UserProps;
+  mediaFile: string;
+  title: string;
+  description: string;
+  likeCount: number;
+  commentCount: number;
+  tags: string[];
+  createdAt: string;
+  pinned: boolean;
 }
 
-export interface ForumCardProps {
-    post: MessagesProps;
-    onDelete: ForumProps['onDelete'];
-    onUpdate: ForumProps['onUpdate'];
-    selectedCard: (value: string) => void;
-    showModal: (value: boolean) =>  void;
-    onLike: (value: boolean, data: MessagesProps) =>  void;
+export interface PostCommentsProps {
+  id: string;
+  user_id: string;
+  content: string;
+  createdAt: string;
+}
+
+export interface PostCommentWithUserProps extends PostCommentsProps {
+  user?: UserProps | null;
 }

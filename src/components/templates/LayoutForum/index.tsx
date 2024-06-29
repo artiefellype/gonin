@@ -1,4 +1,3 @@
-import { Header } from "@/components/molecules/header";
 import {
   MenuItemsProps,
   SideOptions,
@@ -7,20 +6,31 @@ import { Layout } from "antd";
 import React from "react";
 import { HiHome } from "react-icons/hi";
 import { MdExplore } from "react-icons/md";
+import { FaComments } from "react-icons/fa";
+import { ForumHeader } from "@/components/molecules/ForumHeader";
+import { ForumFooter } from "@/components/molecules/ForumFooter";
+import Head from "next/head";
 
-const { Content } = Layout
+const { Content } = Layout;
 
 interface Props {
   children: React.ReactNode;
 }
 
-export const ForumLayout = ({ children }: Props) => {
+export const LayoutForum = ({ children }: Props) => {
   const items: MenuItemsProps[] = [
     {
       label: "INICIO",
       icon: HiHome,
       key: "forum",
       path: `/forum`,
+      show: true,
+    },
+    {
+      label: "TÓPICOS",
+      icon: FaComments,
+      key: "topics",
+      path: `/topics`,
       show: true,
     },
     {
@@ -34,16 +44,18 @@ export const ForumLayout = ({ children }: Props) => {
 
   return (
     <Layout>
-
+      <Head>
+        <title>Tópicos</title>
+      </Head>
       {/* desk */}
       <div className="w-screen bg-background hidden md:flex flex-col items-center">
-        <Header isMobile={false}  />
+        <ForumHeader isMobile={false} />
         <SideOptions items={items}>{children}</SideOptions>
       </div>
 
       {/* mobile */}
-      <div className="w-screen bg-background flex flex-col items-center">
-        <Header isMobile={true}/>
+      <div className="w-screen bg-background flex flex-col md:hidden items-center">
+        <ForumHeader isMobile={true} />
         <Layout>
           <Content
             className={`min-h-screen relative flex md:hidden justify-center items-center flex-col`}
@@ -56,6 +68,7 @@ export const ForumLayout = ({ children }: Props) => {
             {children}
           </Content>
         </Layout>
+        <ForumFooter />
       </div>
     </Layout>
   );

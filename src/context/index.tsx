@@ -1,4 +1,3 @@
-// userProvider.tsx
 import React, {
   createContext,
   useContext,
@@ -12,12 +11,12 @@ import {
   GoogleAuthProvider,
   getAuth,
   signInWithPopup,
-  signInWithRedirect,
   signOut,
 } from "firebase/auth";
 import { onAuthStateChanged } from "firebase/auth";
-import { fireApp as app } from "@/firebase/firebase";
+import { fireApp as app, firestore } from "@/firebase/firebase";
 import { destroyCookie, setCookie } from "nookies";
+import { doc, getDoc, setDoc } from "firebase/firestore";
 
 export type User = {
   isAuth: boolean;
@@ -53,8 +52,23 @@ export const UserContextProvider = ({ children }: { children: ReactNode }) => {
   const signInHandler = async () => {
     try {
       const credential = await signInWithPopup(auth, googleProvider);
-
       const token = await credential.user.getIdTokenResult();
+
+      const userDocRef = doc(firestore, "users", credential.user.uid);
+      const userDoc = await getDoc(userDocRef);
+
+      if (!userDoc.exists()) {
+        await setDoc(userDocRef, {
+          uid: credential.user.uid,
+          displayName: credential.user.displayName,
+          email: credential.user.email,
+          photoURL: credential.user.photoURL,
+          createdAt: new Date().toISOString(),
+          tag: '',
+          posts: [],
+          member: false
+        });
+      }
 
       setCookie(null, "token", token.token, {
         maxAge: 30 * 24 * 60 * 60, // 30 dias

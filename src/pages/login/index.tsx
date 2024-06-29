@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import { useUserContext } from "@/context";
-import SignInScreen from "@/components/pages/SignIn";
 import Image from "next/image";
 import { getAuth, onAuthStateChanged, User } from "firebase/auth";
+import { SignInScreen } from "@/components/pages/SignInScreen";
+import Head from "next/head";
 
 const Login = () => {
   const { user, signIn } = useUserContext();
@@ -40,17 +41,27 @@ const Login = () => {
   }, [auth, router]);
 
   return isLoading ? (
-    <div className="bg-secondary bg-center w-screen h-screen flex justify-center items-center">
-      <Image
-        className="animate-bounce duration-3000 ease-in-out infinite"
-        src={"/imgs/fivechan_logo.png"}
-        alt={"Logo loading"}
-        width={100}
-        height={100}
-      />
-    </div>
+    <>
+      <Head>
+        <title>GONIN</title>
+      </Head>
+      <div className="bg-secondary bg-center w-screen h-screen flex justify-center items-center">
+        <Image
+          className="animate-bounce duration-3000 ease-in-out infinite"
+          src={"/imgs/fivechan_logo.png"}
+          alt={"Logo loading"}
+          width={100}
+          height={100}
+        />
+      </div>
+    </>
   ) : (
-    <SignInScreen loading={setIsLoading} loginWithGoogle={handleSignIn} />
+    <>
+      <Head>
+        <title>Login</title>
+      </Head>
+      <SignInScreen loading={setIsLoading} loginWithGoogle={handleSignIn} />
+    </>
   );
 };
 
