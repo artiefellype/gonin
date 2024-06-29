@@ -24,51 +24,81 @@ import { ForumCommentsArea } from "@/components/organisms/ForumCommentsArea";
 import { FaRocket } from "react-icons/fa6";
 
 export interface PostPageProps {
-  postId: string;
+  postIdUrl: string;
 }
 
-export const PostPage = ({ postId }: PostPageProps) => {
-  const { user } = useUserContext();
-  const auth = user?.auth;
+export const PostPage = ({ postIdUrl }: PostPageProps) => {
+  const { getUserFromLocalStorage} = useUserContext();
   const router = useRouter();
-  const [post, setPost] = useState<PostProps>();
+  const [post, setPost] = useState<PostProps | null >(null);
   const [loading, setLoading] = useState(true);
   const [loadingComments, setLoadingComments] = useState(true);
   const [liked, setLiked] = useState<boolean>();
   const [likedCount, setLikedCount] = useState(0);
   const [isLikeDisabled, setIsLikeDisabled] = useState(false);
-  const [userOwnerInfo, setUserOwnerInfo] = useState<UserProps>();
-  const [userInfo, setUserInfo] = useState<UserProps>();
+  const [userOwnerInfo, setUserOwnerInfo] = useState<UserProps>({} as UserProps);
+  const [userInfo, setUserInfo] = useState<UserProps>({} as UserProps);
+  const user = getUserFromLocalStorage()
   const [comments, setComments] = useState<PostCommentsProps[]>([]);
   const [userOwnerPhotoURL, setUserOwnerPhotoURL] = useState(
     "/imgs/default_perfil.jpg"
   );
   const [errorImage, setErrorImage] = useState(false);
 
+  const { postId } = router.query;
+
+  useEffect(() => {
+    if (postId) {
+      fetchPost();
+    }
+  }, [postId]);
+
   const fetchPost = async () => {
     setLoading(true);
+  
     try {
-      const fetchedPost: PostProps = await postsServices.getPostById(postId);
-      const fetchedUserUserOwner = await UserServices.getUserById(
-        fetchedPost.userId
-      );
-      const fetchedUserInfo = await UserServices.getUserById(user?.user?.uid!!);
-      setUserInfo(fetchedUserInfo);
-      setUserOwnerInfo(fetchedUserUserOwner);
-      setUserOwnerPhotoURL(fetchedUserUserOwner.photoURL);
+      if (!postId) {
+        throw new Error("Post ID is missing");
+      }
+  
+      // Fetch post
+      const fetchedPost: PostProps = await postsServices.getPostById(postId as string);
+      if (!fetchedPost) {
+        throw new Error("Post not found");
+      }
+
+  
+      // Fetch user owner of the post
+      const fetchedUserOwner:UserProps = await UserServices.getUserById(fetchedPost.userId);
+      if (!fetchedUserOwner) {
+        throw new Error("User owner not found");
+      }
+
+  
+      // Fetch current user information
+      const fetchedUserInfo:UserProps = await UserServices.getUserById(user as string);
+      if (!fetchedUserInfo) {
+        throw new Error("Current user information not found");
+      }
+  
+      // Set state with fetched data
       setPost(fetchedPost);
+      setUserOwnerInfo(fetchedUserOwner);
+      setUserInfo(fetchedUserInfo);
+      setUserOwnerPhotoURL(fetchedUserOwner.photoURL);
       setLikedCount(fetchedPost.likeCount);
       setLoading(false);
-    } catch (err: any) {
-      console.error("ERROR: ", err.message);
+    } catch (error: any) {
+      console.error("Error fetching post:", error.message);
       setLoading(false);
     }
   };
+  
 
   const fetchPostComments = async () => {
     setLoadingComments(true);
     try {
-      const response = await postsServices.getAllComments(post?.id!!);
+      const response = await postsServices.getAllComments(postId as string);
       setComments(response);
       setLoadingComments(false);
     } catch (error: any) {
@@ -83,7 +113,7 @@ export const PostPage = ({ postId }: PostPageProps) => {
       setLiked(!liked);
       if (liked) setLikedCount(likedCount < 1 ? 0 : likedCount - 1);
       else setLikedCount(likedCount + 1);
-      await postsServices.likePost(post?.id!!, user?.user?.uid!!);
+      await postsServices.likePost(post?.id!!, user as string);
 
       setTimeout(() => setIsLikeDisabled(false), 500);
     } catch (error: any) {
@@ -94,7 +124,7 @@ export const PostPage = ({ postId }: PostPageProps) => {
   const handleDeleteUniquePost = async (id: string) => {
     try {
       setLoading(true);
-      const userOwnerInfo = await UserServices.getUserById(user?.user?.uid!!);
+      const userOwnerInfo = await UserServices.getUserById(user as string);
       const updatedUserPosts = userOwnerInfo.posts.filter(
         (postId: string) => postId !== id
       );
@@ -136,9 +166,6 @@ export const PostPage = ({ postId }: PostPageProps) => {
     }
   };
 
-  useEffect(() => {
-    fetchPost();
-  }, []);
 
   useEffect(() => {
     if (post) {
@@ -147,7 +174,7 @@ export const PostPage = ({ postId }: PostPageProps) => {
         try {
           const response = await postsServices.hasUserLikedPost(
             post?.id!!,
-            user?.user?.uid!!
+            user as string
           );
           if (response == undefined)
             console.error("UNDEFINED RESPONSE IN HANDLER");
@@ -220,7 +247,7 @@ export const PostPage = ({ postId }: PostPageProps) => {
               </div>
             )}
 
-            {auth?.currentUser?.uid === post?.userId && (
+            {user as string === post?.userId && (
               <div className="absolute right-1 w-12 h-5 gap-2 flex">
                 <CustomPopover
                   trigger={

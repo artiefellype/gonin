@@ -44,7 +44,7 @@ export const ForumComment = ({
                     ""
                   )}
                 </h1>
-              <p className="font-light text-xs text-left">
+              <p className="font-light text-xs text-left md:w-auto w-full">
                 {formatDate(commentCreatedDate)}
               </p>
             </div>
