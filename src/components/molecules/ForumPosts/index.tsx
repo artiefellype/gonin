@@ -69,8 +69,7 @@ export const ForumPosts = ({
   const tagStyle = tagStyleMap[post.tags[0]] || {
     backgroundColor: "#EDF2F7",
     color: "#4A5568",
-  }; // Estilo padrão 
-  console.log("POSTs: ", post.tags[0]);
+  };
 
   if (!post.user) return;
 
@@ -213,7 +212,7 @@ export const ForumPosts = ({
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
-                    handleLike();
+                    router.push(`/post/${post.id}`);
                   }}
                   className="w-7 h-7 z-10 flex flex-row gap-1 justify-center items-center rounded-full"
                   disabled={isLikeDisabled}

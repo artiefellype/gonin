@@ -15,7 +15,7 @@ import {
 } from "firebase/auth";
 import { onAuthStateChanged } from "firebase/auth";
 import { fireApp as app, firestore } from "@/firebase/firebase";
-import { destroyCookie, setCookie } from "nookies";
+import { destroyCookie, parseCookies, setCookie } from "nookies";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 
 export type User = {
@@ -28,6 +28,7 @@ export type UserContextType = {
   user: User | null;
   signIn: () => Promise<void>;
   signOut: () => Promise<void>;
+  getUserFromLocalStorage: () => string | null;
 };
 
 export const UserFiveContext = createContext({} as UserContextType);
@@ -70,7 +71,12 @@ export const UserContextProvider = ({ children }: { children: ReactNode }) => {
         });
       }
 
-      setCookie(null, "token", token.token, {
+      setCookie(null, "userId", credential.user.uid, {
+        maxAge: 30 * 24 * 60 * 60, // 30 dias
+        path: "/", // Caminho onde o cookie é válido
+      });
+
+      setCookie(null, "gonin_token", token.token, {
         maxAge: 30 * 24 * 60 * 60, // 30 dias
         path: "/",
       });
@@ -86,14 +92,25 @@ export const UserContextProvider = ({ children }: { children: ReactNode }) => {
 
   const signOutHandler = async () => {
     await signOut(auth);
-    destroyCookie(null, "token");
+    destroyCookie(null, "gonin_token", { path: '/' });
+    destroyCookie(null, "userId", { path: '/' });
+  };
+
+  const getUserFromLocalStorage = (): string | null => {
+    const cookies = parseCookies();
+    const userId = cookies.userId;
+    if(userId) return userId
+    else return null
   };
 
   const contextValue: UserContextType = {
     user,
     signIn: signInHandler,
     signOut: signOutHandler,
+    getUserFromLocalStorage: getUserFromLocalStorage
   };
+
+  
 
   return (
     <UserFiveContext.Provider value={contextValue}>

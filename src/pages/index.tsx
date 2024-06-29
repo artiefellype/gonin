@@ -10,11 +10,10 @@ export default function LandPage() {
   );
 }
 
-// AUTHENTICAÇÂO A NIVEL DE SERVER SIDE
 export const getServerSideProps: GetServerSideProps = async (ctx) => {
   const cookies = parseCookies(ctx);
 
-  if (!cookies.token) {
+  if (!cookies.gonin_token) {
     return {
       redirect: {
         destination: '/login',

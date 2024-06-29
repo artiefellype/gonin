@@ -1,9 +1,11 @@
 import { User, useUserContext } from "@/context";
 import { useRouter } from "next/router";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import Image from "next/image";
 import { CustomPopover } from "@/components/atoms/CustomPopover";
 import { MenuButton } from "@/components/atoms/MenuButton";
+import { UserServices } from "@/services/userServices";
+import { UserProps } from "@/types";
 
 interface Props {
   isMobile: boolean;
@@ -11,12 +13,32 @@ interface Props {
 
 export const ForumHeader = ({ isMobile }: Props) => {
   const { signOut, user } = useUserContext();
+  const [userInfo, setUserInfo] = useState<UserProps | undefined>(undefined);
+  const [userPhoto, setUserPhoto] = useState<string>("/imgs/default_perfil.jpg");
   const router = useRouter();
 
   const handleSignOut = async () => {
     await signOut();
     router.push("/login");
   };
+
+  useEffect(() => {
+    const fetchUserHeader = async () => {
+      if (user?.user?.uid) {
+        try {
+          const fetchedUserInfo = await UserServices.getUserById(user.user.uid);
+          setUserInfo(fetchedUserInfo);
+          if (fetchedUserInfo.photoURL) {
+            setUserPhoto(fetchedUserInfo.photoURL);
+          }
+        } catch (error:any) {
+          console.error("Error fetching user info:", error.message);
+        }
+      }
+    };
+
+    fetchUserHeader();
+  }, [user]);
 
   return (
     <div className="w-full bg-whiteColor flex items-center justify-center">
@@ -51,7 +73,7 @@ export const ForumHeader = ({ isMobile }: Props) => {
               <CustomPopover
                 trigger={
                   <Image
-                    src={user?.user?.photoURL!! || ""}
+                    src={userPhoto}
                     alt={"perfil photo"}
                     width={40}
                     height={40}
