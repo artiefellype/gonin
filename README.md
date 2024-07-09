@@ -4,7 +4,7 @@ Bem-vindo(a) ao **Gonin**, um fórum de código aberto que visa fornecer uma abo
 
 ## Funcionalidades
 
-- **Fácinho de user**: Interface amigável para novos usuários de fóruns.
+- **Facinho de usar**: Interface amigável para novos usuários de fóruns.
 - **Autenticação via google**: Login simplificado usando sua conta do Google.
 - **Discussões diversas**: Participe de tópicos variados e compartilhe seu conhecimento.
 - **Feedback**: Ajude a melhorar a plataforma reportando bugs e sugerindo melhorias.
