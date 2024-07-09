@@ -13,6 +13,7 @@ import { CustomPopover } from "@/components/atoms/CustomPopover";
 import { useRouter } from "next/router";
 import { getTitleFromTag, tagStyleMap } from "@/services/utils/mappers";
 import { FaRocket } from "react-icons/fa6";
+import { FaMapPin } from "react-icons/fa";
 
 export interface PostCardProps {
   post: PostProps;
@@ -89,6 +90,11 @@ export const ForumPosts = ({
           >
             {getTitleFromTag(post.tags[0])}
           </span>
+          {post.pinned && <span
+            className="text-xs bg-cyan-200 text-cyan-800 font-medium me-2 px-2.5 py-1 rounded-full flex flex-row justify-center items-center gap-1"
+          >
+            <FaMapPin size={13} className="fill-cyan-800"/> Fixado
+          </span>}
         </div>
         <div className="w-full relative flex flex-row">
           <div className="flex rounded-full m-2 bg-gray-500 w-full max-w-[2.5rem] h-10">

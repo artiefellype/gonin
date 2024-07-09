@@ -28,17 +28,19 @@ export interface PostPageProps {
 }
 
 export const PostPage = ({ postIdUrl }: PostPageProps) => {
-  const { getUserFromLocalStorage} = useUserContext();
+  const { getUserFromLocalStorage } = useUserContext();
   const router = useRouter();
-  const [post, setPost] = useState<PostProps | null >(null);
+  const [post, setPost] = useState<PostProps | null>(null);
   const [loading, setLoading] = useState(true);
   const [loadingComments, setLoadingComments] = useState(true);
   const [liked, setLiked] = useState<boolean>();
   const [likedCount, setLikedCount] = useState(0);
   const [isLikeDisabled, setIsLikeDisabled] = useState(false);
-  const [userOwnerInfo, setUserOwnerInfo] = useState<UserProps>({} as UserProps);
+  const [userOwnerInfo, setUserOwnerInfo] = useState<UserProps>(
+    {} as UserProps
+  );
   const [userInfo, setUserInfo] = useState<UserProps>({} as UserProps);
-  const user = getUserFromLocalStorage()
+  const user = getUserFromLocalStorage();
   const [comments, setComments] = useState<PostCommentsProps[]>([]);
   const [userOwnerPhotoURL, setUserOwnerPhotoURL] = useState(
     "/imgs/default_perfil.jpg"
@@ -55,33 +57,33 @@ export const PostPage = ({ postIdUrl }: PostPageProps) => {
 
   const fetchPost = async () => {
     setLoading(true);
-  
+
     try {
       if (!postId) {
         throw new Error("Post ID is missing");
       }
-  
-      // Fetch post
-      const fetchedPost: PostProps = await postsServices.getPostById(postId as string);
+
+      const fetchedPost: PostProps = await postsServices.getPostById(
+        postId as string
+      );
       if (!fetchedPost) {
         throw new Error("Post not found");
       }
 
-  
-      // Fetch user owner of the post
-      const fetchedUserOwner:UserProps = await UserServices.getUserById(fetchedPost.userId);
+      const fetchedUserOwner: UserProps = await UserServices.getUserById(
+        fetchedPost.userId
+      );
       if (!fetchedUserOwner) {
         throw new Error("User owner not found");
       }
 
-  
-      // Fetch current user information
-      const fetchedUserInfo:UserProps = await UserServices.getUserById(user as string);
+      const fetchedUserInfo: UserProps = await UserServices.getUserById(
+        user as string
+      );
       if (!fetchedUserInfo) {
         throw new Error("Current user information not found");
       }
-  
-      // Set state with fetched data
+
       setPost(fetchedPost);
       setUserOwnerInfo(fetchedUserOwner);
       setUserInfo(fetchedUserInfo);
@@ -93,7 +95,6 @@ export const PostPage = ({ postIdUrl }: PostPageProps) => {
       setLoading(false);
     }
   };
-  
 
   const fetchPostComments = async () => {
     setLoadingComments(true);
@@ -165,7 +166,6 @@ export const PostPage = ({ postIdUrl }: PostPageProps) => {
       console.error(error);
     }
   };
-
 
   useEffect(() => {
     if (post) {
@@ -247,7 +247,7 @@ export const PostPage = ({ postIdUrl }: PostPageProps) => {
               </div>
             )}
 
-            {user as string === post?.userId && (
+            {(user as string) === post?.userId && (
               <div className="absolute right-1 w-12 h-5 gap-2 flex">
                 <CustomPopover
                   trigger={

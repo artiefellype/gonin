@@ -7,7 +7,7 @@ import { PostProps } from "@/types";
 import { DocumentData } from "firebase/firestore";
 import { GetServerSideProps } from "next";
 import { parseCookies } from "nookies";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 
 interface TopicPageProps {
   tag: string;

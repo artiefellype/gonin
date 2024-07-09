@@ -73,7 +73,7 @@ export const UserContextProvider = ({ children }: { children: ReactNode }) => {
 
       setCookie(null, "userId", credential.user.uid, {
         maxAge: 30 * 24 * 60 * 60, // 30 dias
-        path: "/", // Caminho onde o cookie é válido
+        path: "/", 
       });
 
       setCookie(null, "gonin_token", token.token, {

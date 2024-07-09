@@ -1,13 +1,35 @@
-# Gonin
-> By artiefellype
+# ⭐️ Gonin 
 
-Bem-vindo(a) ao Gonin, um fórum de código aberto que visa fornecer uma abordagem diferente e mais amigável para usuários que nunca participaram de fóruns online. Participe de discussões e compartilhe seus interesses nesse ambiente diverso!
+Bem-vindo(a) ao **Gonin**, um fórum de código aberto que visa fornecer uma abordagem diferente e mais amigável para usuários que nunca participaram de fóruns online. Participe de discussões e compartilhe seus interesses nesse ambiente diverso!
 
+## Funcionalidades
 
-- Estamos no momento em uma fase Beta e algumas funcionalidades da plataforma podem apresentar bugs. Sinta-se livre para reportar esses bugs em nosso tópico de [Feedback](#) ou dar sugestões de melhorias!
- 
+- **Fácinho de user**: Interface amigável para novos usuários de fóruns.
+- **Autenticação via google**: Login simplificado usando sua conta do Google.
+- **Discussões diversas**: Participe de tópicos variados e compartilhe seu conhecimento.
+- **Feedback**: Ajude a melhorar a plataforma reportando bugs e sugerindo melhorias.
 
+## Tecnologias Utilizadas
 
+- **NextJS**
+- **Firestore**
+- **Firebase Storage**
+- **Firebase Authentication**
+
+## Imagens do Projeto
+
+### Tópicos
+![Topics](https://firebasestorage.googleapis.com/v0/b/chat-app-bd2.appspot.com/o/Captura%20de%20tela%202024-07-09%20182649.png?alt=media&token=35a473aa-0935-4cb5-8d1f-2d5d0869dad5)
+
+### Adicione suas ideias !
+![Post](https://firebasestorage.googleapis.com/v0/b/chat-app-bd2.appspot.com/o/Captura%20de%20tela%202024-07-09%20182703.png?alt=media&token=3d8dcfd4-491e-4b28-917c-5323cfeb8aa8)
+
+## Contribuindo
+Contribuições são sempre bem-vindas! Veja o arquivo [CONTRIBUTING.md](./CONTRIBUTING.md) para mais informações detalhadas sobre como você pode ajudar a melhorar o Gonin.
+
+Estamos atualmente em fase Beta e algumas funcionalidades da plataforma podem apresentar bugs. Sinta-se à vontade para reportar esses bugs em nosso tópico de [Feedback](#) ou sugerir melhorias!
+
+Agradecemos por seu interesse em contribuir para o desenvolvimento do Gonin. Sua ajuda é fundamental para criar uma experiência melhor para todos os usuários.
 
 ## Getting Started
 
@@ -52,9 +74,7 @@ Confira nossa [documentação de implantação do Next.js](https://nextjs.org/do
 
 ---
 
-## Contribuindo
 
-Contribuições são sempre bem-vindas! Veja [CONTRIBUTING.md](./CONTRIBUTING.md) para mais informações.
 
 
 
