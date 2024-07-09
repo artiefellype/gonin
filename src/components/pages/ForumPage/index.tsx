@@ -34,9 +34,14 @@ export const ForumPage = () => {
   return (
     <>
       <div className="pt-10"></div>
-      <Link href={"/topics"} className="w-full h-8 my-4 flex justify-center items-center">
-      <button className="w-full h-8 bg-slate-700  rounded-2xl max-w-[250px] text-whiteColor font-semibold text-sm px-4 py-1 hover:bg-slate-600">Comece uma nova discussão</button>
-      </Link>
+      <div className="w-full h-8 my-4 flex justify-center items-center">
+        <Link
+          href={"/topics"}
+          className="w-full h-8 bg-slate-700  rounded-2xl max-w-[250px] text-whiteColor font-semibold text-sm px-4 py-1 hover:bg-slate-600 flex justify-center items-center hover:text-slate-100 delay-75 transition-colors"
+        >
+          Comece uma nova discussão
+        </Link>
+      </div>
       <ForumContainer
         posts={posts}
         loading={loading}

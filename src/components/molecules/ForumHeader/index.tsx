@@ -6,6 +6,7 @@ import { CustomPopover } from "@/components/atoms/CustomPopover";
 import { MenuButton } from "@/components/atoms/MenuButton";
 import { UserServices } from "@/services/userServices";
 import { UserProps } from "@/types";
+import { FaArrowRightToBracket } from "react-icons/fa6";
 
 interface Props {
   isMobile: boolean;
@@ -49,6 +50,7 @@ export const ForumHeader = ({ isMobile }: Props) => {
         {!isMobile ? (
           <div className="flex flex-row gap-2">
             <CustomPopover
+              width={'100%'}
               trigger={
                 <MenuButton
                   className="flex flex-row gap-3 items-center rounded-full p-2 hover:bg-secondary"
@@ -56,14 +58,18 @@ export const ForumHeader = ({ isMobile }: Props) => {
                 />
               }
               content={
-                <div className="flex flex-col ">
-                  <button
-                    className="bg-whiteColor text-primary px-4 py-2 hover:bg-secondary"
-                    onClick={handleSignOut}
-                  >
-                    Sair
-                  </button>
-                </div>
+                <div className="flex flex-col bg-primary rounded-md w-full ">
+                      <button
+                        className=" text-whiteColor px-4 py-2 hover:bg-slate-600 rounded-md flex flex-row gap-2 justify-start items-center"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleSignOut()
+                        }}
+                      >
+                        <FaArrowRightToBracket size={12} className="fill-whiteColor" />
+                        <p>Sair</p>
+                      </button>
+                    </div>
               }
             />
           </div>
@@ -81,14 +87,18 @@ export const ForumHeader = ({ isMobile }: Props) => {
                   />
                 }
                 content={
-                  <div className="flex flex-col ">
-                    <button
-                      className="bg-whiteColor text-primary px-4 py-2 hover:bg-secondary"
-                      onClick={handleSignOut}
-                    >
-                      Sair
-                    </button>
-                  </div>
+                  <div className="flex flex-col bg-primary rounded-md w-full ">
+                      <button
+                        className=" text-whiteColor px-4 py-2 hover:bg-slate-600 rounded-md flex flex-row gap-2 justify-start items-center"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleSignOut()
+                        }}
+                      >
+                        <FaArrowRightToBracket size={12} className="fill-whiteColor" />
+                        <p>Sair</p>
+                      </button>
+                    </div>
                 }
               />
             </div>

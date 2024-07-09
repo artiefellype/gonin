@@ -16,7 +16,7 @@ export const ForumTopic = (item: TopicProps) => {
       <Image
         className="rounded-full"
         src={item.icon}
-        alt={item.title + 'from StorySet'}
+        alt={item.title + '-from StorySet'}
         width={60}
         height={60}
         loading="lazy"

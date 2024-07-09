@@ -3,9 +3,10 @@ import React, { useEffect, useRef, useState } from "react";
 interface PopoverProps {
   trigger: React.ReactNode;
   content: React.ReactNode;
+  width?: string | 144
 }
 
-export const CustomPopover = ({ trigger, content }: PopoverProps) => {
+export const CustomPopover = ({ trigger, content, width }: PopoverProps) => {
   const [popoverVisible, setPopoverVisible] = useState(false);
   const popoverRef = useRef<HTMLDivElement>(null);
 
@@ -45,7 +46,8 @@ export const CustomPopover = ({ trigger, content }: PopoverProps) => {
       </div>
       {popoverVisible && (
         <div
-          className={`absolute z-10 bg-white w-36 shadow-md top-full right-0 transition-transform duration-300 ${
+        style={{width: width}}
+        className={`absolute z-10 bg-transparent shadow-md top-full right-0 transition-transform duration-300 ${
             popoverVisible
               ? "transform translate-y-0 opacity-100"
               : "transform translate-y-full opacity-0"

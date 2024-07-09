@@ -33,13 +33,13 @@ export const LayoutForum = ({ children }: Props) => {
       path: `/topics`,
       show: true,
     },
-    {
-      label: "EXPLORAR",
-      icon: MdExplore,
-      key: "explore",
-      path: `/explore`,
-      show: true,
-    },
+    // {
+    //   label: "EXPLORAR",
+    //   icon: MdExplore,
+    //   key: "explore",
+    //   path: `/explore`,
+    //   show: true,
+    // },
   ];
 
   return (
