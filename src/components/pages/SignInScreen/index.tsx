@@ -57,7 +57,7 @@ export const SignInScreen = ({
   ];
 
   return (
-    <div className="w-screen h-screen flex justify-center items-center bg-slate-200 relative px-2">
+    <div className="w-screen max-w-[1440px] h-screen flex justify-center items-center bg-slate-200 relative px-2">
       <img
         src={"/imgs/fivechan_logo.png"}
         alt={"background"}
@@ -75,7 +75,7 @@ export const SignInScreen = ({
               error={error}
               OnSubmitLoading={loginLoading}
             />
-            <div className="w-full flex justify-end">
+            <div className="w-full max-w-[320px] flex justify-end">
               <p className="text-[12px] px-2">
                 Não tem uma conta?{" "}
                 <Link
