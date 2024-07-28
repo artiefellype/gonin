@@ -33,21 +33,25 @@ export const ForumPage = () => {
 
   return (
     <>
-      <div className="pt-10"></div>
-      <div className="w-full h-8 my-4 flex justify-center items-center">
-        <Link
-          href={"/topics"}
-          className="w-full h-8 bg-slate-700  rounded-2xl max-w-[250px] text-whiteColor font-semibold text-sm px-4 py-1 hover:bg-slate-600 flex justify-center items-center hover:text-slate-100 delay-75 transition-colors"
-        >
-          Comece uma nova discussão
-        </Link>
+      <div className="flex justify-center items-start flex-col w-full">
+        <div className="w-full h-8 my-4 flex justify-center items-center">
+          <Link
+            href={"/topics"}
+            className="w-full h-8 bg-slate-700  rounded-2xl max-w-[250px] text-whiteColor font-semibold text-sm px-4 py-1 hover:bg-slate-600 flex justify-center items-center hover:text-slate-100 delay-75 transition-colors"
+          >
+            Comece uma nova discussão
+          </Link>
+        </div>
+        <ForumContainer
+          posts={posts}
+          loading={loading}
+          fetch={fetchPosts}
+          setPosts={setPosts}
+        />
       </div>
-      <ForumContainer
-        posts={posts}
-        loading={loading}
-        fetch={fetchPosts}
-        setPosts={setPosts}
-      />
+      <div className="w-80 h-96 px-4">
+
+      </div>
     </>
   );
 };
