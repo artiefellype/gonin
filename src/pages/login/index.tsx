@@ -56,12 +56,12 @@ const Login = () => {
       </div>
     </>
   ) : (
-    <>
+    <div className="flex bg-slate-200 justify-center items-center">
       <Head>
         <title>Login</title>
       </Head>
       <SignInScreen loading={setIsLoading} loginWithGoogle={handleSignIn} />
-    </>
+    </div>
   );
 };
 
