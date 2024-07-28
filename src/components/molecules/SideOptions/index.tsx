@@ -91,8 +91,8 @@ export const SideOptions = ({ children, items }: Props) => {
       </Sider>
       <Layout>
         <Content
-          className={`min-h-screen relative flex justify-center items-center flex-col`}
-          style={{ backgroundColor: '#D6D6D6', paddingRight: '1rem'}}
+          className={`min-h-screen relative flex justify-center items-start flex-row gap-4`}
+          style={{ backgroundColor: '#D6D6D6'}}
         >
           {children}
         </Content>

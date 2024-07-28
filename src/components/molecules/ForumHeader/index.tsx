@@ -54,7 +54,7 @@ export const ForumHeader = ({ isMobile }: Props) => {
               trigger={
                 <MenuButton
                   className="flex flex-row gap-3 items-center rounded-full p-2 hover:bg-secondary"
-                  user={user as User}
+                  user={userInfo}
                 />
               }
               content={

@@ -12,6 +12,8 @@ import {
   getAuth,
   signInWithPopup,
   signOut,
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword
 } from "firebase/auth";
 import { onAuthStateChanged } from "firebase/auth";
 import { fireApp as app, firestore } from "@/firebase/firebase";
@@ -29,6 +31,8 @@ export type UserContextType = {
   signIn: () => Promise<void>;
   signOut: () => Promise<void>;
   getUserFromLocalStorage: () => string | null;
+  signInWithEmail: (email: string, password: string) => Promise<void>,
+  signUpWithEmail: (userName: string, email: string, password: string) => Promise<void>
 };
 
 export const UserFiveContext = createContext({} as UserContextType);
@@ -90,6 +94,60 @@ export const UserContextProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  const signInWithEmail = async (email: string, password: string) => {
+    try {
+      const credential = await signInWithEmailAndPassword(auth, email, password);
+      const token = await credential.user.getIdTokenResult();
+
+      setCookie(null, "userId", credential.user.uid, {
+        maxAge: 30 * 24 * 60 * 60, // 30 dias
+        path: "/", 
+      });
+
+      setCookie(null, "gonin_token", token.token, {
+        maxAge: 30 * 24 * 60 * 60, // 30 dias
+        path: "/",
+      });
+    } catch (err: any) {
+      console.error(err.code, ": ", err.message);
+      throw err
+    }
+  };
+
+
+  const signUpWithEmail = async (userName: string, email: string, password: string) => {
+    try {
+      const credential = await createUserWithEmailAndPassword(auth, email, password);
+      const token = await credential.user.getIdTokenResult();
+      const tempName = credential.user.email?.split("@")[0]
+
+      const userDocRef = doc(firestore, "users", credential.user.uid);
+      await setDoc(userDocRef, {
+        uid: credential.user.uid,
+        displayName: credential.user.displayName || userName || tempName || "",
+        email: credential.user.email,
+        photoURL: credential.user.photoURL || "",
+        createdAt: new Date().toISOString(),
+        tag: '',
+        posts: [],
+        member: false
+      });
+
+      setCookie(null, "userId", credential.user.uid, {
+        maxAge: 30 * 24 * 60 * 60, // 30 dias
+        path: "/", 
+      });
+
+      setCookie(null, "gonin_token", token.token, {
+        maxAge: 30 * 24 * 60 * 60, // 30 dias
+        path: "/",
+      });
+    } catch (err: any) {
+      console.error(err.code, ": ", err.message);
+      return err
+    }
+  };
+
   const signOutHandler = async () => {
     await signOut(auth);
     destroyCookie(null, "gonin_token", { path: '/' });
@@ -107,7 +165,9 @@ export const UserContextProvider = ({ children }: { children: ReactNode }) => {
     user,
     signIn: signInHandler,
     signOut: signOutHandler,
-    getUserFromLocalStorage: getUserFromLocalStorage
+    getUserFromLocalStorage: getUserFromLocalStorage,
+    signInWithEmail: signInWithEmail,
+    signUpWithEmail: signUpWithEmail
   };
 
   
