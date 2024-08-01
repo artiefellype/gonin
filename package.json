@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "postbuild": "next-sitemap",
     "start": "next start",
     "lint": "next lint"
   },
@@ -21,6 +22,7 @@
     "eslint-config-next": "13.4.19",
     "firebase": "^10.2.0",
     "next": "13.4.19",
+    "next-sitemap": "^4.2.3",
     "nookies": "^2.5.2",
     "postcss": "8.4.28",
     "react": "18.2.0",
