@@ -1,0 +1,9 @@
+# *
+User-agent: *
+Allow: /
+
+# Host
+Host: https://gonin.vercel.app
+
+# Sitemaps
+Sitemap: https://gonin.vercel.app/sitemap.xml
