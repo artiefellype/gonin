@@ -75,7 +75,7 @@ const ForumContainer = ({ posts, loading, fetch, setPosts }: HomeProps) => {
   }, [posts]);
 
   return (
-    <div className="md:w-full w-screen px-3 md:px-0 min-h-screen md:max-w-4xl flex flex-col items-center gap-y-5 pb-5 relative">
+    <div className="md:w-full w-screen min-h-screen md:max-w-4xl flex flex-col items-center gap-y-5 pb-5 relative">
       {loading && <CardSkeleton />}
       {!loading && foundPosts.length !== 0 ? (
         foundPosts.map((item) => {
@@ -92,9 +92,14 @@ const ForumContainer = ({ posts, loading, fetch, setPosts }: HomeProps) => {
         })
       ) : (
         <div className="mt-4 font-semibold text-base text-center">
-          Nada para ver aqui :/
+          
         </div>
       )}
+      { !loading && foundPosts.length !== 0 && 
+        <div className="mt-4 font-semibold text-base text-center">
+          Nada para ver aqui /:
+        </div>
+      }
     </div>
   );
 };

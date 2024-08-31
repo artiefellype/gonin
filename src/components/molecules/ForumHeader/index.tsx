@@ -48,7 +48,7 @@ export const ForumHeader = ({ isMobile }: Props) => {
           <h1 className="font-extrabold text-3xl text-primary ">GONIN</h1>
         </div>
         {!isMobile ? (
-          <div className="flex flex-row gap-2">
+          <div className="flex flex-row gap-2 mx-4">
             <CustomPopover
               width={'100%'}
               trigger={
@@ -75,7 +75,7 @@ export const ForumHeader = ({ isMobile }: Props) => {
           </div>
         ) : (
           <div className="flex flex-row">
-            <div className="w-10 h-10 flex justify-center items-center">
+            <div className="w-10 h-10 flex justify-center items-center mx-4">
               <CustomPopover
                 trigger={
                   <Image

@@ -48,7 +48,7 @@ export const LayoutForum = ({ children }: Props) => {
         <title>Tópicos</title>
       </Head>
       {/* desk */}
-      <div className="w-screen bg-background hidden md:flex flex-col items-center">
+      <div className="w-screen bg-background hidden md:flex flex-col items-center ">
         <ForumHeader isMobile={false} />
         <SideOptions items={items}>{children}</SideOptions>
       </div>
