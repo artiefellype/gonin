@@ -27,7 +27,7 @@ export const ForumComposerArea = ({
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [title, setTitle] = useState<string>("");
   const [hasTitle, setHasTitle] = useState<boolean>(false);
-  const [userPhotoUrl, setUserPhotoUrl] = useState("");
+  const [userPhotoUrl, setUserPhotoUrl] = useState("/imgs/default_perfil.jpg");
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
   const fetchUserLoggedInfo = async (id: string) => {
@@ -35,7 +35,7 @@ export const ForumComposerArea = ({
     try {
       const response = await UserServices.getUserById(id);
       setUserInfo(response);
-      setUserPhotoUrl(response?.photoURL);
+      setUserPhotoUrl(response.photoURL);
       setLoadingUser(false);
       return response;
     } catch (error: any) {
@@ -64,11 +64,14 @@ export const ForumComposerArea = ({
   const handleSubmit = async () => {
     setIsSubmitting(true);
     let mediaFileUrl = "";
-    const uniqueId = Date.now(); 
+    const uniqueId = Date.now();
 
     try {
       if (selectedFile) {
-        const fileRef = ref(storage, `forum-images/${uniqueId}-${selectedFile.name}`);
+        const fileRef = ref(
+          storage,
+          `forum-images/${uniqueId}-${selectedFile.name}`
+        );
         await uploadBytes(fileRef, selectedFile);
         mediaFileUrl = await getDownloadURL(fileRef);
       }
@@ -115,7 +118,7 @@ export const ForumComposerArea = ({
 
   useEffect(() => {
     fetchUserLoggedInfo(user?.user?.uid as string);
-  }, []);
+  }, [user]);
 
   useEffect(() => {
     if (textareaRef.current) {
@@ -127,7 +130,7 @@ export const ForumComposerArea = ({
   return (
     <div className="w-full md:max-w-2xl h-auto bg-white rounded-lg p-2 flex flex-row">
       <div className="flex rounded-full m-2 bg-gray-500 w-full max-w-[2.5rem] h-10">
-        {!loadingUser ? (
+        {!loadingUser && (
           <Image
             className="rounded-full min-w-full"
             src={userPhotoUrl}
@@ -136,8 +139,11 @@ export const ForumComposerArea = ({
             height={40}
             priority
           />
-        ) : (
-          <div className="rounded-full min-w-full bg-slate-500 animate-pulse"></div>
+        )}
+        {loadingUser && (
+          <div className="rounded-full w-full min-w-full max-w-[2.5rem] h-10 animate-pulse">
+            <div className="w-10 h-10 rounded-full bg-slate-400"></div>
+          </div>
         )}
       </div>
 

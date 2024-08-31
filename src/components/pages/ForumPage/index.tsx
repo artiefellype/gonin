@@ -6,6 +6,7 @@ import { postsServices } from "@/services/postServices";
 import { GetServerSideProps } from "next";
 import { parseCookies } from "nookies";
 import Link from "next/link";
+import { ForumComposerArea } from "@/components/molecules/ForumComposer";
 
 export const ForumPage = () => {
   const [posts, setPosts] = useState<PostProps[]>([]);
@@ -34,13 +35,10 @@ export const ForumPage = () => {
   return (
     <>
       <div className="flex justify-center items-start flex-col w-full">
-        <div className="w-full h-8 my-4 flex justify-center items-center">
-          <Link
-            href={"/topics"}
-            className="w-full h-8 bg-slate-700  rounded-2xl max-w-[250px] text-whiteColor font-semibold text-sm px-4 py-1 hover:bg-slate-600 flex justify-center items-center hover:text-slate-100 delay-75 transition-colors"
-          >
-            Comece uma nova discussão
-          </Link>
+        <div className="w-full mb-4 mt-11 flex justify-center items-center">
+          <ForumComposerArea 
+          tag={"espaco-livre"}
+          fetchNewPosts={fetchPosts} />
         </div>
         <ForumContainer
           posts={posts}
