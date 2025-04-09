@@ -28,12 +28,12 @@ export const AuthForm = ({
         <CustomInput label={item.title} {...item} key={idx}/>
       ))}
 
-      {error && <p className="text-red-500 text-[12px] px-2">{error}</p>}
+      {error && <p className="text-red-500 text-xs px-2">{error}</p>}
 
       {!isRegistered && (
         <button
           type="submit"
-          className="border-slate-600 mt-4 text-base lg:max-w-[320px] border-solid border-2 w-full h-11 rounded-3xl flex flex-row justify-center items-center gap-2 hover:text-slate-900 hover:bg-slate-300 transition-all duration-400 ease-in-out font-semibold"
+          className="border-slate-600 mt-4 text-base max-w-[320px] border-solid border-2 w-80 h-9 rounded-2xl flex flex-row justify-center items-center gap-2 hover:text-slate-900 hover:bg-slate-300 transition-all duration-400 ease-in-out font-semibold"
           disabled={OnSubmitLoading}
         >
           {!OnSubmitLoading ? (
