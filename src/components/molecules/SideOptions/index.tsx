@@ -52,7 +52,7 @@ export const SideOptions = ({ children, items }: Props) => {
           marginBottom: 10,
         },
         icon: Icon ? (
-          <Icon size={24} className="mr-1 fill-primary" />
+          <Icon size={20} className="mr-1 fill-primary" />
         ) : null,
         children,
         label: to ? <Link href={to}>{label}</Link> : label,
