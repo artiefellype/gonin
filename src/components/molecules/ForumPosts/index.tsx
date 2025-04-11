@@ -2,7 +2,7 @@ import { useUserContext } from "@/context";
 import { formatDate } from "@/services/utils/formaters";
 import { PostProps } from "@/types";
 import Image from "next/image";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   FaTrash as TrashIcon,
   FaHeart as LikeIcon,
@@ -35,7 +35,9 @@ export const ForumPosts = ({
   const [liked, setLiked] = useState(false);
   const [likedCount, setLikedCount] = useState(post.likeCount);
   const [isLikeDisabled, setIsLikeDisabled] = useState(false);
+  const [shouldShowButton, setShouldShowButton] = useState(false);
   const [errorImage, setErrorImage] = useState(false);
+  const contentRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -45,6 +47,19 @@ export const ForumPosts = ({
     };
 
     handleUserLiked();
+  }, []);
+
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      const content = contentRef.current;
+      if (content && content.scrollHeight > 520) {
+        setShouldShowButton(true);
+      } else {
+        setShouldShowButton(false);
+      }
+    }, 100);
+  
+    return () => clearTimeout(timeout);
   }, []);
 
   const handleLike = () => {
@@ -90,11 +105,11 @@ export const ForumPosts = ({
           >
             {getTitleFromTag(post.tags[0])}
           </span>
-          {post.pinned && <span
-            className="text-xs bg-cyan-200 text-cyan-800 font-medium me-2 px-2.5 py-1 rounded-full flex flex-row justify-center items-center gap-1"
-          >
-            <FaMapPin size={13} className="fill-cyan-800"/> Fixado
-          </span>}
+          {post.pinned && (
+            <span className="text-xs bg-cyan-200 text-cyan-800 font-medium me-2 px-2.5 py-1 rounded-full flex flex-row justify-center items-center gap-1">
+              <FaMapPin size={13} className="fill-cyan-800" /> Fixado
+            </span>
+          )}
         </div>
         <div className="w-full relative flex flex-row">
           <div className="flex rounded-full m-2 bg-gray-500 w-full max-w-[2.5rem] h-10">
@@ -153,7 +168,10 @@ export const ForumPosts = ({
             </div>
 
             <div className=" flex justify-center items-center">
-              <div className="w-full break-words text-clip mb-3">
+              <div
+                ref={contentRef}
+                className="w-full break-words text-clip mb-3 max-h-[520px] overflow-y-hidden"
+              >
                 {post.title && (
                   <h2 className="font-semibold mb-2 text-base text-gray-800 ">
                     {post.title}
@@ -185,6 +203,16 @@ export const ForumPosts = ({
                 )}
 
                 {errorImage && defaultImageContainerOnError}
+
+                {shouldShowButton && (
+                  <div className="absolute bottom-0 left-0 right-0 mb-8 h-9 backdrop-blur-md bg-white/30 rounded-md">
+                    <div className="flex w-full justify-center items-center h-full">
+                      <p className="font-normal text-sm text-blue-400">
+                        ... ver mais
+                      </p>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 

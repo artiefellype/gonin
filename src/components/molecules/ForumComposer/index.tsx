@@ -10,6 +10,7 @@ import { storage } from "@/firebase/firebase";
 import { postsServices } from "@/services/postServices";
 import { SpinLoad } from "@/components/atoms/SpinLoad";
 import { InputFile } from "@/components/atoms/InputFile";
+import { TbSend2 as SendIcon } from "react-icons/tb";
 
 interface ForumComposerProps {
   tag: string;
@@ -219,11 +220,13 @@ export const ForumComposerArea = ({
           <div className="pr-3 h-7 flex flex-row gap-2">
             {isSubmitting && <SpinLoad />}
             <button
-              className="px-4 py-1 z-10 bg-slate-500 hover:bg-slate-600 transition-colors delay-75 text-whiteColor font-bold text-sm rounded-xl disabled:opacity-50 disabled:cursor-not-allowed"
+              className=" flex flex-row gap-1 justify-center items-center px-4 py-1 z-10 bg-slate-500 hover:bg-slate-600 transition-colors delay-75 text-whiteColor font-bold text-sm rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
               disabled={isSubmitting || !(text.trim() || selectedFile)}
               onClick={handleSubmit}
             >
-              ENVIAR
+              <SendIcon size={16} />
+              <p>ENVIAR</p>
+              
             </button>
           </div>
         </div>

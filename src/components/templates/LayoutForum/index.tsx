@@ -2,7 +2,7 @@ import {
   MenuItemsProps,
   SideOptions,
 } from "@/components/molecules/SideOptions";
-import { Layout } from "antd";
+import { Divider, Layout } from "antd";
 import React from "react";
 import { HiHome } from "react-icons/hi";
 import { MdExplore } from "react-icons/md";
@@ -52,7 +52,6 @@ export const LayoutForum = ({ children }: Props) => {
         <ForumHeader isMobile={false} />
         <SideOptions items={items}>{children}</SideOptions>
       </div>
-
       {/* mobile */}
       <div className="w-screen bg-background flex flex-col md:hidden items-center">
         <ForumHeader isMobile={true} />

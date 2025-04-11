@@ -15,7 +15,9 @@ interface Props {
 export const ForumHeader = ({ isMobile }: Props) => {
   const { signOut, user } = useUserContext();
   const [userInfo, setUserInfo] = useState<UserProps | undefined>(undefined);
-  const [userPhoto, setUserPhoto] = useState<string>("/imgs/default_perfil.jpg");
+  const [userPhoto, setUserPhoto] = useState<string>(
+    "/imgs/default_perfil.jpg"
+  );
   const router = useRouter();
 
   const handleSignOut = async () => {
@@ -32,7 +34,7 @@ export const ForumHeader = ({ isMobile }: Props) => {
           if (fetchedUserInfo.photoURL) {
             setUserPhoto(fetchedUserInfo.photoURL);
           }
-        } catch (error:any) {
+        } catch (error: any) {
           console.error("Error fetching user info:", error.message);
         }
       }
@@ -49,8 +51,12 @@ export const ForumHeader = ({ isMobile }: Props) => {
         </div>
         {!isMobile ? (
           <div className="flex flex-row gap-2 mx-4">
-            <CustomPopover
-              width={'100%'}
+            <MenuButton
+              className="flex flex-row gap-3 items-center rounded-full p-2 hover:bg-secondary"
+              user={userInfo}
+            />
+            {/* <CustomPopover
+              width={"100%"}
               trigger={
                 <MenuButton
                   className="flex flex-row gap-3 items-center rounded-full p-2 hover:bg-secondary"
@@ -59,24 +65,34 @@ export const ForumHeader = ({ isMobile }: Props) => {
               }
               content={
                 <div className="flex flex-col bg-primary rounded-md w-full ">
-                      <button
-                        className=" text-whiteColor px-4 py-2 hover:bg-slate-600 rounded-md flex flex-row gap-2 justify-start items-center"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleSignOut()
-                        }}
-                      >
-                        <FaArrowRightToBracket size={12} className="fill-whiteColor" />
-                        <p>Sair</p>
-                      </button>
-                    </div>
+                  <button
+                    className=" text-whiteColor px-4 py-2 hover:bg-slate-600 rounded-md flex flex-row gap-2 justify-start items-center"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleSignOut();
+                    }}
+                  >
+                    <FaArrowRightToBracket
+                      size={12}
+                      className="fill-whiteColor"
+                    />
+                    <p>Sair</p>
+                  </button>
+                </div>
               }
-            />
+            /> */}
           </div>
         ) : (
           <div className="flex flex-row">
             <div className="w-10 h-10 flex justify-center items-center mx-4">
-              <CustomPopover
+              <Image
+                src={userPhoto}
+                alt={"perfil photo"}
+                width={40}
+                height={40}
+                className="rounded-full"
+              />
+              {/* <CustomPopover
                 trigger={
                   <Image
                     src={userPhoto}
@@ -100,7 +116,7 @@ export const ForumHeader = ({ isMobile }: Props) => {
                       </button>
                     </div>
                 }
-              />
+              /> */}
             </div>
           </div>
         )}
