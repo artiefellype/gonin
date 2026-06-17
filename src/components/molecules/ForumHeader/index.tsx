@@ -44,7 +44,7 @@ export const ForumHeader = ({ isMobile }: Props) => {
   }, [user]);
 
   return (
-    <div className="w-full bg-whiteColor flex items-center justify-center">
+    <div className="sticky top-0 z-40 flex w-full items-center justify-center border-b border-slate-300/70 bg-whiteColor/95 backdrop-blur">
       <div className="w-full max-w-7xl h-[72px] flex justify-between p-4 items-center">
         <div className=" flex md:justify-center">
           <h1 className="font-extrabold text-3xl text-primary ">GONIN</h1>

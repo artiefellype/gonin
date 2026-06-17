@@ -2,10 +2,9 @@ import {
   MenuItemsProps,
   SideOptions,
 } from "@/components/molecules/SideOptions";
-import { Divider, Layout } from "antd";
+import { Layout } from "antd";
 import React from "react";
 import { HiHome } from "react-icons/hi";
-import { MdExplore } from "react-icons/md";
 import { FaComments } from "react-icons/fa";
 import { ForumHeader } from "@/components/molecules/ForumHeader";
 import { ForumFooter } from "@/components/molecules/ForumFooter";
@@ -20,7 +19,7 @@ interface Props {
 export const LayoutForum = ({ children }: Props) => {
   const items: MenuItemsProps[] = [
     {
-      label: "INICIO",
+      label: "INÍCIO",
       icon: HiHome,
       key: "forum",
       path: `/forum`,
@@ -33,35 +32,26 @@ export const LayoutForum = ({ children }: Props) => {
       path: `/topics`,
       show: true,
     },
-    // {
-    //   label: "EXPLORAR",
-    //   icon: MdExplore,
-    //   key: "explore",
-    //   path: `/explore`,
-    //   show: true,
-    // },
   ];
 
   return (
     <Layout>
       <Head>
-        <title>Tópicos</title>
+        <title>Gonin</title>
       </Head>
-      {/* desk */}
-      <div className="w-screen bg-background hidden md:flex flex-col items-center ">
+      <div className="hidden w-screen flex-col items-center bg-background md:flex">
         <ForumHeader isMobile={false} />
         <SideOptions items={items}>{children}</SideOptions>
       </div>
-      {/* mobile */}
-      <div className="w-screen bg-background flex flex-col md:hidden items-center">
+      <div className="flex w-screen flex-col items-center bg-background md:hidden">
         <ForumHeader isMobile={true} />
         <Layout>
           <Content
-            className={`min-h-screen relative flex md:hidden justify-center items-center flex-col`}
+            className="relative flex min-h-screen flex-col items-center justify-start pb-16 md:hidden"
             style={{
-              backgroundColor: "#D6D6D6",
-              paddingLeft: "0.5rem",
-              paddingRight: "0.5rem",
+              backgroundColor: "#F1EBDD",
+              paddingLeft: "0.75rem",
+              paddingRight: "0.75rem",
             }}
           >
             {children}

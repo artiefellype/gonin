@@ -16,6 +16,7 @@ interface ForumComposerProps {
   tag: string;
   fetchNewPosts: () => Promise<void>;
 }
+
 export const ForumComposerArea = ({
   tag,
   fetchNewPosts,
@@ -30,6 +31,7 @@ export const ForumComposerArea = ({
   const [hasTitle, setHasTitle] = useState<boolean>(false);
   const [userPhotoUrl, setUserPhotoUrl] = useState("/imgs/default_perfil.jpg");
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const remainingCharacters = 4096 - text.length;
 
   const fetchUserLoggedInfo = async (id: string) => {
     setLoadingUser(true);
@@ -129,105 +131,144 @@ export const ForumComposerArea = ({
   }, [text]);
 
   return (
-    <div className="w-full md:max-w-2xl h-auto bg-white rounded-lg p-2 flex flex-row">
-      <div className="flex rounded-full m-2 bg-gray-500 w-full max-w-[2.5rem] h-10">
-        {!loadingUser && (
-          <Image
-            className="rounded-full min-w-full"
-            src={userPhotoUrl}
-            alt={"user photo"}
-            width={40}
-            height={40}
-            priority
-          />
-        )}
-        {loadingUser && (
-          <div className="rounded-full w-full min-w-full max-w-[2.5rem] h-10 animate-pulse">
-            <div className="w-10 h-10 rounded-full bg-slate-400"></div>
+    <div className="w-full rounded-lg border border-slate-200 bg-whiteColor p-3 shadow-sm md:p-4">
+      <div className="mb-4 flex items-start justify-between gap-3 border-b border-slate-200 pb-3">
+        <div>
+          <div className="mb-1 flex flex-wrap items-center gap-2">
+            <h2 className="text-base font-bold text-primary">
+              Abrir conversa
+            </h2>
+            <span className="rounded-full bg-accentSoft px-2 py-1 text-[11px] font-semibold text-accent">
+              Espaço livre
+            </span>
           </div>
-        )}
+          <p className="text-xs font-light text-slate-500">
+            Compartilhe uma ideia pequena. Ela pode crescer com as respostas.
+          </p>
+        </div>
       </div>
 
-      <div className="flex flex-col pt-3 w-full">
-        <div className="flex mb-2 flex-col justify-start ">
-          {hasTitle && (
-            <div className="flex flex-row justify-center items-center mb-3">
-              <input
-                className="font-medium text-base text-gray-500 h-8 w-full border-spacing-1 border p-2 focus:outline-none focus:shadow-outline overflow-hidden"
-                id="title"
-                placeholder="Insira um título chamativo..."
-                type="text"
-                value={title}
-                onChange={(e) => {
-                  setTitle(e.target.value);
-                }}
-                maxLength={256}
-              />
-              <button onClick={handleOptionalTitleRemove}>
-                <FaTimes
-                  size={20}
-                  className="fill-slate-500 hover:fill-slate-600"
-                />
-              </button>
-            </div>
+      <div className="flex flex-row gap-3">
+        <div className="flex h-10 w-10 shrink-0 rounded-full bg-gray-500">
+          {!loadingUser && (
+            <Image
+              className="rounded-full object-cover"
+              src={userPhotoUrl}
+              alt={"user photo"}
+              width={40}
+              height={40}
+              priority
+            />
           )}
-          <textarea
-            ref={textareaRef}
-            placeholder="Compartilhe suas ideias..."
-            className="font-medium text-base text-gray-500 min-h-[2.5rem] w-full border-none focus:outline-none focus:shadow-outline overflow-hidden"
-            value={text}
-            onChange={(e) => setText(e.target.value)}
-            maxLength={4096}
-          />
-          {selectedFile && (
-            <div className="mt-4 flex flex-row items-start">
-              <div className="flex flex-col items-start">
-                <Image
-                  className="mt-4 rounded-md"
-                  src={URL.createObjectURL(selectedFile)}
-                  alt="Selected"
-                  width={250}
-                  height={300}
-                  priority
-                />
-              </div>
-              <button onClick={handleFileRemove} className="mt-4">
-                <FaTimes
-                  size={20}
-                  className="fill-slate-500 hover:fill-slate-600"
-                />
-              </button>
-            </div>
+          {loadingUser && (
+            <div className="h-10 w-10 animate-pulse rounded-full bg-slate-400" />
           )}
         </div>
 
-        <div className="flex w-full h-7 flex-row justify-between items-center mt-auto">
-          <div className="flex flex-row gap-1">
-            <InputFile onFileSelect={handleFileSelect} />
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                handleOptionalTitle();
-              }}
-              className="w-5 h-5 z-10"
-            >
-              <FaMarker
-                size={18}
-                className="fill-slate-500 hover:fill-slate-600"
-              />
-            </button>
+        <div className="flex w-full flex-col">
+          <div className="mb-2 flex flex-col justify-start">
+            {hasTitle && (
+              <div className="mb-3 flex flex-row items-center gap-2">
+                <input
+                  className="h-10 w-full rounded-md border border-slate-300 bg-white px-3 text-base font-medium text-gray-700 focus:border-slate-500 focus:outline-none"
+                  id="title"
+                  placeholder="Insira um título chamativo..."
+                  type="text"
+                  value={title}
+                  onChange={(e) => {
+                    setTitle(e.target.value);
+                  }}
+                  maxLength={256}
+                />
+                <button
+                  onClick={handleOptionalTitleRemove}
+                  className="flex h-9 w-9 items-center justify-center rounded-full hover:bg-slate-200"
+                  aria-label="Remover título"
+                >
+                  <FaTimes
+                    size={20}
+                    className="fill-slate-500 hover:fill-slate-600"
+                  />
+                </button>
+              </div>
+            )}
+            <textarea
+              ref={textareaRef}
+              placeholder="O que vale conversar hoje?"
+              className="min-h-[4.5rem] w-full resize-none overflow-hidden border-none bg-transparent text-base font-medium text-gray-700 placeholder:text-slate-400 focus:outline-none"
+              value={text}
+              onChange={(e) => setText(e.target.value)}
+              maxLength={4096}
+            />
+            {selectedFile && (
+              <div className="mt-4 flex flex-row items-start gap-2">
+                <div className="flex max-w-[280px] flex-col items-start rounded-md border border-slate-200 bg-white p-2">
+                  <Image
+                    className="rounded-md object-cover"
+                    src={URL.createObjectURL(selectedFile)}
+                    alt="Selected"
+                    width={250}
+                    height={300}
+                    priority
+                  />
+                  <p className="mt-2 max-w-full truncate text-xs font-medium text-slate-500">
+                    {selectedFile.name}
+                  </p>
+                </div>
+                <button
+                  onClick={handleFileRemove}
+                  className="mt-1 flex h-9 w-9 items-center justify-center rounded-full hover:bg-slate-200"
+                  aria-label="Remover imagem"
+                >
+                  <FaTimes
+                    size={20}
+                    className="fill-slate-500 hover:fill-slate-600"
+                  />
+                </button>
+              </div>
+            )}
           </div>
-          <div className="pr-3 h-7 flex flex-row gap-2">
-            {isSubmitting && <SpinLoad />}
-            <button
-              className=" flex flex-row gap-1 justify-center items-center px-4 py-1 z-10 bg-slate-500 hover:bg-slate-600 transition-colors delay-75 text-whiteColor font-bold text-sm rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
-              disabled={isSubmitting || !(text.trim() || selectedFile)}
-              onClick={handleSubmit}
-            >
-              <SendIcon size={16} />
-              <p>ENVIAR</p>
-              
-            </button>
+
+          <div className="mt-2 flex w-full flex-col gap-3 border-t border-slate-200 pt-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex flex-row items-center gap-2">
+              <InputFile onFileSelect={handleFileSelect} />
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleOptionalTitle();
+                }}
+                className={`z-10 flex h-8 items-center justify-center gap-2 rounded-full px-3 text-xs font-semibold transition-colors ${
+                  hasTitle
+                    ? "bg-accentSoft text-accent"
+                    : "text-slate-600 hover:bg-accentSoft"
+                }`}
+                aria-label="Adicionar título"
+              >
+                <FaMarker
+                  size={14}
+                  className="fill-slate-500 hover:fill-slate-600"
+                />
+                <span>Título</span>
+              </button>
+            </div>
+            <div className="flex flex-row items-center justify-between gap-3 sm:justify-end">
+              <span
+                className={`text-xs font-medium ${
+                  remainingCharacters < 120 ? "text-red-500" : "text-slate-500"
+                }`}
+              >
+                {remainingCharacters}
+              </span>
+              {isSubmitting && <SpinLoad />}
+              <button
+                className="z-10 flex h-9 flex-row items-center justify-center gap-2 rounded-full bg-accent px-4 text-sm font-bold text-whiteColor transition-colors delay-75 hover:bg-primary disabled:cursor-not-allowed disabled:opacity-50"
+                disabled={isSubmitting || !(text.trim() || selectedFile)}
+                onClick={handleSubmit}
+              >
+                <SendIcon size={16} />
+                <p>Enviar</p>
+              </button>
+            </div>
           </div>
         </div>
       </div>

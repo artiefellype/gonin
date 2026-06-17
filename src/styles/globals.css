@@ -5,7 +5,7 @@
 
 :root {
   --foreground-rgb: 0, 0, 0;
-  --background-color: #D6D6D6;
+  --background-color: #F1EBDD;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -26,7 +26,7 @@ body {
 }
 
 .ant-menu-item-selected {
-  background-color: #F8F8F8 !important;
+  background-color: #FFFDF6 !important;
 }
 
 ::-webkit-scrollbar {
@@ -35,17 +35,58 @@ body {
 
 /* Fundo da barra de rolagem */
 ::-webkit-scrollbar-track {
-  background: #f1f1f1;
+  background: #F1EBDD;
 }
 
 /* Cor da barra de rolagem */
 ::-webkit-scrollbar-thumb {
-  background-color: #888;
+  background-color: #B8AA93;
   border-radius: 10px;
-  border: 3px solid #f1f1f1;
+  border: 3px solid #F1EBDD;
 }
 
 /* Cor da barra de rolagem quando está sendo ativa */
 ::-webkit-scrollbar-thumb:hover {
-  background: #555;
+  background: #7B6A52;
+}
+
+@keyframes goninFadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes goninFloat {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+.gonin-fade-up,
+.gonin-reveal {
+  animation: goninFadeUp 700ms ease both;
+}
+
+.gonin-delay-1 {
+  animation-delay: 140ms;
+}
+
+.gonin-float {
+  animation: goninFloat 4.5s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gonin-fade-up,
+  .gonin-reveal,
+  .gonin-float {
+    animation: none;
+  }
 }

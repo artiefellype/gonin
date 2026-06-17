@@ -1,9 +1,7 @@
 import { useUserContext } from "@/context";
-import { Divider, Layout, Menu, MenuProps } from "antd";
-import Sider from "antd/es/layout/Sider";
 import Link from "next/link";
 import { useRouter } from "next/router";
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useMemo } from "react";
 import { IconType } from "react-icons";
 import { TbLogin as LogoutIcon } from "react-icons/tb";
 
@@ -21,55 +19,16 @@ interface Props {
   items: MenuItemsProps[];
 }
 
-type MenuItem = Required<MenuProps>["items"][number];
-
 export const SideOptions = ({ children, items }: Props) => {
   const { signOut } = useUserContext();
-  const [sideBarItemsm, stateSetSideBarItemsm] = useState<MenuItem[]>([]);
-  const { Sider, Content } = Layout;
-
   const router = useRouter();
 
   const activePath = useMemo(() => {
-    if (router.pathname === "/") return;
-
     const paths = router.pathname.split("/");
+    return paths[1] || "forum";
+  }, [router.pathname]);
 
-    return paths[1];
-  }, [router.pathname]) as string;
-
-  function getItem({
-    label,
-    children,
-    icon: Icon,
-    show = true,
-    key,
-    path: to,
-  }: MenuItemsProps): MenuItem | undefined {
-    if (show)
-      return {
-        key,
-        style: {
-          fontSize: "16px",
-          color: "#374151",
-          marginBottom: 10,
-        },
-        icon: Icon ? <Icon size={20} className="mr-1 fill-primary" /> : null,
-        children,
-        label: to ? <Link href={to}>{label}</Link> : label,
-      } as MenuItem;
-  }
-
-  useEffect(() => {
-    if (items?.length === 0) return;
-    const sideBarItems = items?.map((item) => {
-      return getItem(item);
-    });
-
-    if (!sideBarItems) return;
-
-    stateSetSideBarItemsm(sideBarItems as MenuItem[]);
-  }, [items]);
+  const visibleItems = items.filter((item) => item.show !== false);
 
   const handleLogout = async () => {
     await signOut();
@@ -77,39 +36,57 @@ export const SideOptions = ({ children, items }: Props) => {
   };
 
   return (
-    <Layout className="max-w-7xl w-full">
-      <Sider trigger={null} width={250} style={{}}>
-        <div className="h-full w-full bg-background pt-10">
-          <Menu
-            mode="inline"
-            defaultSelectedKeys={[activePath]}
-            defaultOpenKeys={[activePath]}
-            className=" border-none rounded-lg"
-            style={{
-              backgroundColor: "#D6D6D6",
-              borderRight: 0,
-              borderLeft: 0,
-            }}
-            items={sideBarItemsm}
-          />
-          <Divider />
-          <button
-            onClick={handleLogout}
-            className="hover:bg-gray-100 transition-all delay-75 cursor-pointer w-[250px] h-10 rounded-md flex justify-start px-6 py-4 items-center "
-          >
-            <LogoutIcon size={24} className="mr-2 " color="#374151" />
-            <p className="text-[#374151] text-base">SAIR</p>
-          </button>
+    <div className="flex w-full max-w-7xl bg-background md:h-[calc(100vh-72px)] md:overflow-hidden">
+      <aside className="hidden w-[240px] shrink-0 md:block">
+        <div className="flex h-full flex-col justify-between overflow-y-auto pr-4 pt-6">
+          <nav className="rounded-lg bg-whiteColor p-3 shadow-sm">
+            <p className="px-3 pb-3 text-xs font-bold uppercase text-slate-500">
+              Navegação
+            </p>
+            <div className="flex flex-col gap-1">
+              {visibleItems.map(({ key, path, label, icon: Icon }) => {
+                const isActive = key === activePath;
+
+                return (
+                  <Link
+                    key={String(key)}
+                    href={path || "#"}
+                    className={`flex h-11 items-center gap-3 rounded-md px-3 text-base font-semibold transition-colors ${
+                      isActive
+                        ? "bg-accent text-whiteColor"
+                        : "text-primary hover:bg-accentSoft"
+                    }`}
+                  >
+                    {Icon && (
+                      <Icon
+                        size={20}
+                        className={
+                          isActive ? "fill-whiteColor" : "fill-primary"
+                        }
+                      />
+                    )}
+                    <span>{label}</span>
+                  </Link>
+                );
+              })}
+            </div>
+          </nav>
+
+          <div className="rounded-lg bg-whiteColor p-3 shadow-sm">
+            <button
+              onClick={handleLogout}
+              className="flex h-11 w-full items-center gap-3 rounded-md px-3 text-base font-semibold text-primary transition-colors hover:bg-accentSoft"
+            >
+              <LogoutIcon size={22} />
+              <span>Sair</span>
+            </button>
+          </div>
         </div>
-      </Sider>
-      <Layout>
-        <Content
-          className={`min-h-screen relative flex justify-center items-start flex-row gap-4`}
-          style={{ backgroundColor: "#D6D6D6" }}
-        >
-          {children}
-        </Content>
-      </Layout>
-    </Layout>
+      </aside>
+
+      <main className="relative flex min-h-0 min-w-0 flex-1 flex-row items-start justify-center gap-4 bg-background">
+        {children}
+      </main>
+    </div>
   );
 };

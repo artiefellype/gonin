@@ -75,9 +75,9 @@ const ForumContainer = ({ posts, loading, fetch, setPosts }: HomeProps) => {
   }, [posts]);
 
   return (
-    <div className="md:w-full w-screen min-h-screen md:max-w-4xl flex flex-col items-center gap-y-5 pb-5 relative">
-      {loading && <CardSkeleton />}
-      {!loading && foundPosts.length !== 0 ? (
+    <div className="flex min-h-screen w-full flex-col gap-4 pb-5">
+      {loading && posts.length === 0 && <CardSkeleton />}
+      {!loading && foundPosts.length !== 0 &&
         foundPosts.map((item) => {
           return (
             <ForumPosts
@@ -89,17 +89,22 @@ const ForumContainer = ({ posts, loading, fetch, setPosts }: HomeProps) => {
               hasLiked={handleHasUserLiked}
             />
           );
-        })
-      ) : (
-        <div className="mt-4 font-semibold text-base text-center">
-          
+        })}
+      {!loading && foundPosts.length === 0 && (
+        <div className="rounded-lg bg-whiteColor p-8 text-center shadow-sm">
+          <h2 className="text-lg font-bold text-primary">
+            Nenhuma conversa por aqui ainda.
+          </h2>
+          <p className="mt-2 text-sm font-light text-slate-600">
+            Seja a primeira pessoa a abrir uma ideia no feed.
+          </p>
         </div>
       )}
-      { !loading && foundPosts.length !== 0 && 
-        <div className="mt-4 font-semibold text-base text-center">
-          Nada para ver aqui /:
+      {!loading && foundPosts.length !== 0 && (
+        <div className="py-6 text-center text-sm font-semibold text-slate-500">
+          Você chegou ao fim por enquanto.
         </div>
-      }
+      )}
     </div>
   );
 };

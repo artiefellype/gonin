@@ -56,7 +56,7 @@ const Login = () => {
       </div>
     </>
   ) : (
-    <div className="flex bg-slate-200 justify-center items-center">
+    <div className="flex min-h-screen bg-background justify-center items-center">
       <Head>
         <title>Login</title>
       </Head>

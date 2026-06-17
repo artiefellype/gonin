@@ -15,16 +15,17 @@ const config: Config = {
         'animb': "url('/imgs/cute-four-leaf.png')"
       },
       colors: {
-        primary: '#374151',
-        secondary: '#CECECE',
-        whiteColor: '#F8F8F8',
-        background: '#D6D6D6',
-        
+        primary: '#2D2B26',
+        secondary: '#DED4C2',
+        whiteColor: '#FFFDF6',
+        background: '#F1EBDD',
+        accent: '#52665A',
+        accentSoft: '#E4E9DD',
       },
       keyframes: {
         blink: {
-          '0%, 100%': { fill: '#ba01ff' },
-          '50%': { fill: '#228dff' },
+          '0%, 100%': { fill: '#52665A' },
+          '50%': { fill: '#8A6F45' },
         },
       },
       animation: {
