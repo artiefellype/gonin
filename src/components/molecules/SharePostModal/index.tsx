@@ -43,6 +43,8 @@ export const SharePostModal = ({
 
   const isVideo =
     post.mediaType === "video" || post.mediaFile?.includes("/video/upload/");
+  const authorName = post.user?.displayName || post.user?.username || "Usuário";
+  const authorHandle = post.user?.username ? `@${post.user.username}` : "";
 
   const handleSubmit = async () => {
     if (status === "loading" || status === "success" || loading) return;
@@ -78,14 +80,14 @@ export const SharePostModal = ({
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[80] flex items-end justify-center bg-black/70 px-3 pb-3 backdrop-blur-sm sm:items-center sm:p-4"
+      className="fixed inset-0 z-[120] flex items-end justify-center overflow-hidden bg-black/70 px-2 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-[max(0.75rem,env(safe-area-inset-top))] backdrop-blur-sm sm:items-center sm:p-4"
       onClick={handleClose}
     >
       <section
-        className="max-h-[92svh] w-full max-w-xl overflow-hidden rounded-2xl border border-borderDark bg-background shadow-2xl"
+        className="flex max-h-[calc(100svh-1.5rem)] w-full max-w-xl flex-col overflow-hidden rounded-t-2xl border border-borderDark bg-background shadow-2xl sm:max-h-[92svh] sm:rounded-2xl"
         onClick={(event) => event.stopPropagation()}
       >
-        <header className="flex h-14 items-center justify-between border-b border-borderDark px-4">
+        <header className="flex h-14 shrink-0 items-center justify-between border-b border-borderDark px-4">
           <h2 className="text-base font-semibold text-primary">
             Compartilhar conversa
           </h2>
@@ -100,7 +102,7 @@ export const SharePostModal = ({
           </button>
         </header>
 
-        <div className="max-h-[calc(92svh-116px)] overflow-y-auto p-3 sm:p-4">
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-3 sm:p-4">
           <textarea
             value={text}
             onChange={(event) => setText(event.target.value)}
@@ -134,12 +136,19 @@ export const SharePostModal = ({
 
           <article className="mt-4 overflow-hidden rounded-xl border border-borderDark bg-panel sm:rounded-2xl">
             <div className="p-3">
-              <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm">
-                <span className="font-semibold text-primary">
-                  {post.user?.displayName || "Usuário"}
+              <div className="min-w-0">
+                <span className="block truncate text-sm font-semibold text-primary">
+                  {authorName}
                 </span>
-                <span className="text-mutedText">·</span>
-                <span className="text-mutedText">{formatDate(post.createdAt)}</span>
+                <div className="mt-0.5 flex min-w-0 flex-wrap items-center gap-x-1.5 text-xs text-mutedText">
+                  {authorHandle && (
+                    <>
+                      <span className="truncate">{authorHandle}</span>
+                      <span>·</span>
+                    </>
+                  )}
+                  <span className="shrink-0">{formatDate(post.createdAt)}</span>
+                </div>
               </div>
               {post.title && (
                 <h3 className="mt-2 text-sm font-semibold text-primary">
@@ -172,7 +181,7 @@ export const SharePostModal = ({
           </article>
         </div>
 
-        <footer className="flex items-center justify-end gap-2 border-t border-borderDark px-3 py-3 sm:gap-3 sm:px-4">
+        <footer className="grid shrink-0 grid-cols-2 gap-2 border-t border-borderDark px-3 py-3 sm:flex sm:items-center sm:justify-end sm:gap-3 sm:px-4">
           <button
             type="button"
             onClick={handleClose}

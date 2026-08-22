@@ -195,9 +195,9 @@ export const TopicsPage = () => {
       </div>
 
       {modalOpen && (
-        <div className="fixed inset-0 z-[80] flex items-end justify-center bg-black/70 px-3 pb-3 backdrop-blur-sm sm:items-center sm:p-4">
-          <section className="max-h-[92svh] w-full max-w-lg overflow-hidden rounded-2xl border border-borderDark bg-background shadow-2xl">
-            <header className="flex h-14 items-center justify-between border-b border-borderDark px-4">
+        <div className="fixed inset-0 z-[120] flex items-end justify-center overflow-hidden bg-black/70 px-2 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-[max(0.75rem,env(safe-area-inset-top))] backdrop-blur-sm sm:items-center sm:p-4">
+          <section className="flex max-h-[calc(100svh-1.5rem)] w-full max-w-lg flex-col overflow-hidden rounded-t-2xl border border-borderDark bg-background shadow-2xl sm:max-h-[92svh] sm:rounded-2xl">
+            <header className="flex h-14 shrink-0 items-center justify-between border-b border-borderDark px-4">
               <h2 className="text-base font-semibold text-primary">
                 Criar comunidade
               </h2>
@@ -211,7 +211,7 @@ export const TopicsPage = () => {
               </button>
             </header>
 
-            <form onSubmit={handleCreateCommunity} className="max-h-[calc(92svh-56px)] overflow-y-auto p-4">
+            <form onSubmit={handleCreateCommunity} className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-4">
               <label className="mb-4 flex cursor-pointer items-center gap-4 rounded-xl border border-borderDark bg-panel p-3 transition-colors hover:border-accent">
                 <div className="grid h-16 w-16 shrink-0 place-items-center overflow-hidden rounded-xl bg-secondary text-accent">
                   {iconPreview ? (
@@ -289,7 +289,7 @@ export const TopicsPage = () => {
                 </p>
               )}
 
-              <footer className="mt-5 flex items-center justify-end gap-3">
+              <footer className="mt-5 grid grid-cols-2 gap-2 sm:flex sm:items-center sm:justify-end sm:gap-3">
                 <button
                   type="button"
                   onClick={handleCloseModal}

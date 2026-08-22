@@ -262,6 +262,17 @@ export const PostPage = ({ postIdUrl }: PostPageProps) => {
         color: "#82ABFF",
       }
     : undefined;
+  const ownerDisplayName =
+    userOwnerInfo?.displayName || userOwnerInfo?.username || "Usuário";
+  const ownerHandle = userOwnerInfo?.username
+    ? `@${userOwnerInfo.username}`
+    : "";
+  const originalAuthor = post?.originalPost?.user || post?.originalUser;
+  const originalAuthorDisplayName =
+    originalAuthor?.displayName || originalAuthor?.username || "Usuário";
+  const originalAuthorHandle = originalAuthor?.username
+    ? `@${originalAuthor.username}`
+    : "";
 
   const defaultImageContainerOnError = (
     <div className="flex h-56 w-full flex-col items-center justify-center gap-3 rounded-lg border border-borderDark bg-secondary p-4">
@@ -363,16 +374,16 @@ export const PostPage = ({ postIdUrl }: PostPageProps) => {
                   <div className="min-w-0">
                     <Link
                       href={`/profile/${post.userId}`}
-                      className="flex items-center gap-1 text-base font-semibold text-primary transition-colors hover:text-accent"
+                      className="flex min-w-0 items-center gap-1 text-base font-semibold text-primary transition-colors hover:text-accent"
                     >
-                      {userOwnerInfo?.displayName}
+                      <span className="truncate">{ownerDisplayName}</span>
                       {userOwnerInfo?.tag ? (
                         <FaRocket className="animate-blinkAnimation" />
                       ) : null}
                     </Link>
-                    {userOwnerInfo?.tag ? (
-                      <p className="text-sm text-mutedText">
-                        @{userOwnerInfo.tag}
+                    {ownerHandle ? (
+                      <p className="truncate text-sm text-mutedText">
+                        {ownerHandle}
                       </p>
                     ) : null}
                   </div>
@@ -437,8 +448,8 @@ export const PostPage = ({ postIdUrl }: PostPageProps) => {
                     className="mt-4 w-full overflow-hidden rounded-xl border border-borderDark bg-background text-left transition-colors hover:border-accent sm:rounded-2xl"
                   >
                     <div className="px-3 py-2">
-                      <div className="flex min-w-0 items-center gap-2 text-sm">
-                        <div className="h-7 w-7 overflow-hidden rounded-full bg-secondary">
+                      <div className="flex min-w-0 items-start gap-2">
+                        <div className="h-7 w-7 shrink-0 overflow-hidden rounded-full bg-secondary">
                           <Image
                             src={
                               post.originalPost.user?.photoURL ||
@@ -450,13 +461,24 @@ export const PostPage = ({ postIdUrl }: PostPageProps) => {
                             className="h-full w-full object-cover"
                           />
                         </div>
-                        <span className="truncate font-semibold text-primary">
-                          {post.originalPost.user?.displayName || "Usuário"}
-                        </span>
-                        <span className="text-mutedText">·</span>
-                        <span className="shrink-0 text-mutedText">
-                          {formatDate(post.originalPost.createdAt)}
-                        </span>
+                        <div className="min-w-0">
+                          <span className="block truncate text-sm font-semibold text-primary">
+                            {originalAuthorDisplayName}
+                          </span>
+                          <div className="mt-0.5 flex min-w-0 flex-wrap items-center gap-x-1.5 text-xs text-mutedText">
+                            {originalAuthorHandle && (
+                              <>
+                                <span className="truncate">
+                                  {originalAuthorHandle}
+                                </span>
+                                <span>·</span>
+                              </>
+                            )}
+                            <span className="shrink-0">
+                              {formatDate(post.originalPost.createdAt)}
+                            </span>
+                          </div>
+                        </div>
                       </div>
                       {post.originalPost.title && (
                         <h3 className="mt-1 text-base font-semibold leading-6 text-primary">

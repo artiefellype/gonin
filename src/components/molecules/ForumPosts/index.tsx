@@ -199,6 +199,15 @@ export const ForumPosts = ({
 
   if (!post.user) return null;
 
+  const authorName = post.user.displayName || post.user.username || "Usuário";
+  const authorHandle = post.user.username ? `@${post.user.username}` : "";
+  const originalAuthor = post.originalPost?.user || post.originalUser;
+  const originalAuthorName =
+    originalAuthor?.displayName || originalAuthor?.username || "Usuário";
+  const originalAuthorHandle = originalAuthor?.username
+    ? `@${originalAuthor.username}`
+    : "";
+
   return (
     <article
       className="w-full border-b border-borderDark bg-background/70 px-3 py-3 transition-colors hover:cursor-pointer md:bg-background md:px-4 md:hover:bg-secondary/30"
@@ -224,25 +233,32 @@ export const ForumPosts = ({
         <div className="min-w-0 flex-1">
           <div className="flex min-w-0 items-start justify-between gap-3">
             <div className="min-w-0">
-              <div className="flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-1">
+              <div className="flex min-w-0 flex-col">
                 <Link
                   href={`/profile/${post.userId}`}
                   className="flex min-w-0 items-center gap-1 text-[15px] font-semibold text-primary transition-colors hover:text-accent"
                   onClick={(event) => event.stopPropagation()}
                 >
-                  <span className="truncate">{post.user.displayName}</span>
+                  <span className="truncate">{authorName}</span>
                   {post.user.tag ? (
                     <span className="mt-0.5">
                       <FaRocket className="animate-blinkAnimation" />
                     </span>
                   ) : null}
                 </Link>
-                <span className="text-sm text-mutedText">·</span>
-                <span className="text-sm text-mutedText">
-                  {formatDate(post.createdAt)}
-                </span>
+                <div className="mt-0.5 flex min-w-0 flex-wrap items-center gap-x-1.5 text-xs text-mutedText">
+                  {authorHandle && (
+                    <>
+                      <span className="truncate">{authorHandle}</span>
+                      <span>·</span>
+                    </>
+                  )}
+                  <span className="shrink-0">
+                    {formatDate(post.createdAt)}
+                  </span>
+                </div>
               </div>
-              <div className="mt-0.5 flex flex-wrap items-center gap-2 text-sm text-mutedText">
+              <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-mutedText">
                 {post.postType === "share" && (
                   <span className="font-medium text-accent">
                     compartilhou uma conversa
@@ -319,8 +335,8 @@ export const ForumPosts = ({
                 }}
               >
                 <div className="px-3 py-2">
-                  <div className="flex min-w-0 items-center gap-2 text-sm">
-                    <div className="h-6 w-6 overflow-hidden rounded-full bg-secondary">
+                  <div className="flex min-w-0 items-start gap-2">
+                    <div className="h-6 w-6 shrink-0 overflow-hidden rounded-full bg-secondary">
                       <Image
                         src={
                           post.originalPost.user?.photoURL ||
@@ -332,15 +348,24 @@ export const ForumPosts = ({
                         className="h-full w-full object-cover"
                       />
                     </div>
-                    <span className="truncate font-semibold text-primary">
-                      {post.originalPost.user?.displayName ||
-                        post.originalUser?.displayName ||
-                        "Usuário"}
-                    </span>
-                    <span className="text-mutedText">·</span>
-                    <span className="shrink-0 text-mutedText">
-                      {formatDate(post.originalPost.createdAt)}
-                    </span>
+                    <div className="min-w-0">
+                      <span className="block truncate text-sm font-semibold text-primary">
+                        {originalAuthorName}
+                      </span>
+                      <div className="mt-0.5 flex min-w-0 flex-wrap items-center gap-x-1.5 text-xs text-mutedText">
+                        {originalAuthorHandle && (
+                          <>
+                            <span className="truncate">
+                              {originalAuthorHandle}
+                            </span>
+                            <span>·</span>
+                          </>
+                        )}
+                        <span className="shrink-0">
+                          {formatDate(post.originalPost.createdAt)}
+                        </span>
+                      </div>
+                    </div>
                   </div>
                   {post.originalPost.title && (
                     <h3 className="mt-1 text-sm font-semibold leading-5 text-primary">
