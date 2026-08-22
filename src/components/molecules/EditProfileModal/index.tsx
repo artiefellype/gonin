@@ -1,5 +1,11 @@
 import { CloudinaryServices } from "@/services/cloudinaryServices";
 import { UserServices } from "@/services/userServices";
+import {
+  buildUsernameCandidate,
+  getDisplayNameFallback,
+  isValidUsername,
+  normalizeUsername,
+} from "@/services/utils/userIdentity";
 import { UserProps } from "@/types";
 import Image from "next/image";
 import React, { useEffect, useState } from "react";
@@ -20,13 +26,6 @@ type UserNameStatus =
   | "unavailable"
   | "invalid";
 
-const normalizeUserName = (value?: string | null) =>
-  (value || "")
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase()
-    .trim();
-
 export const EditProfileModal = ({
   open,
   profile,
@@ -34,6 +33,7 @@ export const EditProfileModal = ({
   onClose,
   onSave,
 }: EditProfileModalProps) => {
+  const [username, setUsername] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [bio, setBio] = useState("");
   const [location, setLocation] = useState("");
@@ -49,6 +49,10 @@ export const EditProfileModal = ({
   useEffect(() => {
     if (!profile || !open) return;
 
+    setUsername(
+      profile.username ||
+        buildUsernameCandidate(profile.displayName, profile.email)
+    );
     setDisplayName(profile.displayName || "");
     setBio(profile.bio || "");
     setLocation(profile.location || "");
@@ -63,17 +67,19 @@ export const EditProfileModal = ({
   useEffect(() => {
     if (!profile || !open) return;
 
-    const cleanDisplayName = displayName.trim();
-    const currentSearchName = normalizeUserName(
-      profile.searchName || profile.displayName
+    const cleanUsername = username.trim();
+    const currentSearchUsername = normalizeUsername(
+      profile.username ||
+        profile.searchUsername ||
+        buildUsernameCandidate(profile.displayName, profile.email)
     );
 
-    if (!cleanDisplayName) {
+    if (!cleanUsername || !isValidUsername(cleanUsername)) {
       setUserNameStatus("invalid");
       return;
     }
 
-    if (normalizeUserName(cleanDisplayName) === currentSearchName) {
+    if (normalizeUsername(cleanUsername) === currentSearchUsername) {
       setUserNameStatus("available");
       return;
     }
@@ -83,7 +89,7 @@ export const EditProfileModal = ({
     const timeout = window.setTimeout(async () => {
       try {
         const available = await UserServices.checkUserNameAvailability(
-          cleanDisplayName,
+          cleanUsername,
           profile.uid || profile.id
         );
         setUserNameStatus(available ? "available" : "unavailable");
@@ -93,7 +99,7 @@ export const EditProfileModal = ({
     }, 450);
 
     return () => window.clearTimeout(timeout);
-  }, [displayName, open, profile]);
+  }, [open, profile, username]);
 
   useEffect(() => {
     return () => {
@@ -150,8 +156,13 @@ export const EditProfileModal = ({
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
-    if (!displayName.trim()) {
+    if (!username.trim()) {
       setError("Informe um nome de usuário.");
+      return;
+    }
+
+    if (!isValidUsername(username.trim())) {
+      setError("Use um nome de usuário sem espaços.");
       return;
     }
 
@@ -179,7 +190,8 @@ export const EditProfileModal = ({
 
       await onSave({
         ...profile,
-        displayName: displayName.trim(),
+        username: normalizeUsername(username),
+        displayName: getDisplayNameFallback(displayName, profile.email),
         bio: bio.trim(),
         location: location.trim(),
         photoURL,
@@ -197,14 +209,18 @@ export const EditProfileModal = ({
     userNameStatus === "checking"
       ? "Verificando disponibilidade..."
       : userNameStatus === "available"
-      ? normalizeUserName(displayName) ===
-        normalizeUserName(profile.searchName || profile.displayName)
+      ? normalizeUsername(username) ===
+        normalizeUsername(
+          profile.username ||
+            profile.searchUsername ||
+            buildUsernameCandidate(profile.displayName, profile.email)
+        )
         ? "Nome atual."
-        : "Nome disponível."
+        : `@${normalizeUsername(username)} disponível.`
       : userNameStatus === "unavailable"
       ? "Nome já está em uso."
       : userNameStatus === "invalid"
-      ? "Informe um nome de usuário válido."
+      ? "Use apenas letras, números, ponto, underline ou hífen."
       : "";
   const userNameFeedbackClass =
     userNameStatus === "available"
@@ -215,14 +231,14 @@ export const EditProfileModal = ({
 
   return (
     <div
-      className="fixed inset-0 z-[90] flex items-end justify-center bg-black/70 px-3 pb-3 backdrop-blur-sm sm:items-center sm:p-4"
+      className="fixed inset-0 z-[120] flex items-end justify-center overflow-hidden bg-black/70 px-2 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-[max(0.75rem,env(safe-area-inset-top))] backdrop-blur-sm sm:items-center sm:p-4"
       onClick={onClose}
     >
       <section
-        className="max-h-[92svh] w-full max-w-2xl overflow-hidden rounded-2xl border border-borderDark bg-background shadow-2xl"
+        className="flex max-h-[calc(100svh-1.5rem)] w-full max-w-2xl flex-col overflow-hidden rounded-t-2xl border border-borderDark bg-background shadow-2xl sm:max-h-[92svh] sm:rounded-2xl"
         onClick={(event) => event.stopPropagation()}
       >
-        <header className="flex h-14 items-center justify-between border-b border-borderDark px-4">
+        <header className="flex h-14 shrink-0 items-center justify-between border-b border-borderDark px-4">
           <h2 className="text-base font-semibold text-primary">
             Editar perfil
           </h2>
@@ -238,7 +254,7 @@ export const EditProfileModal = ({
 
         <form
           onSubmit={handleSubmit}
-          className="max-h-[calc(92svh-56px)] overflow-y-auto p-4"
+          className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-4"
         >
           <label className="group relative block h-36 cursor-pointer overflow-hidden rounded-2xl border border-borderDark bg-secondary sm:h-44">
             {bannerPreview || profile.profileBanner ? (
@@ -298,10 +314,11 @@ export const EditProfileModal = ({
                 Nome de usuário
               </span>
               <input
-                value={displayName}
-                onChange={(event) => setDisplayName(event.target.value)}
-                maxLength={48}
+                value={username}
+                onChange={(event) => setUsername(event.target.value)}
+                maxLength={32}
                 disabled={busy}
+                placeholder="arthur"
                 className="h-11 rounded-lg border border-borderDark bg-secondary px-3 text-sm font-medium text-primary placeholder:text-mutedText/70 focus:border-accent focus:outline-none disabled:opacity-60"
               />
               {userNameFeedback && (
@@ -311,6 +328,25 @@ export const EditProfileModal = ({
                   {userNameFeedback}
                 </span>
               )}
+            </label>
+
+            <label className="grid gap-1">
+              <span className="text-xs font-semibold text-mutedText">
+                Nome exibido
+              </span>
+              <input
+                value={displayName}
+                onChange={(event) => setDisplayName(event.target.value)}
+                maxLength={64}
+                disabled={busy}
+                placeholder={
+                  profile.email?.split("@")[0] || "Como você quer aparecer"
+                }
+                className="h-11 rounded-lg border border-borderDark bg-secondary px-3 text-sm font-medium text-primary placeholder:text-mutedText/70 focus:border-accent focus:outline-none disabled:opacity-60"
+              />
+              <span className="px-1 text-xs font-semibold text-mutedText">
+                Pode ter espaços. Se vazio, usamos a primeira parte do email.
+              </span>
             </label>
 
             <label className="grid gap-1">
@@ -348,7 +384,7 @@ export const EditProfileModal = ({
             </p>
           )}
 
-          <footer className="mt-5 flex items-center justify-end gap-2">
+          <footer className="mt-5 grid grid-cols-2 gap-2 sm:flex sm:items-center sm:justify-end">
             <button
               type="button"
               onClick={onClose}

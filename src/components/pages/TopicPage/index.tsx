@@ -429,13 +429,13 @@ export const TopicPage = ({ tag }: TopicPageProps) => {
 
       {deleteModalOpen && community && (
         <div
-          className="fixed inset-0 z-[90] flex items-end justify-center bg-black/70 px-3 pb-3 backdrop-blur-sm sm:items-center sm:p-4"
+          className="fixed inset-0 z-[120] flex items-end justify-center overflow-hidden bg-black/70 px-2 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-[max(0.75rem,env(safe-area-inset-top))] backdrop-blur-sm sm:items-center sm:p-4"
           onClick={() => {
             if (!deletingCommunity) setDeleteModalOpen(false);
           }}
         >
           <section
-            className="w-full max-w-md overflow-hidden rounded-2xl border border-borderDark bg-background shadow-2xl"
+            className="w-full max-w-md overflow-hidden rounded-t-2xl border border-borderDark bg-background shadow-2xl sm:rounded-2xl"
             onClick={(event) => event.stopPropagation()}
           >
             <header className="flex h-14 items-center justify-between border-b border-borderDark px-4">
@@ -469,7 +469,7 @@ export const TopicPage = ({ tag }: TopicPageProps) => {
                 </p>
               )}
 
-              <footer className="mt-5 flex items-center justify-end gap-2">
+              <footer className="mt-5 grid grid-cols-2 gap-2 sm:flex sm:items-center sm:justify-end">
                 <button
                   onClick={() => setDeleteModalOpen(false)}
                   disabled={deletingCommunity}
@@ -492,17 +492,17 @@ export const TopicPage = ({ tag }: TopicPageProps) => {
 
       {inviteModalOpen && community && (
         <div
-          className="fixed inset-0 z-[90] flex items-end justify-center bg-black/70 px-3 pb-3 backdrop-blur-sm sm:items-center sm:p-4"
+          className="fixed inset-0 z-[120] flex items-end justify-center overflow-hidden bg-black/70 px-2 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-[max(0.75rem,env(safe-area-inset-top))] backdrop-blur-sm sm:items-center sm:p-4"
           onClick={() => setInviteModalOpen(false)}
         >
           <section
-            className="flex max-h-[86svh] w-full max-w-lg flex-col overflow-hidden rounded-2xl border border-borderDark bg-background shadow-2xl"
+            className="flex max-h-[calc(100svh-1.5rem)] w-full max-w-lg flex-col overflow-hidden rounded-t-2xl border border-borderDark bg-background shadow-2xl sm:max-h-[86svh] sm:rounded-2xl"
             onClick={(event) => event.stopPropagation()}
           >
-            <header className="flex h-14 items-center justify-between border-b border-borderDark px-4">
-              <div className="flex items-center gap-2">
+            <header className="flex h-14 shrink-0 items-center justify-between border-b border-borderDark px-4">
+              <div className="flex min-w-0 items-center gap-2">
                 <FaUserPlus className="text-accent" />
-                <h2 className="text-base font-semibold text-primary">
+                <h2 className="truncate text-base font-semibold text-primary">
                   Convidar para {community.title}
                 </h2>
               </div>
@@ -515,7 +515,7 @@ export const TopicPage = ({ tag }: TopicPageProps) => {
               </button>
             </header>
 
-            <div className="border-b border-borderDark p-4">
+            <div className="shrink-0 border-b border-borderDark p-4">
               <input
                 value={inviteSearch}
                 onChange={(event) => setInviteSearch(event.target.value)}
@@ -529,7 +529,7 @@ export const TopicPage = ({ tag }: TopicPageProps) => {
               )}
             </div>
 
-            <div className="min-h-0 flex-1 overflow-y-auto p-2">
+            <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-2">
               {inviteSearch.trim().length < 2 && (
                 <p className="px-3 py-8 text-center text-sm text-mutedText">
                   Digite pelo menos duas letras.
@@ -558,7 +558,7 @@ export const TopicPage = ({ tag }: TopicPageProps) => {
                   return (
                     <div
                       key={profileId}
-                      className="flex items-center gap-3 rounded-xl px-3 py-2 transition-colors hover:bg-secondary/70"
+                      className="grid grid-cols-[2.5rem_minmax(0,1fr)] gap-3 rounded-xl px-3 py-2 transition-colors hover:bg-secondary/70 sm:flex sm:items-center"
                     >
                       <div className="h-10 w-10 shrink-0 overflow-hidden rounded-full bg-secondary">
                         <Image
@@ -574,13 +574,15 @@ export const TopicPage = ({ tag }: TopicPageProps) => {
                           {foundUser.displayName || "Usuário do Gonin"}
                         </p>
                         <p className="truncate text-xs text-mutedText">
-                          {foundUser.bio || foundUser.location || "Perfil"}
+                          {foundUser.username
+                            ? `@${foundUser.username}`
+                            : foundUser.bio || foundUser.location || "Perfil"}
                         </p>
                       </div>
                       <button
                         onClick={() => handleInviteUser(profileId)}
                         disabled={invitingUserId === profileId}
-                        className="inline-flex h-9 items-center gap-2 rounded-full bg-accent px-3 text-xs font-semibold text-background transition-colors hover:bg-accent/90 disabled:cursor-wait disabled:opacity-70"
+                        className="col-span-2 inline-flex h-9 items-center justify-center gap-2 rounded-full bg-accent px-3 text-xs font-semibold text-background transition-colors hover:bg-accent/90 disabled:cursor-wait disabled:opacity-70 sm:col-span-1 sm:shrink-0"
                       >
                         <FaPaperPlane size={12} />
                         Convidar

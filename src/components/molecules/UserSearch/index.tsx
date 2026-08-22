@@ -4,6 +4,7 @@ import { UserProps } from "@/types";
 import Image from "next/image";
 import Link from "next/link";
 import React, { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { FaSearch, FaTimes, FaUserFriends } from "react-icons/fa";
 import { FriendActionButton } from "../FriendActionButton";
 
@@ -20,8 +21,13 @@ export const UserSearch = ({ compact = false, className = "" }: UserSearchProps)
   const [results, setResults] = useState<UserProps[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [mounted, setMounted] = useState(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     if (!open) return;
@@ -90,7 +96,7 @@ export const UserSearch = ({ compact = false, className = "" }: UserSearchProps)
   };
 
   const resultList = (
-    <div className="min-h-0 overflow-y-auto">
+    <div className="min-h-0 overflow-y-auto overscroll-contain">
       {query.trim().length < 2 && (
         <div className="flex flex-col items-center px-5 py-9 text-center">
           <span className="grid h-12 w-12 place-items-center rounded-full bg-accentSoft text-accent">
@@ -144,7 +150,7 @@ export const UserSearch = ({ compact = false, className = "" }: UserSearchProps)
             return (
               <div
                 key={profileId}
-                className="flex items-center gap-3 rounded-xl px-3 py-2 transition-colors hover:bg-secondary/70"
+                className="grid grid-cols-[2.75rem_minmax(0,1fr)] gap-3 rounded-xl px-2.5 py-2.5 transition-colors hover:bg-secondary/70 sm:flex sm:items-center sm:px-3"
               >
                 <Link
                   href={`/profile/${profileId}`}
@@ -169,11 +175,15 @@ export const UserSearch = ({ compact = false, className = "" }: UserSearchProps)
                     {displayName}
                   </p>
                   <p className="truncate text-xs text-mutedText">
-                    {foundUser.bio || foundUser.location || "Ver perfil"}
+                    {foundUser.username
+                      ? `@${foundUser.username}`
+                      : foundUser.bio || foundUser.location || "Ver perfil"}
                   </p>
                 </Link>
 
-                <FriendActionButton targetUserId={profileId} compact />
+                <div className="col-span-2 flex justify-end border-t border-borderDark/70 pt-2 sm:col-span-1 sm:shrink-0 sm:border-0 sm:pt-0">
+                  <FriendActionButton targetUserId={profileId} compact />
+                </div>
               </div>
             );
           })}
@@ -194,18 +204,20 @@ export const UserSearch = ({ compact = false, className = "" }: UserSearchProps)
           <FaSearch size={17} />
         </button>
 
-        {open && (
+        {open &&
+          mounted &&
+          createPortal(
           <div
-            className="fixed inset-0 z-[120] flex items-start justify-center bg-black/75 px-3 py-4 backdrop-blur-sm"
+            className="fixed inset-0 z-[9999] overflow-hidden bg-black/35 backdrop-blur-[1px] sm:bg-transparent sm:backdrop-blur-0"
             onMouseDown={closeSearch}
           >
             <section
-              className="mt-2 flex max-h-[calc(100svh-32px)] w-full max-w-[520px] flex-col overflow-hidden rounded-2xl border border-borderDark bg-panel shadow-2xl"
+              className="absolute left-3 right-3 top-[calc(3.5rem+0.5rem)] mx-auto flex max-h-[calc(100svh-5rem)] max-w-[420px] flex-col overflow-hidden rounded-2xl border border-borderDark bg-panel shadow-2xl ring-1 ring-accent/10 sm:left-auto sm:right-4 sm:top-20 sm:w-[420px]"
               role="dialog"
               aria-modal="true"
               onMouseDown={(event) => event.stopPropagation()}
             >
-              <header className="flex items-center gap-2 border-b border-borderDark p-3">
+              <header className="flex shrink-0 items-center gap-2 border-b border-borderDark p-2.5 sm:p-3">
                 <label className="flex h-11 min-w-0 flex-1 items-center gap-3 rounded-lg border border-borderDark bg-background px-4 text-mutedText focus-within:border-accent">
                   <FaSearch size={14} />
                   <input
@@ -225,9 +237,12 @@ export const UserSearch = ({ compact = false, className = "" }: UserSearchProps)
                   <FaTimes size={16} />
                 </button>
               </header>
-              {resultList}
+              <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
+                {resultList}
+              </div>
             </section>
-          </div>
+          </div>,
+          document.body
         )}
       </>
     );

@@ -6,9 +6,11 @@ import { useRouter } from "next/router";
 import Image from "next/image";
 import { AuthTitle } from "@/components/atoms/AuthTitle";
 import { AuthForm, InputProps } from "@/components/organisms/AuthForm";
+import { isValidUsername, normalizeUsername } from "@/services/utils/userIdentity";
 
 export const SignUpScreen = () => {
   const [userName, setUserName] = useState("");
+  const [displayName, setDisplayName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -26,6 +28,11 @@ export const SignUpScreen = () => {
 
     if (!cleanUserName) {
       setUserNameStatus("idle");
+      return;
+    }
+
+    if (!isValidUsername(cleanUserName)) {
+      setUserNameStatus("invalid");
       return;
     }
 
@@ -50,6 +57,10 @@ export const SignUpScreen = () => {
       setError("Informe um nome de usuário.");
       return;
     }
+    if (!isValidUsername(userName.trim())) {
+      setError("Use um nome de usuário sem espaços.");
+      return;
+    }
     if (userNameStatus === "checking") {
       setError("Aguarde a verificação do nome de usuário.");
       return;
@@ -68,7 +79,7 @@ export const SignUpScreen = () => {
     }
     setLoginLoading(true);
     try {
-      await signUpWithEmail(userName, email, password);
+      await signUpWithEmail(userName, email, password, displayName);
       setIsRegistered(true);
       setTimeout(() => {
         router.push("/login");
@@ -85,16 +96,17 @@ export const SignUpScreen = () => {
       type: "text",
       value: userName,
       onChange: (e: any) => setUserName(e.target.value),
+      placeholder: "arthur",
       helperText:
         userNameStatus === "checking"
           ? "Verificando disponibilidade..."
           : userNameStatus === "available"
-          ? "Nome disponível."
+          ? `@${normalizeUsername(userName)} disponível.`
           : userNameStatus === "unavailable"
           ? "Nome já está em uso."
           : userNameStatus === "invalid"
-          ? "Não foi possível verificar agora."
-          : "",
+          ? "Use apenas letras, números, ponto, underline ou hífen."
+          : "Sem espaços. Usado para marcar você em posts.",
       helperTone:
         userNameStatus === "available"
           ? "success"
@@ -102,6 +114,16 @@ export const SignUpScreen = () => {
           ? "danger"
           : "default",
       required: true,
+    },
+    {
+      title: "Nome exibido",
+      type: "text",
+      value: displayName,
+      onChange: (e: any) => setDisplayName(e.target.value),
+      placeholder: email ? email.split("@")[0] : "Como você quer aparecer",
+      helperText: "Pode ter espaços. Se vazio, usamos a primeira parte do email.",
+      helperTone: "default",
+      required: false,
     },
     {
       title: "Email",
@@ -221,7 +243,8 @@ export const SignUpScreen = () => {
                   userNameStatus === "checking" ||
                   userNameStatus === "unavailable" ||
                   userNameStatus === "invalid" ||
-                  !userName.trim()
+                  !userName.trim() ||
+                  !isValidUsername(userName.trim())
                 }
               />
               {isRegistered && (

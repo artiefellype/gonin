@@ -36,6 +36,14 @@ import {
   UserProps,
 } from "@/types";
 import { deleteObject, ref, getStorage } from "firebase/storage";
+import {
+  buildUsernameCandidate,
+  getDisplayNameFallback,
+  hydrateUserIdentity,
+  isValidUsername,
+  normalizeSearchText,
+  normalizeUsername,
+} from "./utils/userIdentity";
 
 export class BaseAPI {
   private auth;
@@ -298,8 +306,8 @@ export class BaseAPI {
     await setDoc(notificationRef, notification);
   }
 
-  private extractMentionSearchNames(postData: PostProps) {
-    const mentionRegex = /(^|[^\wÀ-ÿ])@([A-Za-zÀ-ÿ0-9._-]{2,48})/g;
+  private extractMentionUsernames(postData: PostProps) {
+    const mentionRegex = /(^|[^\wÀ-ÿ])@([A-Za-z0-9._-]{2,32})/g;
     const searchableText = [
       postData.title,
       postData.description,
@@ -311,30 +319,30 @@ export class BaseAPI {
     let match: RegExpExecArray | null;
 
     while ((match = mentionRegex.exec(searchableText)) !== null) {
-      const searchName = this.normalizeSearchValue(match[2]);
-      if (searchName) mentions.add(searchName);
+      const searchUsername = normalizeUsername(match[2]);
+      if (searchUsername) mentions.add(searchUsername);
     }
 
     return Array.from(mentions);
   }
 
-  private async findUsersBySearchNames(
-    searchNames: string[]
+  private async findUsersByUsernames(
+    usernames: string[]
   ): Promise<UserProps[]> {
-    if (searchNames.length === 0) return [];
+    if (usernames.length === 0) return [];
 
-    const uniqueSearchNames = Array.from(new Set(searchNames));
+    const uniqueUsernames = Array.from(new Set(usernames));
     const chunks = [];
 
-    for (let index = 0; index < uniqueSearchNames.length; index += 10) {
-      chunks.push(uniqueSearchNames.slice(index, index + 10));
+    for (let index = 0; index < uniqueUsernames.length; index += 10) {
+      chunks.push(uniqueUsernames.slice(index, index + 10));
     }
 
     const snapshots = await Promise.all(
       chunks.map((chunk) => {
         const usersQuery = query(
           collection(this.db, "users"),
-          where("searchName", "in", chunk)
+          where("searchUsername", "in", chunk)
         );
         return getDocs(usersQuery);
       })
@@ -343,15 +351,40 @@ export class BaseAPI {
 
     snapshots.forEach((snapshot) => {
       snapshot.docs.forEach((userDoc) => {
-        const userData = {
+        const userData = hydrateUserIdentity({
           id: userDoc.id,
           ...userDoc.data(),
-        } as UserProps;
+        } as UserProps);
         const userId = userData.uid || userData.id;
 
         if (userId) usersMap.set(userId, userData);
       });
     });
+
+    const missingUsernames = uniqueUsernames.filter((username) =>
+      Array.from(usersMap.values()).every(
+        (userData) => userData.searchUsername !== username
+      )
+    );
+
+    if (missingUsernames.length > 0) {
+      const usersSnapshot = await getDocs(collection(this.db, "users"));
+
+      usersSnapshot.docs.forEach((userDoc) => {
+        const userData = hydrateUserIdentity({
+          id: userDoc.id,
+          ...userDoc.data(),
+        } as UserProps);
+        const userId = userData.uid || userData.id;
+
+        if (
+          userId &&
+          missingUsernames.includes(userData.searchUsername || "")
+        ) {
+          usersMap.set(userId, userData);
+        }
+      });
+    }
 
     return Array.from(usersMap.values());
   }
@@ -369,11 +402,11 @@ export class BaseAPI {
     postData: PostProps,
     actorId: string
   ) {
-    const mentionSearchNames = this.extractMentionSearchNames(postData);
-    if (mentionSearchNames.length === 0) return;
+    const mentionUsernames = this.extractMentionUsernames(postData);
+    if (mentionUsernames.length === 0) return;
 
-    const mentionedUsers = await this.findUsersBySearchNames(
-      mentionSearchNames
+    const mentionedUsers = await this.findUsersByUsernames(
+      mentionUsernames
     );
     const message = this.getMentionNotificationMessage(postData);
 
@@ -791,15 +824,17 @@ export class BaseAPI {
     try {
       const authenticatedUser = (await this.getUser()) as { uid: string };
       const targetUserId = user.uid || user.id;
-      const normalizedDisplayName = this.normalizeSearchValue(
-        user.displayName
-      );
+      const displayName = getDisplayNameFallback(user.displayName, user.email);
+      const requestedUsername =
+        user.username || buildUsernameCandidate(displayName, user.email);
+      const normalizedUsername = normalizeUsername(requestedUsername);
+      const username = normalizedUsername;
 
       if (authenticatedUser.uid !== targetUserId) {
         throw new Error("Você só pode editar o próprio perfil.");
       }
 
-      if (!normalizedDisplayName) {
+      if (!isValidUsername(requestedUsername)) {
         throw new Error("Informe um nome de usuário.");
       }
 
@@ -808,21 +843,27 @@ export class BaseAPI {
       const currentUserData = currentUserSnapshot.data() as
         | UserProps
         | undefined;
-      const currentSearchName = this.normalizeSearchValue(
-        currentUserData?.searchName || currentUserData?.displayName
+      const currentUserIdentity = hydrateUserIdentity({
+        id: targetUserId,
+        ...currentUserData,
+      } as UserProps);
+      const currentSearchUsername = normalizeUsername(
+        currentUserIdentity.username
       );
 
       if (
-        normalizedDisplayName !== currentSearchName &&
-        !(await this.isUserNameAvailable(user.displayName, targetUserId))
+        normalizedUsername !== currentSearchUsername &&
+        !(await this.isUserNameAvailable(username, targetUserId))
       ) {
         throw new Error("Nome de usuário já está em uso.");
       }
 
       await updateDoc(userRef, {
         uid: targetUserId,
-        displayName: user.displayName,
-        searchName: normalizedDisplayName,
+        displayName,
+        searchName: normalizeSearchText(displayName),
+        username,
+        searchUsername: normalizedUsername,
         tag: user.tag,
         member: user.member,
         photoURL: user.photoURL,
@@ -838,7 +879,7 @@ export class BaseAPI {
 
       if (this.auth.currentUser) {
         await updateProfile(this.auth.currentUser, {
-          displayName: user.displayName || null,
+          displayName: displayName || null,
           photoURL: user.photoURL || null,
         });
       }
@@ -853,21 +894,36 @@ export class BaseAPI {
   ): Promise<boolean> {
     try {
       await this.getUser();
-      const normalizedName = this.normalizeSearchValue(userName);
+      if (!isValidUsername(userName)) return false;
+
+      const normalizedName = normalizeUsername(userName);
 
       if (!normalizedName) return false;
 
       const usersQuery = query(
         collection(this.db, "users"),
-        where("searchName", "==", normalizedName)
+        where("searchUsername", "==", normalizedName)
       );
       const usersSnapshot = await getDocs(usersQuery);
-
-      return usersSnapshot.docs.every((userDoc) => {
+      const hasCurrentUserOnly = usersSnapshot.docs.every((userDoc) => {
         const userData = userDoc.data();
         const foundUserId = userData.uid || userDoc.id;
 
         return Boolean(currentUserId && foundUserId === currentUserId);
+      });
+
+      if (!hasCurrentUserOnly) return false;
+
+      const allUsersSnapshot = await getDocs(collection(this.db, "users"));
+      return allUsersSnapshot.docs.every((userDoc) => {
+        const userData = hydrateUserIdentity({
+          id: userDoc.id,
+          ...userDoc.data(),
+        } as UserProps);
+        const foundUserId = userData.uid || userDoc.id;
+
+        if (currentUserId && foundUserId === currentUserId) return true;
+        return userData.searchUsername !== normalizedName;
       });
     } catch (error) {
       throw error;
@@ -1036,7 +1092,10 @@ export class BaseAPI {
       const docSnap = await getDoc(docRef);
 
       if (docSnap.exists()) {
-        return { id: docSnap.id, ...docSnap.data() };
+        return hydrateUserIdentity({
+          id: docSnap.id,
+          ...docSnap.data(),
+        } as UserProps);
       } else {
         throw new Error(`No user found with id: ${userId}`);
       }
@@ -1051,15 +1110,19 @@ export class BaseAPI {
   ): Promise<UserProps[]> {
     try {
       await this.getUser();
-      const normalizedTerm = this.normalizeSearchValue(searchTerm);
+      const cleanSearchTerm = searchTerm.trim().replace(/^@+/, "");
+      const normalizedTerm = this.normalizeSearchValue(cleanSearchTerm);
+      const normalizedUsernameTerm = normalizeUsername(cleanSearchTerm);
 
       if (normalizedTerm.length < 2) return [];
 
       const usersSnapshot = await getDocs(collection(this.db, "users"));
-      const users = usersSnapshot.docs.map((userDoc) => ({
-        id: userDoc.id,
-        ...userDoc.data(),
-      })) as UserProps[];
+      const users = usersSnapshot.docs.map((userDoc) =>
+        hydrateUserIdentity({
+          id: userDoc.id,
+          ...userDoc.data(),
+        } as UserProps)
+      );
 
       return users
         .filter((foundUser) => {
@@ -1067,6 +1130,8 @@ export class BaseAPI {
           if (currentUserId && userId === currentUserId) return false;
 
           const searchableText = [
+            foundUser.searchUsername,
+            foundUser.username,
             foundUser.searchName,
             foundUser.displayName,
             foundUser.tag,
@@ -1077,10 +1142,16 @@ export class BaseAPI {
           return searchableText.includes(normalizedTerm);
         })
         .sort((a, b) => {
+          const aUsername = normalizeUsername(a.username);
+          const bUsername = normalizeUsername(b.username);
           const aName = this.normalizeSearchValue(a.displayName);
           const bName = this.normalizeSearchValue(b.displayName);
-          const aStarts = aName.startsWith(normalizedTerm);
-          const bStarts = bName.startsWith(normalizedTerm);
+          const aStarts =
+            aName.startsWith(normalizedTerm) ||
+            aUsername.startsWith(normalizedUsernameTerm);
+          const bStarts =
+            bName.startsWith(normalizedTerm) ||
+            bUsername.startsWith(normalizedUsernameTerm);
 
           if (aStarts !== bStarts) return aStarts ? -1 : 1;
           return aName.localeCompare(bName);

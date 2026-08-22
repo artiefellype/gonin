@@ -8,6 +8,8 @@ export interface UserProps {
   member: boolean;
   tag: string;
   searchName?: string;
+  username?: string;
+  searchUsername?: string;
   uid: string;
   bio?: string;
   location?: string;

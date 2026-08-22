@@ -26,15 +26,18 @@ import {
   getDocs,
   query,
   setDoc,
+  updateDoc,
   where,
 } from "firebase/firestore";
-
-const normalizeSearchName = (value?: string | null) =>
-  (value || "")
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase()
-    .trim();
+import {
+  buildUsernameCandidate,
+  getDisplayNameFallback,
+  hydrateUserIdentity,
+  isValidUsername,
+  normalizeSearchText,
+  normalizeUsername,
+} from "@/services/utils/userIdentity";
+import { UserProps } from "@/types";
 
 export type User = {
   isAuth: boolean;
@@ -49,9 +52,10 @@ export type UserContextType = {
   getUserFromLocalStorage: () => string | null;
   signInWithEmail: (email: string, password: string) => Promise<void>;
   signUpWithEmail: (
-    userName: string,
+    username: string,
     email: string,
-    password: string
+    password: string,
+    displayName?: string
   ) => Promise<void>;
   checkUserNameAvailability: (
     userName: string,
@@ -70,40 +74,98 @@ export const UserContextProvider = ({ children }: { children: ReactNode }) => {
     userName: string,
     currentUserId?: string
   ) => {
-    const normalizedName = normalizeSearchName(userName);
+    if (!isValidUsername(userName)) return false;
+
+    const normalizedName = normalizeUsername(userName);
 
     if (!normalizedName) return false;
 
     const usersQuery = query(
       collection(firestore, "users"),
-      where("searchName", "==", normalizedName)
+      where("searchUsername", "==", normalizedName)
     );
     const usersSnapshot = await getDocs(usersQuery);
-
-    return usersSnapshot.docs.every((userDoc) => {
+    const hasCurrentUserOnly = usersSnapshot.docs.every((userDoc) => {
       const userData = userDoc.data();
       const foundUserId = userData.uid || userDoc.id;
 
       return Boolean(currentUserId && foundUserId === currentUserId);
     });
+
+    if (!hasCurrentUserOnly) return false;
+
+    const allUsersSnapshot = await getDocs(collection(firestore, "users"));
+    return allUsersSnapshot.docs.every((userDoc) => {
+      const userData = hydrateUserIdentity({
+        id: userDoc.id,
+        ...userDoc.data(),
+      } as UserProps);
+      const foundUserId = userData.uid || userDoc.id;
+
+      if (currentUserId && foundUserId === currentUserId) return true;
+      return userData.searchUsername !== normalizedName;
+    });
   };
 
-  const buildUniqueDisplayName = async (baseName?: string | null) => {
-    const cleanBaseName = (baseName || "Usuário").trim() || "Usuário";
+  const buildUniqueUsername = async (
+    baseName?: string | null,
+    currentUserId?: string
+  ) => {
+    const cleanBaseName = buildUsernameCandidate(baseName);
 
-    if (await checkUserNameAvailability(cleanBaseName)) {
+    if (await checkUserNameAvailability(cleanBaseName, currentUserId)) {
       return cleanBaseName;
     }
 
     for (let suffix = 2; suffix <= 50; suffix += 1) {
-      const candidate = `${cleanBaseName} ${suffix}`;
+      const suffixText = String(suffix);
+      const candidate = normalizeUsername(
+        `${cleanBaseName.slice(0, 32 - suffixText.length)}${suffixText}`
+      );
 
-      if (await checkUserNameAvailability(candidate)) {
+      if (await checkUserNameAvailability(candidate, currentUserId)) {
         return candidate;
       }
     }
 
-    return `${cleanBaseName} ${Date.now().toString(36)}`;
+    const fallbackSuffix = Date.now().toString(36).slice(-6);
+    return `${cleanBaseName.slice(0, 32 - fallbackSuffix.length)}${fallbackSuffix}`;
+  };
+
+  const ensureCurrentUserIdentity = async (authUser: FirebaseUser) => {
+    const userDocRef = doc(firestore, "users", authUser.uid);
+    const userDoc = await getDoc(userDocRef);
+
+    if (!userDoc.exists()) return;
+
+    const rawData = userDoc.data();
+    const hydratedUser = hydrateUserIdentity({
+      id: userDoc.id,
+      ...rawData,
+      email: rawData.email || authUser.email || "",
+    } as UserProps);
+    const needsUsername = !rawData.username || !rawData.searchUsername;
+    const needsDisplayName = !rawData.displayName;
+    const displayName = getDisplayNameFallback(
+      hydratedUser.displayName,
+      authUser.email
+    );
+    const username = needsUsername
+      ? await buildUniqueUsername(displayName, authUser.uid)
+      : hydratedUser.username;
+
+    if (needsUsername || needsDisplayName) {
+      await updateDoc(userDocRef, {
+        displayName,
+        searchName: normalizeSearchText(displayName),
+        username,
+        searchUsername: normalizeUsername(username),
+      });
+    }
+
+    if (!authUser.displayName || authUser.displayName !== displayName) {
+      await updateProfile(authUser, { displayName });
+    }
   };
 
   useEffect(() => {
@@ -127,16 +189,19 @@ export const UserContextProvider = ({ children }: { children: ReactNode }) => {
       const userDoc = await getDoc(userDocRef);
 
       if (!userDoc.exists()) {
-        const displayName = await buildUniqueDisplayName(
+        const displayName = getDisplayNameFallback(
           credential.user.displayName ||
-            credential.user.email?.split("@")[0] ||
-            "Usuário"
+            credential.user.email?.split("@")[0],
+          credential.user.email
         );
+        const username = await buildUniqueUsername(displayName);
 
         await setDoc(userDocRef, {
           uid: credential.user.uid,
           displayName,
-          searchName: normalizeSearchName(displayName),
+          searchName: normalizeSearchText(displayName),
+          username,
+          searchUsername: normalizeUsername(username),
           email: credential.user.email,
           photoURL: credential.user.photoURL,
           createdAt: new Date().toISOString(),
@@ -151,6 +216,8 @@ export const UserContextProvider = ({ children }: { children: ReactNode }) => {
           communityId: "",
           communities: [],
         });
+      } else {
+        await ensureCurrentUserIdentity(credential.user);
       }
 
       setCookie(null, "userId", credential.user.uid, {
@@ -176,6 +243,7 @@ export const UserContextProvider = ({ children }: { children: ReactNode }) => {
     try {
       const credential = await signInWithEmailAndPassword(auth, email, password);
       const token = await credential.user.getIdTokenResult();
+      await ensureCurrentUserIdentity(credential.user);
 
       setCookie(null, "userId", credential.user.uid, {
         maxAge: 30 * 24 * 60 * 60, // 30 dias
@@ -194,19 +262,25 @@ export const UserContextProvider = ({ children }: { children: ReactNode }) => {
 
 
   const signUpWithEmail = async (
-    userName: string,
+    username: string,
     email: string,
-    password: string
+    password: string,
+    displayName?: string
   ) => {
     try {
-      const cleanUserName = userName.trim();
+      const requestedUsername = username.trim();
 
-      if (!cleanUserName) {
+      if (!requestedUsername) {
         throw new Error("Informe um nome de usuário.");
       }
 
+      if (!isValidUsername(requestedUsername)) {
+        throw new Error("Use um nome de usuário sem espaços.");
+      }
+
+      const cleanUsername = normalizeUsername(requestedUsername);
       const isUserNameAvailable = await checkUserNameAvailability(
-        cleanUserName
+        cleanUsername
       );
 
       if (!isUserNameAvailable) {
@@ -216,16 +290,19 @@ export const UserContextProvider = ({ children }: { children: ReactNode }) => {
       const credential = await createUserWithEmailAndPassword(auth, email, password);
       const token = await credential.user.getIdTokenResult();
       const tempName = credential.user.email?.split("@")[0]
+      const cleanDisplayName = getDisplayNameFallback(displayName, email);
 
       await updateProfile(credential.user, {
-        displayName: cleanUserName,
+        displayName: cleanDisplayName,
       });
 
       const userDocRef = doc(firestore, "users", credential.user.uid);
       await setDoc(userDocRef, {
         uid: credential.user.uid,
-        displayName: cleanUserName || tempName || "",
-        searchName: normalizeSearchName(cleanUserName || tempName),
+        displayName: cleanDisplayName || tempName || "",
+        searchName: normalizeSearchText(cleanDisplayName || tempName),
+        username: cleanUsername,
+        searchUsername: normalizeUsername(cleanUsername),
         email: credential.user.email,
         photoURL: credential.user.photoURL || "",
         createdAt: new Date().toISOString(),

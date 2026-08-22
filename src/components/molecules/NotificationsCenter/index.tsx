@@ -19,6 +19,7 @@ import {
 import Image from "next/image";
 import Link from "next/link";
 import React, { useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import { FaBell, FaCheck, FaTimes, FaUserFriends } from "react-icons/fa";
 
 type RequestWithUser = FriendshipProps & {
@@ -66,9 +67,14 @@ export const NotificationsCenter = ({
   const [notificationsLoading, setNotificationsLoading] = useState(true);
   const [actionId, setActionId] = useState<string | null>(null);
   const [message, setMessage] = useState("");
+  const [mounted, setMounted] = useState(false);
 
   const pendingCount =
     requests.length + communityInvites.length + postNotifications.length;
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     if (!loggedUserId) {
@@ -253,6 +259,9 @@ export const NotificationsCenter = ({
     if (pendingCount === 1) return "1 notificação pendente";
     return `${pendingCount} notificações pendentes`;
   }, [pendingCount]);
+  const badgeClassName = compact
+    ? "absolute -right-1 -top-1 z-10 grid min-h-[18px] min-w-[18px] place-items-center rounded-full border-2 border-panel bg-accent px-1 text-[10px] font-black leading-none text-background shadow-lg"
+    : "absolute right-1 top-1 z-10 grid min-h-[18px] min-w-[18px] place-items-center rounded-full bg-accent px-1 text-[10px] font-black leading-none text-background";
 
   const handleAccept = async (request: RequestWithUser) => {
     if (!loggedUserId || actionId) return;
@@ -379,40 +388,50 @@ export const NotificationsCenter = ({
         className={
           label
             ? "relative flex h-12 items-center gap-4 rounded-full px-3 text-[16px] font-normal text-primary/90 transition-colors hover:bg-secondary md:justify-center md:px-0 lg:justify-start lg:px-3"
-            : "relative grid h-10 w-10 shrink-0 place-items-center rounded-full border border-borderDark bg-secondary text-mutedText transition-colors hover:border-accent hover:text-accent"
+            : "relative grid h-10 w-10 shrink-0 place-items-center overflow-visible rounded-full border border-borderDark bg-secondary text-mutedText transition-colors hover:border-accent hover:text-accent"
         }
         aria-label={title}
       >
         <FaBell size={label ? 21 : compact ? 18 : 20} />
         {label && <span className="hidden lg:inline">Notificações</span>}
         {pendingCount > 0 && (
-          <span className="absolute right-1 top-1 grid min-h-[18px] min-w-[18px] place-items-center rounded-full bg-accent px-1 text-[10px] font-black leading-none text-background">
+          <span className={badgeClassName} aria-hidden="true">
             {pendingCount > 9 ? "9+" : pendingCount}
           </span>
         )}
       </button>
 
-      {open && (
+      {open &&
+        mounted &&
+        createPortal(
         <div
-          className="fixed inset-0 z-[80] flex items-end justify-center bg-black/70 px-3 pb-3 pt-12 backdrop-blur-sm sm:items-center sm:p-6"
+          className={
+            compact
+              ? "fixed inset-0 z-[9999] overflow-hidden bg-black/35 backdrop-blur-[1px] sm:bg-transparent sm:backdrop-blur-0"
+              : "fixed inset-0 z-[9999] flex items-end justify-center overflow-hidden bg-black/70 px-2 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-[max(0.75rem,env(safe-area-inset-top))] backdrop-blur-sm sm:items-center sm:p-6"
+          }
           onMouseDown={() => setOpen(false)}
         >
           <section
-            className="flex max-h-[86svh] w-full max-w-[520px] flex-col overflow-hidden rounded-2xl border border-borderDark bg-panel shadow-2xl"
+            className={
+              compact
+                ? "absolute left-3 right-3 top-[calc(3.5rem+0.5rem)] mx-auto flex max-h-[calc(100svh-5rem)] max-w-[420px] flex-col overflow-hidden rounded-2xl border border-borderDark bg-panel shadow-2xl ring-1 ring-accent/10 sm:left-auto sm:right-4 sm:top-20 sm:w-[420px]"
+                : "flex max-h-[calc(100svh-1.5rem)] w-full max-w-[520px] flex-col overflow-hidden rounded-t-2xl border border-borderDark bg-panel shadow-2xl sm:max-h-[86svh] sm:rounded-2xl"
+            }
             role="dialog"
             aria-modal="true"
             aria-labelledby="notifications-title"
             onMouseDown={(event) => event.stopPropagation()}
           >
-            <header className="flex items-start justify-between gap-4 border-b border-borderDark px-4 py-4 sm:px-5">
-              <div>
+            <header className="flex shrink-0 items-center justify-between gap-3 border-b border-borderDark px-4 py-3 sm:items-start sm:px-5 sm:py-4">
+              <div className="min-w-0">
                 <h2
                   id="notifications-title"
-                  className="text-lg font-semibold text-primary"
+                  className="truncate text-base font-semibold text-primary sm:text-lg"
                 >
                   Notificações
                 </h2>
-                <p className="mt-1 text-sm text-mutedText">
+                <p className="mt-1 hidden text-sm text-mutedText sm:block">
                   Pedidos, convites e conversas que envolvem você.
                 </p>
               </div>
@@ -426,7 +445,7 @@ export const NotificationsCenter = ({
               </button>
             </header>
 
-            <div className="min-h-0 flex-1 overflow-y-auto px-4 py-3 sm:px-5">
+            <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-2.5 py-2.5 sm:px-5 sm:py-3">
               {message && (
                 <p className="mb-3 rounded-lg border border-borderDark bg-secondary px-3 py-2 text-sm text-mutedText">
                   {message}
@@ -472,13 +491,13 @@ export const NotificationsCenter = ({
                     return (
                       <article
                         key={notification.id}
-                        className="rounded-xl border border-borderDark bg-background p-3"
+                        className="rounded-xl border border-borderDark bg-background p-2.5 sm:p-3"
                       >
-                        <div className="flex gap-3">
+                        <div className="flex min-w-0 gap-3">
                           <Link
                             href={`/profile/${notification.actorId}`}
                             onClick={() => setOpen(false)}
-                            className="h-11 w-11 shrink-0 overflow-hidden rounded-full bg-secondary"
+                            className="h-10 w-10 shrink-0 overflow-hidden rounded-full bg-secondary sm:h-11 sm:w-11"
                           >
                             <Image
                               src={actor?.photoURL || "/imgs/default_perfil.jpg"}
@@ -493,12 +512,12 @@ export const NotificationsCenter = ({
                             <Link
                               href={`/post/${notification.postId}`}
                               onClick={() => setOpen(false)}
-                              className="block text-sm font-semibold text-primary hover:text-accent"
+                              className="block break-words text-sm font-semibold text-primary hover:text-accent"
                             >
                               {getPostNotificationText(notification)}
                             </Link>
                             {notification.message && (
-                              <p className="mt-1 line-clamp-2 text-sm text-mutedText">
+                              <p className="mt-1 line-clamp-2 break-words text-sm text-mutedText">
                                 {notification.message}
                               </p>
                             )}
@@ -508,7 +527,7 @@ export const NotificationsCenter = ({
                                 handleDismissPostNotification(notification)
                               }
                               disabled={actionId === notification.id}
-                              className="mt-3 inline-flex h-9 items-center gap-2 rounded-full border border-borderDark px-4 text-sm font-semibold text-mutedText transition-colors hover:border-accent hover:text-accent disabled:cursor-wait disabled:opacity-70"
+                              className="mt-3 inline-flex h-9 w-full items-center justify-center gap-2 rounded-full border border-borderDark px-4 text-sm font-semibold text-mutedText transition-colors hover:border-accent hover:text-accent disabled:cursor-wait disabled:opacity-70 sm:w-auto"
                             >
                               <FaTimes size={12} />
                               Dispensar
@@ -532,13 +551,13 @@ export const NotificationsCenter = ({
                     return (
                       <article
                         key={request.id}
-                        className="rounded-xl border border-borderDark bg-background p-3"
+                        className="rounded-xl border border-borderDark bg-background p-2.5 sm:p-3"
                       >
-                        <div className="flex gap-3">
+                        <div className="flex min-w-0 gap-3">
                           <Link
                             href={`/profile/${request.requesterId}`}
                             onClick={() => setOpen(false)}
-                            className="h-11 w-11 shrink-0 overflow-hidden rounded-full bg-secondary"
+                            className="h-10 w-10 shrink-0 overflow-hidden rounded-full bg-secondary sm:h-11 sm:w-11"
                           >
                             <Image
                               src={
@@ -564,12 +583,12 @@ export const NotificationsCenter = ({
                               quer ser seu amigo.
                             </p>
 
-                            <div className="mt-3 flex flex-wrap gap-2">
+                            <div className="mt-3 grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
                               <button
                                 type="button"
                                 onClick={() => handleAccept(request)}
                                 disabled={actionId === request.id}
-                                className="inline-flex h-9 items-center gap-2 rounded-full bg-accent px-4 text-sm font-semibold text-background transition-colors hover:bg-accent/90 disabled:cursor-wait disabled:opacity-70"
+                                className="inline-flex h-9 items-center justify-center gap-2 rounded-full bg-accent px-4 text-sm font-semibold text-background transition-colors hover:bg-accent/90 disabled:cursor-wait disabled:opacity-70"
                               >
                                 <FaCheck size={12} />
                                 Aceitar
@@ -578,7 +597,7 @@ export const NotificationsCenter = ({
                                 type="button"
                                 onClick={() => handleDecline(request)}
                                 disabled={actionId === request.id}
-                                className="inline-flex h-9 items-center gap-2 rounded-full border border-borderDark px-4 text-sm font-semibold text-mutedText transition-colors hover:border-coral hover:text-coral disabled:cursor-wait disabled:opacity-70"
+                                className="inline-flex h-9 items-center justify-center gap-2 rounded-full border border-borderDark px-4 text-sm font-semibold text-mutedText transition-colors hover:border-coral hover:text-coral disabled:cursor-wait disabled:opacity-70"
                               >
                                 <FaTimes size={12} />
                                 Dispensar
@@ -601,13 +620,13 @@ export const NotificationsCenter = ({
                     return (
                       <article
                         key={invite.id}
-                        className="rounded-xl border border-borderDark bg-background p-3"
+                        className="rounded-xl border border-borderDark bg-background p-2.5 sm:p-3"
                       >
-                        <div className="flex gap-3">
+                        <div className="flex min-w-0 gap-3">
                           <Link
                             href={`/profile/${invite.inviterId}`}
                             onClick={() => setOpen(false)}
-                            className="h-11 w-11 shrink-0 overflow-hidden rounded-full bg-secondary"
+                            className="h-10 w-10 shrink-0 overflow-hidden rounded-full bg-secondary sm:h-11 sm:w-11"
                           >
                             <Image
                               src={
@@ -629,7 +648,7 @@ export const NotificationsCenter = ({
                             >
                               {inviterName}
                             </Link>
-                            <p className="mt-1 text-sm text-mutedText">
+                            <p className="mt-1 break-words text-sm text-mutedText">
                               convidou você para{" "}
                               <Link
                                 href={`/topics/${invite.communityId}`}
@@ -641,14 +660,14 @@ export const NotificationsCenter = ({
                               .
                             </p>
 
-                            <div className="mt-3 flex flex-wrap gap-2">
+                            <div className="mt-3 grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
                               <button
                                 type="button"
                                 onClick={() =>
                                   handleAcceptCommunityInvite(invite)
                                 }
                                 disabled={actionId === invite.id}
-                                className="inline-flex h-9 items-center gap-2 rounded-full bg-accent px-4 text-sm font-semibold text-background transition-colors hover:bg-accent/90 disabled:cursor-wait disabled:opacity-70"
+                                className="inline-flex h-9 items-center justify-center gap-2 rounded-full bg-accent px-4 text-sm font-semibold text-background transition-colors hover:bg-accent/90 disabled:cursor-wait disabled:opacity-70"
                               >
                                 <FaCheck size={12} />
                                 Aceitar
@@ -659,7 +678,7 @@ export const NotificationsCenter = ({
                                   handleDeclineCommunityInvite(invite)
                                 }
                                 disabled={actionId === invite.id}
-                                className="inline-flex h-9 items-center gap-2 rounded-full border border-borderDark px-4 text-sm font-semibold text-mutedText transition-colors hover:border-coral hover:text-coral disabled:cursor-wait disabled:opacity-70"
+                                className="inline-flex h-9 items-center justify-center gap-2 rounded-full border border-borderDark px-4 text-sm font-semibold text-mutedText transition-colors hover:border-coral hover:text-coral disabled:cursor-wait disabled:opacity-70"
                               >
                                 <FaTimes size={12} />
                                 Dispensar
@@ -674,7 +693,8 @@ export const NotificationsCenter = ({
               )}
             </div>
           </section>
-        </div>
+        </div>,
+        document.body
       )}
     </>
   );
