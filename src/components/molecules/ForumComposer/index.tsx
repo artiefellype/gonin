@@ -5,20 +5,24 @@ import { PostProps, UserProps } from "@/types";
 import { useUserContext } from "@/context";
 import { UserServices } from "@/services/userServices";
 import { FaTimes } from "react-icons/fa";
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
-import { storage } from "@/firebase/firebase";
 import { postsServices } from "@/services/postServices";
 import { SpinLoad } from "@/components/atoms/SpinLoad";
 import { InputFile } from "@/components/atoms/InputFile";
 import { TbSend2 as SendIcon } from "react-icons/tb";
+import { CloudinaryServices } from "@/services/cloudinaryServices";
 
 interface ForumComposerProps {
   tag: string;
   fetchNewPosts: () => Promise<void>;
+  variant?: "card" | "timeline";
+  lockCommunity?: boolean;
 }
+
 export const ForumComposerArea = ({
   tag,
   fetchNewPosts,
+  variant = "card",
+  lockCommunity = false,
 }: ForumComposerProps) => {
   const [loadingUser, setLoadingUser] = useState(false);
   const { user } = useUserContext();
@@ -26,10 +30,16 @@ export const ForumComposerArea = ({
   const [text, setText] = useState("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [selectedFilePreview, setSelectedFilePreview] = useState("");
+  const [fileError, setFileError] = useState("");
   const [title, setTitle] = useState<string>("");
   const [hasTitle, setHasTitle] = useState<boolean>(false);
   const [userPhotoUrl, setUserPhotoUrl] = useState("/imgs/default_perfil.jpg");
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const remainingCharacters = 4096 - text.length;
+  const isTimeline = variant === "timeline";
+  const communityTag = lockCommunity ? tag : "";
+  const postContextLabel = communityTag ? "Post na comunidade" : "Post livre";
 
   const fetchUserLoggedInfo = async (id: string) => {
     setLoadingUser(true);
@@ -46,11 +56,15 @@ export const ForumComposerArea = ({
   };
 
   const handleFileSelect = (file: File) => {
+    setFileError("");
     setSelectedFile(file);
+    setSelectedFilePreview(URL.createObjectURL(file));
   };
 
   const handleFileRemove = () => {
     setSelectedFile(null);
+    if (selectedFilePreview) URL.revokeObjectURL(selectedFilePreview);
+    setSelectedFilePreview("");
   };
 
   const handleOptionalTitle = () => {
@@ -65,28 +79,33 @@ export const ForumComposerArea = ({
   const handleSubmit = async () => {
     setIsSubmitting(true);
     let mediaFileUrl = "";
-    const uniqueId = Date.now();
+    let mediaType: PostProps["mediaType"] = undefined;
+    let thumbnailUrl = "";
 
     try {
       if (selectedFile) {
-        const fileRef = ref(
-          storage,
-          `forum-images/${uniqueId}-${selectedFile.name}`
-        );
-        await uploadBytes(fileRef, selectedFile);
-        mediaFileUrl = await getDownloadURL(fileRef);
+        const media = await CloudinaryServices.uploadMedia(selectedFile);
+        mediaFileUrl = media.mediaUrl;
+        mediaType = media.mediaType;
+        thumbnailUrl = media.thumbnailUrl || "";
       }
 
       const post: PostProps = {
         id: "",
         userId: user?.user?.uid!!,
         mediaFile: mediaFileUrl,
+        mediaType,
+        thumbnailUrl,
         title: title,
         description: text,
         likeCount: 0,
         commentCount: 0,
-        tags: [tag],
+        savedCount: 0,
+        shareCount: 0,
+        tags: communityTag ? [communityTag] : [],
+        communityId: communityTag || undefined,
         pinned: false,
+        postType: "original",
         createdAt: new Date().toISOString(),
       };
 
@@ -101,12 +120,12 @@ export const ForumComposerArea = ({
       await postsServices.addPostEmptyLikesCollection(postDocRef);
 
       if (userInfo) {
-        userInfo.posts.push(postId);
+        userInfo.posts = [...(userInfo.posts || []), postId];
         await UserServices.updateUser(userInfo);
       }
 
       setText("");
-      setSelectedFile(null);
+      handleFileRemove();
       setTitle("");
       setHasTitle(false);
       fetchNewPosts();
@@ -122,6 +141,12 @@ export const ForumComposerArea = ({
   }, [user]);
 
   useEffect(() => {
+    return () => {
+      if (selectedFilePreview) URL.revokeObjectURL(selectedFilePreview);
+    };
+  }, [selectedFilePreview]);
+
+  useEffect(() => {
     if (textareaRef.current) {
       textareaRef.current.style.height = "auto";
       textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
@@ -129,105 +154,177 @@ export const ForumComposerArea = ({
   }, [text]);
 
   return (
-    <div className="w-full md:max-w-2xl h-auto bg-white rounded-lg p-2 flex flex-row">
-      <div className="flex rounded-full m-2 bg-gray-500 w-full max-w-[2.5rem] h-10">
-        {!loadingUser && (
-          <Image
-            className="rounded-full min-w-full"
-            src={userPhotoUrl}
-            alt={"user photo"}
-            width={40}
-            height={40}
-            priority
-          />
-        )}
-        {loadingUser && (
-          <div className="rounded-full w-full min-w-full max-w-[2.5rem] h-10 animate-pulse">
-            <div className="w-10 h-10 rounded-full bg-slate-400"></div>
+    <div
+      className={
+        isTimeline
+          ? "w-full border-b border-borderDark bg-background/70 px-3 py-3 sm:px-4 sm:py-4 md:bg-background"
+          : "w-full rounded-xl border border-borderDark bg-panel/90 p-3 shadow-lg md:rounded-lg md:p-4"
+      }
+    >
+      {!isTimeline && (
+        <div className="mb-4 flex items-start justify-between gap-3 border-b border-borderDark pb-3">
+          <div>
+            <div className="mb-1 flex flex-wrap items-center gap-2">
+              <h2 className="text-base font-semibold text-primary">
+                Abrir conversa
+              </h2>
+              <span className="rounded-full bg-accentSoft px-2 py-1 text-[11px] font-bold text-accent">
+                {postContextLabel}
+              </span>
+            </div>
+            <p className="text-xs font-medium text-mutedText">
+              Compartilhe uma ideia pequena. Ela pode crescer com as respostas.
+            </p>
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
-      <div className="flex flex-col pt-3 w-full">
-        <div className="flex mb-2 flex-col justify-start ">
-          {hasTitle && (
-            <div className="flex flex-row justify-center items-center mb-3">
-              <input
-                className="font-medium text-base text-gray-500 h-8 w-full border-spacing-1 border p-2 focus:outline-none focus:shadow-outline overflow-hidden"
-                id="title"
-                placeholder="Insira um título chamativo..."
-                type="text"
-                value={title}
-                onChange={(e) => {
-                  setTitle(e.target.value);
-                }}
-                maxLength={256}
-              />
-              <button onClick={handleOptionalTitleRemove}>
-                <FaTimes
-                  size={20}
-                  className="fill-slate-500 hover:fill-slate-600"
-                />
-              </button>
-            </div>
+      <div className="flex flex-row gap-3">
+        <div className="flex h-9 w-9 shrink-0 overflow-hidden rounded-full border border-borderDark bg-secondary sm:h-10 sm:w-10">
+          {!loadingUser && (
+            <Image
+              className="h-full w-full object-cover"
+              src={userPhotoUrl}
+              alt={"user photo"}
+              width={40}
+              height={40}
+              priority
+            />
           )}
-          <textarea
-            ref={textareaRef}
-            placeholder="Compartilhe suas ideias..."
-            className="font-medium text-base text-gray-500 min-h-[2.5rem] w-full border-none focus:outline-none focus:shadow-outline overflow-hidden"
-            value={text}
-            onChange={(e) => setText(e.target.value)}
-            maxLength={4096}
-          />
-          {selectedFile && (
-            <div className="mt-4 flex flex-row items-start">
-              <div className="flex flex-col items-start">
-                <Image
-                  className="mt-4 rounded-md"
-                  src={URL.createObjectURL(selectedFile)}
-                  alt="Selected"
-                  width={250}
-                  height={300}
-                  priority
-                />
-              </div>
-              <button onClick={handleFileRemove} className="mt-4">
-                <FaTimes
-                  size={20}
-                  className="fill-slate-500 hover:fill-slate-600"
-                />
-              </button>
-            </div>
+          {loadingUser && (
+            <div className="h-10 w-10 animate-pulse rounded-full bg-secondary" />
           )}
         </div>
 
-        <div className="flex w-full h-7 flex-row justify-between items-center mt-auto">
-          <div className="flex flex-row gap-1">
-            <InputFile onFileSelect={handleFileSelect} />
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                handleOptionalTitle();
-              }}
-              className="w-5 h-5 z-10"
-            >
-              <FaMarker
-                size={18}
-                className="fill-slate-500 hover:fill-slate-600"
-              />
-            </button>
+        <div className="flex w-full flex-col">
+          <div className="mb-2 flex flex-col justify-start">
+            {hasTitle && (
+              <div className="mb-3 flex flex-row items-center gap-2">
+                <input
+                  className="h-10 w-full rounded-lg border border-borderDark bg-secondary px-3 text-base font-medium text-primary placeholder:text-mutedText/70 focus:border-accent focus:outline-none"
+                  id="title"
+                  placeholder="Insira um título chamativo..."
+                  type="text"
+                  value={title}
+                  onChange={(e) => {
+                    setTitle(e.target.value);
+                  }}
+                  maxLength={256}
+                />
+                <button
+                  onClick={handleOptionalTitleRemove}
+                  className="flex h-9 w-9 items-center justify-center rounded-lg text-mutedText hover:bg-secondary hover:text-primary"
+                  aria-label="Remover título"
+                >
+                  <FaTimes size={20} className="fill-current" />
+                </button>
+              </div>
+            )}
+            <textarea
+              ref={textareaRef}
+              placeholder={
+                communityTag
+                  ? "Compartilhe uma ideia nesta comunidade"
+                  : isTimeline
+                    ? "Compartilhe uma ideia no Gonin"
+                    : "O que vale conversar hoje?"
+              }
+              className={`w-full resize-none overflow-hidden border-none bg-transparent font-medium text-primary placeholder:text-mutedText/70 focus:outline-none ${
+                isTimeline
+                  ? "min-h-[3rem] text-base"
+                  : "min-h-[4.5rem] text-base"
+              }`}
+              value={text}
+              onChange={(e) => setText(e.target.value)}
+              maxLength={4096}
+            />
+            {selectedFile && (
+              <div className="mt-4 flex flex-row items-start gap-2">
+                <div className="flex min-w-0 flex-1 flex-col items-start rounded-xl border border-borderDark bg-secondary p-2 sm:max-w-[360px]">
+                  {selectedFile.type.startsWith("video/") ? (
+                    <video
+                      className="max-h-[260px] w-full rounded-lg object-cover sm:max-h-[320px]"
+                      src={selectedFilePreview}
+                      controls
+                    />
+                  ) : (
+                    <Image
+                      className="max-h-[260px] w-full rounded-lg object-cover sm:max-h-[320px]"
+                      src={selectedFilePreview}
+                      alt="Selected"
+                      width={340}
+                      height={320}
+                      priority
+                    />
+                  )}
+                  <p className="mt-2 max-w-full truncate text-xs font-medium text-mutedText">
+                    {selectedFile.name}
+                  </p>
+                </div>
+                <button
+                  onClick={handleFileRemove}
+                  className="mt-1 flex h-9 w-9 items-center justify-center rounded-lg text-mutedText hover:bg-secondary hover:text-primary"
+                  aria-label="Remover imagem"
+                >
+                  <FaTimes size={20} className="fill-current" />
+                </button>
+              </div>
+            )}
+            {fileError && (
+              <p className="mt-3 rounded-lg border border-coral/30 bg-coralSoft px-3 py-2 text-sm font-semibold text-coral">
+                {fileError}
+              </p>
+            )}
           </div>
-          <div className="pr-3 h-7 flex flex-row gap-2">
-            {isSubmitting && <SpinLoad />}
-            <button
-              className=" flex flex-row gap-1 justify-center items-center px-4 py-1 z-10 bg-slate-500 hover:bg-slate-600 transition-colors delay-75 text-whiteColor font-bold text-sm rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
-              disabled={isSubmitting || !(text.trim() || selectedFile)}
-              onClick={handleSubmit}
-            >
-              <SendIcon size={16} />
-              <p>ENVIAR</p>
-              
-            </button>
+
+          <div
+            className={`mt-2 flex w-full flex-col gap-3 pt-3 sm:flex-row sm:items-center sm:justify-between ${
+              isTimeline ? "" : "border-t border-borderDark"
+            }`}
+          >
+            <div className="flex flex-row items-center gap-2">
+              <InputFile
+                onFileSelect={handleFileSelect}
+                onFileError={setFileError}
+              />
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleOptionalTitle();
+                }}
+                className={`z-10 flex h-9 items-center justify-center gap-2 rounded-lg border px-3 text-xs font-bold transition-colors ${
+                  hasTitle
+                    ? "border-accent bg-accentSoft text-accent"
+                    : "border-borderDark text-mutedText hover:border-accent hover:text-accent"
+                }`}
+                aria-label="Adicionar título"
+              >
+                <FaMarker size={14} className="fill-current" />
+                <span>Título</span>
+              </button>
+            </div>
+            <div className="flex flex-row items-center justify-between gap-3 sm:justify-end">
+              <span
+                className={`text-xs font-medium ${
+                  remainingCharacters < 120 ? "text-coral" : "text-mutedText"
+                }`}
+              >
+                {remainingCharacters}
+              </span>
+              {isSubmitting && <SpinLoad />}
+              <button
+                className={`z-10 flex h-9 flex-row items-center justify-center gap-2 px-4 text-sm font-semibold transition-colors delay-75 disabled:cursor-not-allowed disabled:opacity-50 ${
+                  isTimeline
+                    ? "rounded-full bg-primary text-background hover:bg-primary/90"
+                    : "rounded-lg bg-accent text-background hover:bg-accent/90"
+                }`}
+                disabled={isSubmitting || !(text.trim() || selectedFile)}
+                onClick={handleSubmit}
+              >
+                <SendIcon size={16} />
+                <p>Enviar</p>
+              </button>
+            </div>
           </div>
         </div>
       </div>

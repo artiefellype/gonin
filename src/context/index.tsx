@@ -71,7 +71,14 @@ export const UserContextProvider = ({ children }: { children: ReactNode }) => {
           createdAt: new Date().toISOString(),
           tag: '',
           posts: [],
-          member: false
+          member: false,
+          bio: "",
+          location: "",
+          profileBanner: "",
+          friendCount: 0,
+          savedCount: 0,
+          communityId: "",
+          communities: [],
         });
       }
 
@@ -130,7 +137,14 @@ export const UserContextProvider = ({ children }: { children: ReactNode }) => {
         createdAt: new Date().toISOString(),
         tag: '',
         posts: [],
-        member: false
+        member: false,
+        bio: "",
+        location: "",
+        profileBanner: "",
+        friendCount: 0,
+        savedCount: 0,
+        communityId: "",
+        communities: [],
       });
 
       setCookie(null, "userId", credential.user.uid, {

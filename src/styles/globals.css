@@ -4,8 +4,14 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter&display=swap');
 
 :root {
-  --foreground-rgb: 0, 0, 0;
-  --background-color: #D6D6D6;
+  --foreground-rgb: 238, 247, 245;
+  --background-color: #080D10;
+  --gonin-panel: #10191F;
+  --gonin-surface: #121D23;
+  --gonin-surface-soft: #1A2931;
+  --gonin-border: #263943;
+  --gonin-muted: #9EB2B1;
+  --gonin-accent: #82ABFF;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -18,34 +24,147 @@ html, body {
   scroll-behavior: smooth;
   overflow-x: hidden;
   font-family: 'Inter', sans-serif;
+  color-scheme: dark;
+  background: var(--background-color);
+}
+
+a,
+button,
+label,
+input,
+textarea {
+  -webkit-tap-highlight-color: transparent;
+}
+
+img,
+video {
+  max-width: 100%;
 }
 
 body {
   color: rgb(var(--foreground-rgb));
-  background-color: var(--background-color);
+  background:
+    radial-gradient(circle at 50% 0%, rgba(130, 171, 255, 0.08), transparent 320px),
+    linear-gradient(180deg, #0B1114 0%, var(--background-color) 360px);
+  min-height: 100vh;
+  min-height: 100svh;
+}
+
+#__next {
+  min-height: 100vh;
+  min-height: 100svh;
+  background: transparent;
+}
+
+.ant-layout,
+.ant-layout-content {
+  background: var(--background-color) !important;
+  color: inherit;
 }
 
 .ant-menu-item-selected {
-  background-color: #F8F8F8 !important;
+  background-color: #111B3E !important;
 }
 
 ::-webkit-scrollbar {
-  width: 12px;
+  width: 10px;
 }
 
-/* Fundo da barra de rolagem */
 ::-webkit-scrollbar-track {
-  background: #f1f1f1;
+  background: #080D10;
 }
 
-/* Cor da barra de rolagem */
 ::-webkit-scrollbar-thumb {
-  background-color: #888;
+  background-color: #263943;
   border-radius: 10px;
-  border: 3px solid #f1f1f1;
+  border: 2px solid #080D10;
 }
 
-/* Cor da barra de rolagem quando está sendo ativa */
 ::-webkit-scrollbar-thumb:hover {
-  background: #555;
+  background: #3B555F;
+}
+
+::selection {
+  background: rgba(130, 171, 255, 0.32);
+  color: #EEF7F5;
+}
+
+.gonin-panel {
+  border: 1px solid var(--gonin-border);
+  background: rgba(18, 29, 35, 0.92);
+}
+
+.gonin-soft-panel {
+  border: 1px solid var(--gonin-border);
+  background: rgba(16, 25, 31, 0.78);
+}
+
+@keyframes goninFadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes goninFloat {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+.gonin-fade-up,
+.gonin-reveal {
+  animation: goninFadeUp 700ms ease both;
+}
+
+.gonin-delay-1 {
+  animation-delay: 140ms;
+}
+
+.gonin-float {
+  animation: goninFloat 4.5s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 1ms !important;
+  }
+
+  .gonin-fade-up,
+  .gonin-reveal,
+  .gonin-float {
+    animation: none;
+  }
+}
+
+@media (max-width: 767px) {
+  body {
+    background:
+      radial-gradient(circle at 50% -80px, rgba(130, 171, 255, 0.12), transparent 280px),
+      var(--background-color);
+  }
+
+  ::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+  }
+
+  .gonin-fade-up,
+  .gonin-reveal,
+  .gonin-float,
+  .animate-blinkAnimation {
+    animation: none !important;
+  }
 }

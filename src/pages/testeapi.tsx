@@ -1,4 +1,5 @@
 // pages/posts.tsx
+import Head from "next/head";
 import { useEffect, useState } from "react";
 import { postsServices } from "@/services/postServices";
 import { DocumentData, QueryDocumentSnapshot } from "firebase/firestore";
@@ -36,20 +37,40 @@ const PostsPage = () => {
   }, []);
 
   return (
-    <div>
-      <h1>Posts</h1>
-      {error && <p style={{ color: "red" }}>{error}</p>}
-      <ul>
-        {posts.map((post) => (
-          <li key={post.id}>
-            <p>{post.content}</p>
-            <small>
-              Author: {post.user ? post.user.displayName : "Unknown"}
-            </small>
-            <small>Created At: {post.createdAt}</small>
-          </li>
-        ))}
-      </ul>
+    <div className="min-h-[100svh] bg-transparent px-3 py-6 text-primary sm:px-4">
+      <Head>
+        <title>Teste API - Gonin</title>
+        <meta name="robots" content="noindex,nofollow" />
+      </Head>
+      <main className="mx-auto w-full max-w-2xl rounded-2xl border border-borderDark bg-panel/90 p-4 shadow-lg">
+        <p className="text-xs font-bold uppercase tracking-wide text-accent">
+          Teste interno
+        </p>
+        <h1 className="mt-1 text-xl font-semibold">Posts</h1>
+        {error && (
+          <p className="mt-3 rounded-lg border border-coral/30 bg-coralSoft px-3 py-2 text-sm font-semibold text-coral">
+            {error}
+          </p>
+        )}
+        <ul className="mt-4 grid gap-3">
+          {posts.map((post) => (
+            <li
+              key={post.id}
+              className="rounded-xl border border-borderDark bg-background/70 p-3"
+            >
+              <p className="break-words text-sm text-primary">
+                {post.content || post.description || "Sem conteúdo"}
+              </p>
+              <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-xs text-mutedText">
+                <span>
+                  Autor: {post.user ? post.user.displayName : "Desconhecido"}
+                </span>
+                <span>{post.createdAt}</span>
+              </div>
+            </li>
+          ))}
+        </ul>
+      </main>
     </div>
   );
 };

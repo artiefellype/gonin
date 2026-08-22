@@ -4,12 +4,12 @@ interface CustomInputProps extends InputHTMLAttributes<HTMLInputElement> {
   label: string;
 }
 
-export const CustomInput = ({label, ...inputProps}:CustomInputProps) => {
+export const CustomInput = ({ label, ...inputProps }: CustomInputProps) => {
   return (
-    <div className="w-80 flex flex-col text-base my-2 gap-1">
-      <label className="text-xs font-thin">{label}</label>
+    <div className="my-2 flex w-full flex-col gap-1 text-base">
+      <label className="text-xs font-semibold text-mutedText">{label}</label>
       <input
-        className="text-base border-solid h-8 rounded-md p-4 focus:border-slate-300 focus:outline-none"
+        className="h-11 w-full rounded-lg border border-borderDark bg-secondary px-4 text-base text-primary placeholder:text-mutedText/70 focus:border-accent focus:outline-none"
         {...inputProps}
       />
     </div>

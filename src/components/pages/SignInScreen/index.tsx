@@ -3,6 +3,7 @@ import { FcGoogle } from "react-icons/fc";
 import { BetaFlag } from "../../atoms/BetaFlag";
 import { useUserContext } from "@/context";
 import Link from "next/link";
+import Image from "next/image";
 import { AuthForm } from "@/components/organisms/AuthForm";
 import { AuthTitle } from "@/components/atoms/AuthTitle";
 
@@ -10,6 +11,7 @@ export interface SignInScreenProps {
   loginWithGoogle: () => void;
   loading: (value: boolean) => void;
 }
+
 export const SignInScreen = ({
   loginWithGoogle,
   loading,
@@ -31,7 +33,7 @@ export const SignInScreen = ({
         error.code === "auth/user-not-found" ||
         error.code === "auth/wrong-password"
       ) {
-        setError("Email ou senha incorretos.Verifique e tente novamente.");
+        setError("Email ou senha incorretos. Verifique e tente novamente.");
       } else {
         setError("Erro ao fazer login: " + error.message);
       }
@@ -39,7 +41,7 @@ export const SignInScreen = ({
     setLoginLoading(false);
   };
 
-  const signInIputs = [
+  const signInInputs = [
     {
       title: "Email",
       type: "email",
@@ -57,62 +59,120 @@ export const SignInScreen = ({
   ];
 
   return (
-    <div className="w-screen max-w-[1440px] h-screen flex justify-center items-center bg-slate-200 relative px-2">
-      <img
-        src={"/imgs/fivechan_logo.png"}
-        alt={"background"}
-        className="bg-center w-12 h-12 absolute top-4 left-4 lg:hidden"
-      />
-      <div className=" w-full max-w-[320px] lg:max-w-none lg:w-2/5 h-screen flex md:flex-col justify-center items-center text-slate-900 relative">
-        <div className="flex flex-col w-full lg:w-1/2">
-          <AuthTitle title="Explore" description="Descubra o Gonin agora" />
+    <div className="flex min-h-[100svh] w-full justify-center bg-transparent px-3 text-primary sm:px-4">
+      <div className="grid min-h-[100svh] w-full max-w-7xl grid-cols-1 items-center gap-8 py-6 sm:py-8 lg:grid-cols-[0.9fr_1.1fr] lg:py-0">
+        <section className="flex justify-center lg:justify-start">
+          <div className="w-full max-w-[390px] rounded-2xl border border-borderDark bg-panel/95 p-5 shadow-lg sm:p-6 md:p-8">
+            <Link href="/" className="mb-8 flex items-center gap-3 sm:mb-10">
+              <span className="grid h-10 w-10 place-items-center rounded-lg bg-accent text-lg font-black text-background">
+                G
+              </span>
+              <span className="text-2xl font-semibold">GONIN</span>
+            </Link>
 
-          <div className="w-full flex justify-center items-start flex-col gap-2 relative">
-            <AuthForm
-              formTitle={"Login"}
-              handleSubmit={handleSubmit}
-              inputArray={signInIputs}
-              error={error}
-              OnSubmitLoading={loginLoading}
-            />
-            <div className="w-80 max-w-[320px] flex justify-end">
-              <p className="text-[12px] px-2">
-                Não tem uma conta?{" "}
-                <Link
-                  href="/register"
-                  className="text-blue-600 hover:cursor-pointer hover:text-blue-800"
-                >
-                  Registre-se
-                </Link>
+            <AuthTitle title="Explore" description="Entre para continuar." />
+
+            <div className="flex w-full flex-col items-start gap-3">
+              <AuthForm
+                formTitle="Login"
+                handleSubmit={handleSubmit}
+                inputArray={signInInputs}
+                error={error}
+                OnSubmitLoading={loginLoading}
+              />
+              <div className="flex w-full max-w-[320px] justify-end">
+                <p className="px-2 text-[12px] text-mutedText">
+                  Não tem uma conta?{" "}
+                  <Link
+                    href="/register"
+                    className="font-bold text-accent hover:cursor-pointer hover:text-primary"
+                  >
+                    Registre-se
+                  </Link>
+                </p>
+              </div>
+              <div className="flex w-full max-w-[320px] flex-row items-center justify-center">
+                <div className="h-[1px] w-full bg-borderDark"></div>
+                <div className="p-2 text-sm text-mutedText">ou</div>
+                <div className="h-[1px] w-full bg-borderDark"></div>
+              </div>
+              <button
+                onClick={() => {
+                  loginWithGoogle();
+                  loading(true);
+                }}
+                className="flex h-11 w-full max-w-[320px] flex-row items-center justify-center gap-2 rounded-lg border border-borderDark bg-secondary text-base font-bold text-primary transition-all duration-300 ease-in-out hover:border-accent hover:bg-accentSoft"
+              >
+                <FcGoogle className="mb-[1px] rounded-full bg-white" />
+                Continue com o Google
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <section className="hidden h-full min-h-[100svh] items-center justify-center lg:flex">
+          <div className="grid w-full max-w-2xl gap-4">
+            <div className="rounded-2xl border border-borderDark bg-panel/95 p-6 shadow-lg">
+              <div className="mb-6 flex items-start justify-between">
+                <div>
+                  <p className="text-sm font-bold uppercase tracking-wide text-accent">
+                    Fórum aberto
+                  </p>
+                  <h2 className="text-2xl font-semibold">
+                    Conversas sem complicação.
+                  </h2>
+                </div>
+                <Image
+                  src="/imgs/topics/Welcome aboard-pana.svg"
+                  alt="Boas-vindas ao Gonin"
+                  width={112}
+                  height={112}
+                />
+              </div>
+              <div className="grid grid-cols-3 gap-3">
+                <div className="rounded-xl border border-borderDark bg-secondary p-4">
+                  <p className="text-xs font-medium text-mutedText">Tópicos</p>
+                  <p className="text-lg font-bold">Diversos</p>
+                </div>
+                <div className="rounded-xl border border-borderDark bg-secondary p-4">
+                  <p className="text-xs font-medium text-mutedText">Entrada</p>
+                  <p className="text-lg font-bold">Fácil</p>
+                </div>
+                <div className="rounded-xl border border-borderDark bg-secondary p-4">
+                  <p className="text-xs font-medium text-mutedText">Status</p>
+                  <p className="text-lg font-bold">Beta</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="rounded-lg border border-borderDark bg-panel p-4 shadow-lg">
+              <div className="mb-3 flex items-center gap-3">
+                <Image
+                  src="/imgs/default_perfil.jpg"
+                  alt="Perfil"
+                  width={40}
+                  height={40}
+                  className="rounded-full"
+                />
+                <div>
+                  <p className="text-base font-bold">Novo usuário</p>
+                  <p className="text-xs font-medium text-mutedText">
+                    agora mesmo
+                  </p>
+                </div>
+              </div>
+              <h3 className="mb-2 text-base font-semibold">
+                Qual assunto você quer abrir hoje?
+              </h3>
+              <p className="text-sm font-medium leading-6 text-mutedText">
+                Compartilhe uma ideia, peça recomendações, participe de um
+                tópico ou ajude o Gonin a melhorar com feedback.
               </p>
             </div>
-            <div className="w-80 flex flex-row justify-center items-center max-w-[320px]">
-              <div className="h-[1px] w-full bg-slate-600"></div>
-              <div className="p-2 text-slate-600">ou</div>
-              <div className="h-[1px] w-full bg-slate-600"></div>
-            </div>
-            <button
-              onClick={() => {
-                loginWithGoogle();
-                loading(true);
-              }}
-              className="border-red-500 text-base max-w-[320px] border-solid border-2 w-80 h-9 rounded-2xl flex flex-row justify-center items-center gap-2 hover:text-slate-200 hover:bg-red-500 transition-all duration-400 ease-in-out"
-            >
-              {" "}
-              <FcGoogle className="mb-[1px] bg-slate-200 rounded-full" />{" "}
-              Continue com o Google
-            </button>
-            <BetaFlag />
           </div>
-        </div>
+        </section>
       </div>
-      <div className=" w-3/5 h-screen hidden lg:flex  flex-col justify-center items-center relative">
-        <img
-          src={"/imgs/fivechan_logo.png"}
-          alt={"background"}
-          className="bg-center w-72 h-72 absolute"
-        />
-      </div>
+      <BetaFlag />
     </div>
   );
 };

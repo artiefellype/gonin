@@ -2,10 +2,9 @@ import {
   MenuItemsProps,
   SideOptions,
 } from "@/components/molecules/SideOptions";
-import { Divider, Layout } from "antd";
+import { Layout } from "antd";
 import React from "react";
 import { HiHome } from "react-icons/hi";
-import { MdExplore } from "react-icons/md";
 import { FaComments } from "react-icons/fa";
 import { ForumHeader } from "@/components/molecules/ForumHeader";
 import { ForumFooter } from "@/components/molecules/ForumFooter";
@@ -20,48 +19,36 @@ interface Props {
 export const LayoutForum = ({ children }: Props) => {
   const items: MenuItemsProps[] = [
     {
-      label: "INICIO",
+      label: "Início",
       icon: HiHome,
       key: "forum",
       path: `/forum`,
       show: true,
     },
     {
-      label: "TÓPICOS",
+      label: "Comunidades",
       icon: FaComments,
       key: "topics",
       path: `/topics`,
       show: true,
     },
-    // {
-    //   label: "EXPLORAR",
-    //   icon: MdExplore,
-    //   key: "explore",
-    //   path: `/explore`,
-    //   show: true,
-    // },
   ];
 
   return (
-    <Layout>
+    <Layout className="min-h-[100svh] overflow-x-hidden bg-background text-primary">
       <Head>
-        <title>Tópicos</title>
+        <title>Gonin</title>
       </Head>
-      {/* desk */}
-      <div className="w-screen bg-background hidden md:flex flex-col items-center ">
-        <ForumHeader isMobile={false} />
+      <div className="hidden h-screen min-h-0 w-full flex-col items-center bg-background text-primary md:flex">
         <SideOptions items={items}>{children}</SideOptions>
       </div>
-      {/* mobile */}
-      <div className="w-screen bg-background flex flex-col md:hidden items-center">
+      <div className="flex min-h-[100svh] w-full flex-col bg-background text-primary md:hidden">
         <ForumHeader isMobile={true} />
-        <Layout>
+        <Layout className="min-h-0 w-full flex-1 bg-background">
           <Content
-            className={`min-h-screen relative flex md:hidden justify-center items-center flex-col`}
+            className="relative flex min-h-0 w-full min-w-0 flex-1 flex-col items-stretch justify-start bg-background pb-24 md:hidden"
             style={{
-              backgroundColor: "#D6D6D6",
-              paddingLeft: "0.5rem",
-              paddingRight: "0.5rem",
+              backgroundColor: "var(--background-color)",
             }}
           >
             {children}

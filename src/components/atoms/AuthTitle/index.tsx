@@ -6,9 +6,9 @@ export interface AuthTitleProps {
 }
 export const AuthTitle = ({ title, description }: AuthTitleProps) => {
   return (
-    <div className="w-full pb-12 flex justify-center flex-col lg:justify-start">
-      <h1 className="text-3xl font-bold ">{title}</h1>
-      <p className="text-base font-light"> {description}</p>
+    <div className="flex w-full flex-col justify-center pb-6 sm:pb-8 lg:justify-start">
+      <h1 className="text-2xl font-semibold text-primary">{title}</h1>
+      <p className="mt-2 text-sm font-normal leading-6 text-mutedText sm:text-base">{description}</p>
     </div>
   );
 };

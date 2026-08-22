@@ -1,29 +1,24 @@
-import { User, useUserContext } from "@/context";
+import { useUserContext } from "@/context";
 import { useRouter } from "next/router";
 import React, { useEffect, useState } from "react";
 import Image from "next/image";
-import { CustomPopover } from "@/components/atoms/CustomPopover";
 import { MenuButton } from "@/components/atoms/MenuButton";
 import { UserServices } from "@/services/userServices";
 import { UserProps } from "@/types";
-import { FaArrowRightToBracket } from "react-icons/fa6";
+import { FaPlus, FaSearch } from "react-icons/fa";
+import Link from "next/link";
 
 interface Props {
   isMobile: boolean;
 }
 
 export const ForumHeader = ({ isMobile }: Props) => {
-  const { signOut, user } = useUserContext();
+  const { user } = useUserContext();
   const [userInfo, setUserInfo] = useState<UserProps | undefined>(undefined);
   const [userPhoto, setUserPhoto] = useState<string>(
     "/imgs/default_perfil.jpg"
   );
   const router = useRouter();
-
-  const handleSignOut = async () => {
-    await signOut();
-    router.push("/login");
-  };
 
   useEffect(() => {
     const fetchUserHeader = async () => {
@@ -44,82 +39,64 @@ export const ForumHeader = ({ isMobile }: Props) => {
   }, [user]);
 
   return (
-    <div className="w-full bg-whiteColor flex items-center justify-center">
-      <div className="w-full max-w-7xl h-[72px] flex justify-between p-4 items-center">
-        <div className=" flex md:justify-center">
-          <h1 className="font-extrabold text-3xl text-primary ">GONIN</h1>
-        </div>
-        {!isMobile ? (
-          <div className="flex flex-row gap-2 mx-4">
+    <div className="sticky top-0 z-40 flex w-full items-center justify-center border-b border-borderDark bg-panel/95 backdrop-blur-xl">
+      <div className="flex h-14 w-full max-w-7xl items-center justify-between gap-3 px-3 sm:h-[72px] sm:px-4">
+        <Link href="/forum" className="flex min-w-0 items-center gap-3">
+          <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-accent text-base font-black text-background sm:h-10 sm:w-10 sm:text-lg">
+            G
+          </span>
+          <div className="hidden min-w-0 flex-col sm:flex">
+            <h1 className="truncate text-xl font-semibold leading-5 text-primary">
+              Gonin
+            </h1>
+            <p className="truncate text-xs font-medium text-mutedText">
+              Conversas que continuam
+            </p>
+          </div>
+        </Link>
+
+        {!isMobile && (
+          <label className="hidden min-w-0 flex-1 items-center gap-2 rounded-lg border border-borderDark bg-secondary px-3 py-2 text-mutedText lg:flex">
+            <FaSearch size={14} />
+            <input
+              aria-label="Buscar"
+              className="min-w-0 flex-1 bg-transparent text-sm text-primary placeholder:text-mutedText focus:outline-none"
+              placeholder="Buscar conversas, tópicos ou pessoas"
+              readOnly
+            />
+          </label>
+        )}
+
+        <div className="flex items-center gap-2">
+          {!isMobile && (
+            <button
+              onClick={() => router.push("/forum")}
+              className="hidden h-10 items-center gap-2 rounded-lg bg-accent px-4 text-sm font-bold text-background transition-colors hover:bg-accent/90 md:flex"
+            >
+              <FaPlus size={13} />
+              Novo post
+            </button>
+          )}
+          {!isMobile ? (
             <MenuButton
-              className="flex flex-row gap-3 items-center rounded-full p-2 hover:bg-secondary"
+              className="flex items-center gap-3 rounded-lg border border-borderDark bg-whiteColor p-2 transition-colors hover:border-accent"
               user={userInfo}
             />
-            {/* <CustomPopover
-              width={"100%"}
-              trigger={
-                <MenuButton
-                  className="flex flex-row gap-3 items-center rounded-full p-2 hover:bg-secondary"
-                  user={userInfo}
-                />
-              }
-              content={
-                <div className="flex flex-col bg-primary rounded-md w-full ">
-                  <button
-                    className=" text-whiteColor px-4 py-2 hover:bg-slate-600 rounded-md flex flex-row gap-2 justify-start items-center"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleSignOut();
-                    }}
-                  >
-                    <FaArrowRightToBracket
-                      size={12}
-                      className="fill-whiteColor"
-                    />
-                    <p>Sair</p>
-                  </button>
-                </div>
-              }
-            /> */}
-          </div>
-        ) : (
-          <div className="flex flex-row">
-            <div className="w-10 h-10 flex justify-center items-center mx-4">
+          ) : (
+            <Link
+              href={`/profile/${user?.user?.uid || ""}`}
+              className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full border border-borderDark bg-secondary sm:h-10 sm:w-10"
+            >
               <Image
                 src={userPhoto}
                 alt={"perfil photo"}
                 width={40}
                 height={40}
-                className="rounded-full"
+                className="h-full w-full object-cover"
               />
-              {/* <CustomPopover
-                trigger={
-                  <Image
-                    src={userPhoto}
-                    alt={"perfil photo"}
-                    width={40}
-                    height={40}
-                    className="rounded-full"
-                  />
-                }
-                content={
-                  <div className="flex flex-col bg-primary rounded-md w-full ">
-                      <button
-                        className=" text-whiteColor px-4 py-2 hover:bg-slate-600 rounded-md flex flex-row gap-2 justify-start items-center"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleSignOut()
-                        }}
-                      >
-                        <FaArrowRightToBracket size={12} className="fill-whiteColor" />
-                        <p>Sair</p>
-                      </button>
-                    </div>
-                }
-              /> */}
-            </div>
-          </div>
-        )}
+            </Link>
+          )}
+        </div>
       </div>
     </div>
   );

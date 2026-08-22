@@ -18,6 +18,18 @@ export const CustomPopover = ({ trigger, content, width }: PopoverProps) => {
     setPopoverVisible(false);
   };
 
+  const triggerElement = (() => {
+    if (!React.isValidElement(trigger)) return trigger;
+
+    return React.cloneElement(trigger as React.ReactElement<any>, {
+      onClick: (e: React.MouseEvent) => {
+        e.stopPropagation();
+        trigger.props.onClick?.(e);
+        togglePopover();
+      },
+    });
+  })();
+
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
@@ -36,18 +48,11 @@ export const CustomPopover = ({ trigger, content, width }: PopoverProps) => {
 
   return (
     <div className="relative">
-      <div
-        onClick={(e) => {
-          e.stopPropagation();
-          togglePopover();
-        }}
-      >
-        {trigger}
-      </div>
+      {triggerElement}
       {popoverVisible && (
         <div
         style={{width: width}}
-        className={`absolute z-10 bg-transparent shadow-md top-full right-0 transition-transform duration-300 ${
+        className={`absolute z-50 bg-transparent shadow-md top-full right-0 transition-transform duration-300 ${
             popoverVisible
               ? "transform translate-y-0 opacity-100"
               : "transform translate-y-full opacity-0"

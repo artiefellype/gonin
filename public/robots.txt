@@ -1,6 +1,7 @@
 # *
 User-agent: *
 Allow: /
+Disallow: /testeapi
 
 # Host
 Host: https://gonin.vercel.app

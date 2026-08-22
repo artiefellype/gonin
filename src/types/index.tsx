@@ -8,6 +8,37 @@ export interface UserProps {
   member: boolean;
   tag: string;
   uid: string;
+  bio?: string;
+  location?: string;
+  profileBanner?: string;
+  friendCount?: number;
+  savedCount?: number;
+  communityId?: string;
+  communities?: string[];
+}
+
+export interface CommunityProps {
+  id: string;
+  title: string;
+  slug: string;
+  description: string;
+  avatar?: string;
+  banner?: string;
+  ownerId: string;
+  membersCount: number;
+  postsCount: number;
+  createdAt: string;
+  isSystem?: boolean;
+}
+
+export interface FriendshipProps {
+  id: string;
+  requesterId: string;
+  addresseeId: string;
+  participants: string[];
+  status: "pending" | "accepted";
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface PostProps {
@@ -15,13 +46,25 @@ export interface PostProps {
   userId: string;
   user?: UserProps;
   mediaFile: string;
+  mediaType?: "image" | "video";
+  thumbnailUrl?: string;
   title: string;
   description: string;
   likeCount: number;
   commentCount: number;
+  savedCount?: number;
+  shareCount?: number;
   tags: string[];
+  communityId?: string;
+  community?: CommunityProps | null;
   createdAt: string;
   pinned: boolean;
+  postType?: "original" | "share";
+  originalPostId?: string;
+  originalUserId?: string;
+  originalPost?: PostProps | null;
+  originalUser?: UserProps | null;
+  sharedByText?: string;
 }
 
 export interface PostCommentsProps {
@@ -33,4 +76,11 @@ export interface PostCommentsProps {
 
 export interface PostCommentWithUserProps extends PostCommentsProps {
   user?: UserProps | null;
+}
+
+export interface SavedPostProps {
+  id: string;
+  postId: string;
+  userId: string;
+  createdAt: string;
 }

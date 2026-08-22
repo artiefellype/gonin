@@ -7,9 +7,13 @@ interface DividerProps {
 
 export const CustomDivider = ({ tag }: DividerProps) => {
   return (
-    <>
-      <h2 className="font-bold text-lg text-primary">{getTitleFromTag(tag)}</h2>
-      <div className="w-9/12 h-[2px] bg-slate-400 mb-2 "></div>
-    </>
+    <div className="w-full rounded-xl border border-borderDark bg-panel/90 p-4 md:rounded-lg">
+      <p className="text-xs font-bold uppercase tracking-wide text-accent">
+        Comunidade
+      </p>
+      <h2 className="mt-1 text-xl font-semibold text-primary sm:text-2xl">
+        {getTitleFromTag(tag)}
+      </h2>
+    </div>
   );
 };
