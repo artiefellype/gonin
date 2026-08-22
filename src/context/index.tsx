@@ -13,12 +13,21 @@ import {
   signInWithPopup,
   signOut,
   signInWithEmailAndPassword,
-  createUserWithEmailAndPassword
+  createUserWithEmailAndPassword,
+  updateProfile,
 } from "firebase/auth";
 import { onAuthStateChanged } from "firebase/auth";
 import { fireApp as app, firestore } from "@/firebase/firebase";
 import { destroyCookie, parseCookies, setCookie } from "nookies";
-import { doc, getDoc, setDoc } from "firebase/firestore";
+import {
+  collection,
+  doc,
+  getDoc,
+  getDocs,
+  query,
+  setDoc,
+  where,
+} from "firebase/firestore";
 
 const normalizeSearchName = (value?: string | null) =>
   (value || "")
@@ -38,8 +47,16 @@ export type UserContextType = {
   signIn: () => Promise<void>;
   signOut: () => Promise<void>;
   getUserFromLocalStorage: () => string | null;
-  signInWithEmail: (email: string, password: string) => Promise<void>,
-  signUpWithEmail: (userName: string, email: string, password: string) => Promise<void>
+  signInWithEmail: (email: string, password: string) => Promise<void>;
+  signUpWithEmail: (
+    userName: string,
+    email: string,
+    password: string
+  ) => Promise<void>;
+  checkUserNameAvailability: (
+    userName: string,
+    currentUserId?: string
+  ) => Promise<boolean>;
 };
 
 export const UserFiveContext = createContext({} as UserContextType);
@@ -48,6 +65,46 @@ export const UserContextProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>({ isAuth: false, user: null });
   const googleProvider = new GoogleAuthProvider();
   const auth = getAuth(app);
+
+  const checkUserNameAvailability = async (
+    userName: string,
+    currentUserId?: string
+  ) => {
+    const normalizedName = normalizeSearchName(userName);
+
+    if (!normalizedName) return false;
+
+    const usersQuery = query(
+      collection(firestore, "users"),
+      where("searchName", "==", normalizedName)
+    );
+    const usersSnapshot = await getDocs(usersQuery);
+
+    return usersSnapshot.docs.every((userDoc) => {
+      const userData = userDoc.data();
+      const foundUserId = userData.uid || userDoc.id;
+
+      return Boolean(currentUserId && foundUserId === currentUserId);
+    });
+  };
+
+  const buildUniqueDisplayName = async (baseName?: string | null) => {
+    const cleanBaseName = (baseName || "Usuário").trim() || "Usuário";
+
+    if (await checkUserNameAvailability(cleanBaseName)) {
+      return cleanBaseName;
+    }
+
+    for (let suffix = 2; suffix <= 50; suffix += 1) {
+      const candidate = `${cleanBaseName} ${suffix}`;
+
+      if (await checkUserNameAvailability(candidate)) {
+        return candidate;
+      }
+    }
+
+    return `${cleanBaseName} ${Date.now().toString(36)}`;
+  };
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (authUser) => {
@@ -70,10 +127,16 @@ export const UserContextProvider = ({ children }: { children: ReactNode }) => {
       const userDoc = await getDoc(userDocRef);
 
       if (!userDoc.exists()) {
+        const displayName = await buildUniqueDisplayName(
+          credential.user.displayName ||
+            credential.user.email?.split("@")[0] ||
+            "Usuário"
+        );
+
         await setDoc(userDocRef, {
           uid: credential.user.uid,
-          displayName: credential.user.displayName,
-          searchName: normalizeSearchName(credential.user.displayName),
+          displayName,
+          searchName: normalizeSearchName(displayName),
           email: credential.user.email,
           photoURL: credential.user.photoURL,
           createdAt: new Date().toISOString(),
@@ -130,19 +193,39 @@ export const UserContextProvider = ({ children }: { children: ReactNode }) => {
   };
 
 
-  const signUpWithEmail = async (userName: string, email: string, password: string) => {
+  const signUpWithEmail = async (
+    userName: string,
+    email: string,
+    password: string
+  ) => {
     try {
+      const cleanUserName = userName.trim();
+
+      if (!cleanUserName) {
+        throw new Error("Informe um nome de usuário.");
+      }
+
+      const isUserNameAvailable = await checkUserNameAvailability(
+        cleanUserName
+      );
+
+      if (!isUserNameAvailable) {
+        throw new Error("Nome de usuário já está em uso.");
+      }
+
       const credential = await createUserWithEmailAndPassword(auth, email, password);
       const token = await credential.user.getIdTokenResult();
       const tempName = credential.user.email?.split("@")[0]
 
+      await updateProfile(credential.user, {
+        displayName: cleanUserName,
+      });
+
       const userDocRef = doc(firestore, "users", credential.user.uid);
       await setDoc(userDocRef, {
         uid: credential.user.uid,
-        displayName: credential.user.displayName || userName || tempName || "",
-        searchName: normalizeSearchName(
-          userName || tempName || credential.user.email
-        ),
+        displayName: cleanUserName || tempName || "",
+        searchName: normalizeSearchName(cleanUserName || tempName),
         email: credential.user.email,
         photoURL: credential.user.photoURL || "",
         createdAt: new Date().toISOString(),
@@ -169,7 +252,7 @@ export const UserContextProvider = ({ children }: { children: ReactNode }) => {
       });
     } catch (err: any) {
       console.error(err.code, ": ", err.message);
-      return err
+      throw err;
     }
   };
 
@@ -192,7 +275,8 @@ export const UserContextProvider = ({ children }: { children: ReactNode }) => {
     signOut: signOutHandler,
     getUserFromLocalStorage: getUserFromLocalStorage,
     signInWithEmail: signInWithEmail,
-    signUpWithEmail: signUpWithEmail
+    signUpWithEmail: signUpWithEmail,
+    checkUserNameAvailability,
   };
 
   

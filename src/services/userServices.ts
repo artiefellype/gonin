@@ -29,4 +29,15 @@ export class UserServices {
       throw error;
     }
   };
+
+  static checkUserNameAvailability = async (
+    userName: string,
+    currentUserId?: string
+  ): Promise<boolean> => {
+    try {
+      return await new BaseAPI().isUserNameAvailable(userName, currentUserId);
+    } catch (error) {
+      throw error;
+    }
+  };
 }

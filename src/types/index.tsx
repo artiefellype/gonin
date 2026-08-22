@@ -54,6 +54,17 @@ export interface CommunityInviteProps {
   updatedAt: string;
 }
 
+export interface NotificationProps {
+  id: string;
+  recipientId: string;
+  actorId: string;
+  postId: string;
+  type: "like" | "comment" | "share" | "mention";
+  status: "active" | "dismissed";
+  message?: string;
+  createdAt: string;
+}
+
 export interface PostProps {
   id: string;
   userId: string;

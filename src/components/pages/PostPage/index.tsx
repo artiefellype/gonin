@@ -160,9 +160,9 @@ export const PostPage = ({ postIdUrl }: PostPageProps) => {
         shareText
       );
       setShareCount((current) => current + 1);
-      setShareModalOpen(false);
     } catch (error: any) {
       console.error(error.message);
+      throw error;
     } finally {
       setIsShareDisabled(false);
     }
@@ -434,10 +434,10 @@ export const PostPage = ({ postIdUrl }: PostPageProps) => {
                 {post.postType === "share" && post.originalPost && (
                   <button
                     onClick={() => router.push(`/post/${post.originalPostId}`)}
-                    className="mt-4 w-full overflow-hidden rounded-xl border border-borderDark bg-panel/70 text-left transition-colors hover:border-accent sm:rounded-2xl"
+                    className="mt-4 w-full overflow-hidden rounded-xl border border-borderDark bg-background text-left transition-colors hover:border-accent sm:rounded-2xl"
                   >
-                    <div className="p-3">
-                      <div className="mb-2 flex items-center gap-2 text-sm">
+                    <div className="px-3 py-2">
+                      <div className="flex min-w-0 items-center gap-2 text-sm">
                         <div className="h-7 w-7 overflow-hidden rounded-full bg-secondary">
                           <Image
                             src={
@@ -450,14 +450,19 @@ export const PostPage = ({ postIdUrl }: PostPageProps) => {
                             className="h-full w-full object-cover"
                           />
                         </div>
-                        <span className="font-semibold text-primary">
+                        <span className="truncate font-semibold text-primary">
                           {post.originalPost.user?.displayName || "Usuário"}
                         </span>
                         <span className="text-mutedText">·</span>
-                        <span className="text-mutedText">
+                        <span className="shrink-0 text-mutedText">
                           {formatDate(post.originalPost.createdAt)}
                         </span>
                       </div>
+                      {post.originalPost.title && (
+                        <h3 className="mt-1 text-base font-semibold leading-6 text-primary">
+                          {post.originalPost.title}
+                        </h3>
+                      )}
                       <p className="whitespace-pre-wrap text-base leading-6 text-primary">
                         <LinkifiedText text={post.originalPost.description} />
                       </p>
@@ -506,7 +511,10 @@ export const PostPage = ({ postIdUrl }: PostPageProps) => {
                   <span>{savedCount}</span>
                 </button>
                 <button
-                  onClick={() => setShareModalOpen(true)}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    setShareModalOpen(true);
+                  }}
                   className="flex items-center gap-2 rounded-full px-3 py-2 transition-colors hover:text-accent"
                   disabled={isShareDisabled}
                 >

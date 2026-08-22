@@ -2,10 +2,14 @@ import { useUserContext } from "@/context";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/router";
-import React, { useMemo } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { IconType } from "react-icons";
 import { TbLogin as LogoutIcon } from "react-icons/tb";
 import { NotificationsCenter } from "../NotificationsCenter";
+import { UserServices } from "@/services/userServices";
+import { UserProps } from "@/types";
+
+const DEFAULT_PROFILE_IMAGE = "/imgs/default_perfil.jpg";
 
 export interface MenuItemsProps {
   label: React.ReactNode;
@@ -24,6 +28,7 @@ interface Props {
 export const SideOptions = ({ children, items }: Props) => {
   const { signOut, user } = useUserContext();
   const router = useRouter();
+  const [currentUser, setCurrentUser] = useState<UserProps | null>(null);
 
   const activePath = useMemo(() => {
     const paths = router.pathname.split("/");
@@ -31,6 +36,28 @@ export const SideOptions = ({ children, items }: Props) => {
   }, [router.pathname]);
 
   const visibleItems = items.filter((item) => item.show !== false);
+  const menuDisplayName =
+    currentUser?.displayName || user?.user?.displayName || "Usuário";
+  const menuPhotoURL =
+    currentUser?.photoURL || user?.user?.photoURL || DEFAULT_PROFILE_IMAGE;
+
+  useEffect(() => {
+    const fetchCurrentUser = async () => {
+      if (!user?.user?.uid) {
+        setCurrentUser(null);
+        return;
+      }
+
+      try {
+        const response = await UserServices.getUserById(user.user.uid);
+        setCurrentUser(response);
+      } catch (error) {
+        console.error("Erro ao carregar usuário do menu:", error);
+      }
+    };
+
+    fetchCurrentUser();
+  }, [user?.user?.uid]);
 
   const handleLogout = async () => {
     await signOut();
@@ -104,7 +131,7 @@ export const SideOptions = ({ children, items }: Props) => {
               >
                 <div className="h-10 w-10 shrink-0 overflow-hidden rounded-full bg-secondary">
                   <Image
-                    src={user?.user?.photoURL || "/imgs/default_perfil.jpg"}
+                    src={menuPhotoURL}
                     alt="Perfil"
                     width={40}
                     height={40}
@@ -113,7 +140,7 @@ export const SideOptions = ({ children, items }: Props) => {
                 </div>
                 <div className="hidden min-w-0 flex-1 lg:block">
                   <p className="truncate text-sm font-semibold text-primary">
-                    {user?.user?.displayName || "Gonin"}
+                    {menuDisplayName}
                   </p>
                 </div>
               </Link>
