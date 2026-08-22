@@ -113,12 +113,7 @@ export const SideOptions = ({ children, items }: Props) => {
                 </div>
                 <div className="hidden min-w-0 flex-1 lg:block">
                   <p className="truncate text-sm font-semibold text-primary">
-                    {user?.user?.displayName ||
-                      user?.user?.email?.split("@")[0] ||
-                      "Gonin"}
-                  </p>
-                  <p className="truncate text-xs text-mutedText">
-                    {user?.user?.email || "Sessão ativa"}
+                    {user?.user?.displayName || "Gonin"}
                   </p>
                 </div>
               </Link>

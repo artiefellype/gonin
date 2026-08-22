@@ -254,7 +254,6 @@ export const NotificationsCenter = ({
                     const requester = request.requester;
                     const requesterName =
                       requester?.displayName ||
-                      requester?.email?.split("@")[0] ||
                       "Usuário do Gonin";
 
                     return (

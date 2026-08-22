@@ -73,9 +73,7 @@ export const UserContextProvider = ({ children }: { children: ReactNode }) => {
         await setDoc(userDocRef, {
           uid: credential.user.uid,
           displayName: credential.user.displayName,
-          searchName: normalizeSearchName(
-            credential.user.displayName || credential.user.email
-          ),
+          searchName: normalizeSearchName(credential.user.displayName),
           email: credential.user.email,
           photoURL: credential.user.photoURL,
           createdAt: new Date().toISOString(),

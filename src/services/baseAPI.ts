@@ -320,7 +320,7 @@ export class BaseAPI {
       await updateDoc(userRef, {
         uid: targetUserId,
         displayName: user.displayName,
-        searchName: this.normalizeSearchValue(user.displayName || user.email),
+        searchName: this.normalizeSearchValue(user.displayName),
         tag: user.tag,
         member: user.member,
         photoURL: user.photoURL,
@@ -520,7 +520,6 @@ export class BaseAPI {
             foundUser.searchName,
             foundUser.displayName,
             foundUser.tag,
-            foundUser.email,
           ]
             .map((value) => this.normalizeSearchValue(value))
             .join(" ");
@@ -528,8 +527,8 @@ export class BaseAPI {
           return searchableText.includes(normalizedTerm);
         })
         .sort((a, b) => {
-          const aName = this.normalizeSearchValue(a.displayName || a.email);
-          const bName = this.normalizeSearchValue(b.displayName || b.email);
+          const aName = this.normalizeSearchValue(a.displayName);
+          const bName = this.normalizeSearchValue(b.displayName);
           const aStarts = aName.startsWith(normalizedTerm);
           const bStarts = bName.startsWith(normalizedTerm);
 

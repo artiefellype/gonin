@@ -139,7 +139,6 @@ export const UserSearch = ({ compact = false, className = "" }: UserSearchProps)
             const profileId = foundUser.uid || foundUser.id;
             const displayName =
               foundUser.displayName ||
-              foundUser.email?.split("@")[0] ||
               "Usuário do Gonin";
 
             return (
@@ -196,8 +195,16 @@ export const UserSearch = ({ compact = false, className = "" }: UserSearchProps)
         </button>
 
         {open && (
-          <div className="fixed inset-0 z-[80] flex items-end justify-center bg-black/70 px-3 pb-3 pt-12 backdrop-blur-sm sm:items-center sm:p-6">
-            <section className="flex max-h-[86svh] w-full max-w-[520px] flex-col overflow-hidden rounded-2xl border border-borderDark bg-panel shadow-2xl">
+          <div
+            className="fixed inset-0 z-[120] flex items-start justify-center bg-black/75 px-3 py-4 backdrop-blur-sm"
+            onMouseDown={closeSearch}
+          >
+            <section
+              className="mt-2 flex max-h-[calc(100svh-32px)] w-full max-w-[520px] flex-col overflow-hidden rounded-2xl border border-borderDark bg-panel shadow-2xl"
+              role="dialog"
+              aria-modal="true"
+              onMouseDown={(event) => event.stopPropagation()}
+            >
               <header className="flex items-center gap-2 border-b border-borderDark p-3">
                 <label className="flex h-11 min-w-0 flex-1 items-center gap-3 rounded-lg border border-borderDark bg-background px-4 text-mutedText focus-within:border-accent">
                   <FaSearch size={14} />

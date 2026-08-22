@@ -370,11 +370,11 @@ export const PostPage = ({ postIdUrl }: PostPageProps) => {
                         <FaRocket className="animate-blinkAnimation" />
                       ) : null}
                     </Link>
-                    <p className="text-sm text-mutedText">
-                      {userOwnerInfo?.email?.split("@")[0]
-                        ? `@${userOwnerInfo.email.split("@")[0]}`
-                        : "Gonin"}
-                    </p>
+                    {userOwnerInfo?.tag ? (
+                      <p className="text-sm text-mutedText">
+                        @{userOwnerInfo.tag}
+                      </p>
+                    ) : null}
                   </div>
                 </div>
 
