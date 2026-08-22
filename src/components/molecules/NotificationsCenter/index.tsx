@@ -2,8 +2,14 @@ import { useUserContext } from "@/context";
 import { firestore } from "@/firebase/firebase";
 import { CommunityServices } from "@/services/communityServices";
 import { FriendshipServices } from "@/services/friendshipServices";
+import { postsServices } from "@/services/postServices";
 import { UserServices } from "@/services/userServices";
-import { CommunityInviteProps, FriendshipProps, UserProps } from "@/types";
+import {
+  CommunityInviteProps,
+  FriendshipProps,
+  NotificationProps,
+  UserProps,
+} from "@/types";
 import {
   collection,
   onSnapshot,
@@ -21,6 +27,10 @@ type RequestWithUser = FriendshipProps & {
 
 type CommunityInviteWithUser = CommunityInviteProps & {
   inviter?: UserProps | null;
+};
+
+type NotificationWithActor = NotificationProps & {
+  actor?: UserProps | null;
 };
 
 interface NotificationsCenterProps {
@@ -48,19 +58,26 @@ export const NotificationsCenter = ({
   const [communityInvites, setCommunityInvites] = useState<
     CommunityInviteWithUser[]
   >([]);
+  const [postNotifications, setPostNotifications] = useState<
+    NotificationWithActor[]
+  >([]);
   const [loading, setLoading] = useState(true);
   const [invitesLoading, setInvitesLoading] = useState(true);
+  const [notificationsLoading, setNotificationsLoading] = useState(true);
   const [actionId, setActionId] = useState<string | null>(null);
   const [message, setMessage] = useState("");
 
-  const pendingCount = requests.length + communityInvites.length;
+  const pendingCount =
+    requests.length + communityInvites.length + postNotifications.length;
 
   useEffect(() => {
     if (!loggedUserId) {
       setRequests([]);
       setCommunityInvites([]);
+      setPostNotifications([]);
       setLoading(false);
       setInvitesLoading(false);
+      setNotificationsLoading(false);
       return;
     }
 
@@ -159,6 +176,61 @@ export const NotificationsCenter = ({
         console.error("Erro ao carregar convites:", error);
         setMessage("Não foi possível carregar seus convites agora.");
         setInvitesLoading(false);
+      }
+    );
+
+    return () => unsubscribe();
+  }, [loggedUserId]);
+
+  useEffect(() => {
+    if (!loggedUserId) {
+      setPostNotifications([]);
+      setNotificationsLoading(false);
+      return;
+    }
+
+    setNotificationsLoading(true);
+    const notificationsQuery = query(
+      collection(firestore, "notifications"),
+      where("recipientId", "==", loggedUserId),
+      where("status", "==", "active")
+    );
+
+    const unsubscribe = onSnapshot(
+      notificationsQuery,
+      async (snapshot) => {
+        const notifications = snapshot.docs
+          .map((notificationDoc) => ({
+            id: notificationDoc.id,
+            ...notificationDoc.data(),
+          }))
+          .sort(
+            (a, b) =>
+              new Date((b as NotificationProps).createdAt).getTime() -
+              new Date((a as NotificationProps).createdAt).getTime()
+          ) as NotificationProps[];
+
+        const hydratedNotifications = await Promise.all(
+          notifications.map(async (notification) => {
+            try {
+              const actor = await UserServices.getUserById(
+                notification.actorId
+              );
+              return { ...notification, actor };
+            } catch (error) {
+              console.error("Erro ao carregar autor da notificação:", error);
+              return { ...notification, actor: null };
+            }
+          })
+        );
+
+        setPostNotifications(hydratedNotifications);
+        setNotificationsLoading(false);
+      },
+      (error) => {
+        console.error("Erro ao carregar notificações de posts:", error);
+        setMessage("Não foi possível carregar suas notificações agora.");
+        setNotificationsLoading(false);
       }
     );
 
@@ -265,6 +337,40 @@ export const NotificationsCenter = ({
     }
   };
 
+  const handleDismissPostNotification = async (
+    notification: NotificationWithActor
+  ) => {
+    if (!loggedUserId || actionId) return;
+
+    setActionId(notification.id);
+    setMessage("");
+    try {
+      await postsServices.dismissNotification(notification.id, loggedUserId);
+      setPostNotifications((current) =>
+        current.filter((item) => item.id !== notification.id)
+      );
+      setMessage("Notificação dispensada.");
+    } catch (error) {
+      console.error("Erro ao dispensar notificação:", error);
+      setMessage("Não foi possível dispensar essa notificação.");
+    } finally {
+      setActionId(null);
+    }
+  };
+
+  const getPostNotificationText = (notification: NotificationWithActor) => {
+    const actorName = notification.actor?.displayName || "Alguém";
+
+    if (notification.type === "like") return `${actorName} curtiu seu post.`;
+    if (notification.type === "comment") {
+      return `${actorName} comentou no seu post.`;
+    }
+    if (notification.type === "mention") {
+      return `${actorName} marcou você em um post.`;
+    }
+    return `${actorName} compartilhou seu post.`;
+  };
+
   return (
     <>
       <button
@@ -307,7 +413,7 @@ export const NotificationsCenter = ({
                   Notificações
                 </h2>
                 <p className="mt-1 text-sm text-mutedText">
-                  Pedidos de amizade e convites.
+                  Pedidos, convites e conversas que envolvem você.
                 </p>
               </div>
               <button
@@ -327,7 +433,7 @@ export const NotificationsCenter = ({
                 </p>
               )}
 
-              {(loading || invitesLoading) && (
+              {(loading || invitesLoading || notificationsLoading) && (
                 <div className="space-y-3">
                   {[0, 1].map((item) => (
                     <div
@@ -340,8 +446,10 @@ export const NotificationsCenter = ({
 
               {!loading &&
                 !invitesLoading &&
+                !notificationsLoading &&
                 requests.length === 0 &&
-                communityInvites.length === 0 && (
+                communityInvites.length === 0 &&
+                postNotifications.length === 0 && (
                 <div className="flex flex-col items-center justify-center py-12 text-center">
                   <span className="grid h-14 w-14 place-items-center rounded-full bg-accentSoft text-accent">
                     <FaUserFriends size={22} />
@@ -350,13 +458,71 @@ export const NotificationsCenter = ({
                     Nada pendente por enquanto
                   </h3>
                   <p className="mt-1 max-w-xs text-sm text-mutedText">
-                    Quando chegarem pedidos ou convites, você decide por aqui.
+                    Quando chegar algo novo, você decide por aqui.
                   </p>
                 </div>
               )}
 
-              {!loading && requests.length > 0 && (
+              {!notificationsLoading && postNotifications.length > 0 && (
                 <div className="space-y-3">
+                  {postNotifications.map((notification) => {
+                    const actor = notification.actor;
+                    const actorName = actor?.displayName || "Usuário do Gonin";
+
+                    return (
+                      <article
+                        key={notification.id}
+                        className="rounded-xl border border-borderDark bg-background p-3"
+                      >
+                        <div className="flex gap-3">
+                          <Link
+                            href={`/profile/${notification.actorId}`}
+                            onClick={() => setOpen(false)}
+                            className="h-11 w-11 shrink-0 overflow-hidden rounded-full bg-secondary"
+                          >
+                            <Image
+                              src={actor?.photoURL || "/imgs/default_perfil.jpg"}
+                              alt={actorName}
+                              width={44}
+                              height={44}
+                              className="h-full w-full object-cover"
+                            />
+                          </Link>
+
+                          <div className="min-w-0 flex-1">
+                            <Link
+                              href={`/post/${notification.postId}`}
+                              onClick={() => setOpen(false)}
+                              className="block text-sm font-semibold text-primary hover:text-accent"
+                            >
+                              {getPostNotificationText(notification)}
+                            </Link>
+                            {notification.message && (
+                              <p className="mt-1 line-clamp-2 text-sm text-mutedText">
+                                {notification.message}
+                              </p>
+                            )}
+                            <button
+                              type="button"
+                              onClick={() =>
+                                handleDismissPostNotification(notification)
+                              }
+                              disabled={actionId === notification.id}
+                              className="mt-3 inline-flex h-9 items-center gap-2 rounded-full border border-borderDark px-4 text-sm font-semibold text-mutedText transition-colors hover:border-accent hover:text-accent disabled:cursor-wait disabled:opacity-70"
+                            >
+                              <FaTimes size={12} />
+                              Dispensar
+                            </button>
+                          </div>
+                        </div>
+                      </article>
+                    );
+                  })}
+                </div>
+              )}
+
+              {!loading && requests.length > 0 && (
+                <div className="mt-3 space-y-3">
                   {requests.map((request) => {
                     const requester = request.requester;
                     const requesterName =
@@ -415,7 +581,7 @@ export const NotificationsCenter = ({
                                 className="inline-flex h-9 items-center gap-2 rounded-full border border-borderDark px-4 text-sm font-semibold text-mutedText transition-colors hover:border-coral hover:text-coral disabled:cursor-wait disabled:opacity-70"
                               >
                                 <FaTimes size={12} />
-                                Recusar
+                                Dispensar
                               </button>
                             </div>
                           </div>
@@ -496,7 +662,7 @@ export const NotificationsCenter = ({
                                 className="inline-flex h-9 items-center gap-2 rounded-full border border-borderDark px-4 text-sm font-semibold text-mutedText transition-colors hover:border-coral hover:text-coral disabled:cursor-wait disabled:opacity-70"
                               >
                                 <FaTimes size={12} />
-                                Recusar
+                                Dispensar
                               </button>
                             </div>
                           </div>

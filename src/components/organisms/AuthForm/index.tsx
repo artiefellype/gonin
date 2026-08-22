@@ -3,6 +3,8 @@ import React, { FormEvent, InputHTMLAttributes } from "react";
 
 export interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   title: string;
+  helperText?: string;
+  helperTone?: "default" | "success" | "danger";
 }
 
 export interface AuthFormProps {
@@ -12,6 +14,7 @@ export interface AuthFormProps {
   error: string;
   OnSubmitLoading: boolean;
   isRegistered?: boolean;
+  submitDisabled?: boolean;
 }
 
 export const AuthForm = ({
@@ -21,6 +24,7 @@ export const AuthForm = ({
   handleSubmit,
   inputArray,
   isRegistered = false,
+  submitDisabled = false,
 }: AuthFormProps) => {
   return (
     <form onSubmit={handleSubmit} className="w-full max-w-[320px]">
@@ -34,7 +38,7 @@ export const AuthForm = ({
         <button
           type="submit"
           className="mt-4 flex h-11 w-full max-w-[320px] flex-row items-center justify-center gap-2 rounded-lg border border-accent bg-accent text-base font-bold text-background transition-all duration-300 ease-in-out hover:bg-accent/90 disabled:cursor-not-allowed disabled:opacity-60"
-          disabled={OnSubmitLoading}
+          disabled={OnSubmitLoading || submitDisabled}
         >
           {!OnSubmitLoading ? (
             formTitle

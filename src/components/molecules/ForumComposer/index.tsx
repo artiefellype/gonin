@@ -11,6 +11,8 @@ import { InputFile } from "@/components/atoms/InputFile";
 import { TbSend2 as SendIcon } from "react-icons/tb";
 import { CloudinaryServices } from "@/services/cloudinaryServices";
 
+const DEFAULT_PROFILE_IMAGE = "/imgs/default_perfil.jpg";
+
 interface ForumComposerProps {
   tag: string;
   fetchNewPosts: () => Promise<void>;
@@ -35,7 +37,7 @@ export const ForumComposerArea = ({
   const [fileError, setFileError] = useState("");
   const [title, setTitle] = useState<string>("");
   const [hasTitle, setHasTitle] = useState<boolean>(false);
-  const [userPhotoUrl, setUserPhotoUrl] = useState("/imgs/default_perfil.jpg");
+  const [userPhotoUrl, setUserPhotoUrl] = useState(DEFAULT_PROFILE_IMAGE);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const remainingCharacters = 4096 - text.length;
   const isTimeline = variant === "timeline";
@@ -47,7 +49,7 @@ export const ForumComposerArea = ({
     try {
       const response = await UserServices.getUserById(id);
       setUserInfo(response);
-      setUserPhotoUrl(response.photoURL);
+      setUserPhotoUrl(response.photoURL || DEFAULT_PROFILE_IMAGE);
       setLoadingUser(false);
       return response;
     } catch (error: any) {
@@ -201,7 +203,7 @@ export const ForumComposerArea = ({
           {!loadingUser && (
             <Image
               className="h-full w-full object-cover"
-              src={userPhotoUrl}
+              src={userPhotoUrl || DEFAULT_PROFILE_IMAGE}
               alt={"user photo"}
               width={40}
               height={40}

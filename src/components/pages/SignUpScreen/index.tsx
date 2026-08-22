@@ -1,26 +1,67 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { BetaFlag } from "../../atoms/BetaFlag";
 import { useUserContext } from "@/context";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import Image from "next/image";
 import { AuthTitle } from "@/components/atoms/AuthTitle";
-import { AuthForm } from "@/components/organisms/AuthForm";
+import { AuthForm, InputProps } from "@/components/organisms/AuthForm";
 
 export const SignUpScreen = () => {
   const [userName, setUserName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const { signUpWithEmail } = useUserContext();
+  const { signUpWithEmail, checkUserNameAvailability } = useUserContext();
   const [loginLoading, setLoginLoading] = useState(false);
   const [isRegistered, setIsRegistered] = useState(false);
   const [error, setError] = useState("");
+  const [userNameStatus, setUserNameStatus] = useState<
+    "idle" | "checking" | "available" | "unavailable" | "invalid"
+  >("idle");
   const router = useRouter();
+
+  useEffect(() => {
+    const cleanUserName = userName.trim();
+
+    if (!cleanUserName) {
+      setUserNameStatus("idle");
+      return;
+    }
+
+    setUserNameStatus("checking");
+
+    const timeout = window.setTimeout(async () => {
+      try {
+        const available = await checkUserNameAvailability(cleanUserName);
+        setUserNameStatus(available ? "available" : "unavailable");
+      } catch (error) {
+        setUserNameStatus("invalid");
+      }
+    }, 450);
+
+    return () => window.clearTimeout(timeout);
+  }, [checkUserNameAvailability, userName]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+    if (!userName.trim()) {
+      setError("Informe um nome de usuário.");
+      return;
+    }
+    if (userNameStatus === "checking") {
+      setError("Aguarde a verificação do nome de usuário.");
+      return;
+    }
+    if (userNameStatus === "unavailable") {
+      setError("Esse nome de usuário já está em uso.");
+      return;
+    }
+    if (userNameStatus === "invalid") {
+      setError("Não foi possível verificar esse nome de usuário agora.");
+      return;
+    }
     if (password !== confirmPassword) {
       setError("As senhas não coincidem.");
       return;
@@ -38,12 +79,28 @@ export const SignUpScreen = () => {
     setLoginLoading(false);
   };
 
-  const signUpInputs = [
+  const signUpInputs: InputProps[] = [
     {
       title: "Nome de usuário",
       type: "text",
       value: userName,
       onChange: (e: any) => setUserName(e.target.value),
+      helperText:
+        userNameStatus === "checking"
+          ? "Verificando disponibilidade..."
+          : userNameStatus === "available"
+          ? "Nome disponível."
+          : userNameStatus === "unavailable"
+          ? "Nome já está em uso."
+          : userNameStatus === "invalid"
+          ? "Não foi possível verificar agora."
+          : "",
+      helperTone:
+        userNameStatus === "available"
+          ? "success"
+          : userNameStatus === "unavailable" || userNameStatus === "invalid"
+          ? "danger"
+          : "default",
       required: true,
     },
     {
@@ -160,6 +217,12 @@ export const SignUpScreen = () => {
                 error={error}
                 OnSubmitLoading={loginLoading}
                 isRegistered={isRegistered}
+                submitDisabled={
+                  userNameStatus === "checking" ||
+                  userNameStatus === "unavailable" ||
+                  userNameStatus === "invalid" ||
+                  !userName.trim()
+                }
               />
               {isRegistered && (
                 <p className="w-full max-w-[320px] px-2 text-xs font-medium text-accent">

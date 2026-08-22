@@ -263,4 +263,15 @@ export class postsServices {
       throw error;
     }
   };
+
+  static dismissNotification = async (
+    notificationId: string,
+    userId: string
+  ): Promise<void> => {
+    try {
+      await new BaseAPI().dismissNotification(notificationId, userId);
+    } catch (error) {
+      throw error;
+    }
+  };
 }

@@ -28,6 +28,7 @@ import {
   CommunityProps,
   CommunityInviteProps,
   FriendshipProps,
+  NotificationProps,
   PaginatedPostsProps,
   PostCommentsProps,
   PostCommentWithUserProps,
@@ -250,6 +251,12 @@ export class BaseAPI {
     return postData.createdAt || null;
   }
 
+  private removeUndefinedFields<T extends Record<string, any>>(data: T): T {
+    return Object.fromEntries(
+      Object.entries(data).filter(([, value]) => value !== undefined)
+    ) as T;
+  }
+
   private async updateCommunityPostCount(
     postData: PostProps,
     amount: number
@@ -263,6 +270,132 @@ export class BaseAPI {
 
         if (!communitySnap.exists()) return;
         await updateDoc(communityRef, { postsCount: increment(amount) });
+      })
+    );
+  }
+
+  private async createPostNotification(
+    type: NotificationProps["type"],
+    postData: PostProps,
+    actorId: string,
+    message: string = "",
+    recipientId: string = postData.userId
+  ) {
+    if (!postData.id || !recipientId || recipientId === actorId) return;
+
+    const notificationRef = doc(collection(this.db, "notifications"));
+    const notification: NotificationProps = {
+      id: notificationRef.id,
+      recipientId,
+      actorId,
+      postId: postData.id,
+      type,
+      status: "active",
+      message,
+      createdAt: new Date().toISOString(),
+    };
+
+    await setDoc(notificationRef, notification);
+  }
+
+  private extractMentionSearchNames(postData: PostProps) {
+    const mentionRegex = /(^|[^\wÀ-ÿ])@([A-Za-zÀ-ÿ0-9._-]{2,48})/g;
+    const searchableText = [
+      postData.title,
+      postData.description,
+      postData.sharedByText,
+    ]
+      .filter(Boolean)
+      .join(" ");
+    const mentions = new Set<string>();
+    let match: RegExpExecArray | null;
+
+    while ((match = mentionRegex.exec(searchableText)) !== null) {
+      const searchName = this.normalizeSearchValue(match[2]);
+      if (searchName) mentions.add(searchName);
+    }
+
+    return Array.from(mentions);
+  }
+
+  private async findUsersBySearchNames(
+    searchNames: string[]
+  ): Promise<UserProps[]> {
+    if (searchNames.length === 0) return [];
+
+    const uniqueSearchNames = Array.from(new Set(searchNames));
+    const chunks = [];
+
+    for (let index = 0; index < uniqueSearchNames.length; index += 10) {
+      chunks.push(uniqueSearchNames.slice(index, index + 10));
+    }
+
+    const snapshots = await Promise.all(
+      chunks.map((chunk) => {
+        const usersQuery = query(
+          collection(this.db, "users"),
+          where("searchName", "in", chunk)
+        );
+        return getDocs(usersQuery);
+      })
+    );
+    const usersMap = new Map<string, UserProps>();
+
+    snapshots.forEach((snapshot) => {
+      snapshot.docs.forEach((userDoc) => {
+        const userData = {
+          id: userDoc.id,
+          ...userDoc.data(),
+        } as UserProps;
+        const userId = userData.uid || userData.id;
+
+        if (userId) usersMap.set(userId, userData);
+      });
+    });
+
+    return Array.from(usersMap.values());
+  }
+
+  private getMentionNotificationMessage(postData: PostProps) {
+    const message = [postData.title, postData.description, postData.sharedByText]
+      .filter(Boolean)
+      .join(" ")
+      .trim();
+
+    return message.length > 180 ? `${message.slice(0, 177)}...` : message;
+  }
+
+  private async createMentionNotifications(
+    postData: PostProps,
+    actorId: string
+  ) {
+    const mentionSearchNames = this.extractMentionSearchNames(postData);
+    if (mentionSearchNames.length === 0) return;
+
+    const mentionedUsers = await this.findUsersBySearchNames(
+      mentionSearchNames
+    );
+    const message = this.getMentionNotificationMessage(postData);
+
+    await Promise.all(
+      mentionedUsers.map(async (mentionedUser) => {
+        const recipientId = mentionedUser.uid || mentionedUser.id;
+
+        if (!recipientId || recipientId === actorId) return;
+
+        const canView = await this.canViewPost(postData, recipientId).catch(
+          () => false
+        );
+
+        if (!canView) return;
+
+        await this.createPostNotification(
+          "mention",
+          postData,
+          actorId,
+          message,
+          recipientId
+        );
       })
     );
   }
@@ -606,10 +739,18 @@ export class BaseAPI {
 
       const collectionRef = collection(this.db, collectionName);
       const docRef = doc(collectionRef);
-      await setDoc(docRef, newData);
+      const documentData =
+        collectionName === "posts"
+          ? { ...newData, id: docRef.id }
+          : newData;
+
+      await setDoc(docRef, this.removeUndefinedFields(documentData));
 
       if (collectionName === "posts") {
-        await this.updateCommunityPostCount(newData as PostProps, 1);
+        const postData = documentData as PostProps;
+
+        await this.updateCommunityPostCount(postData, 1);
+        await this.createMentionNotifications(postData, user.uid);
       }
 
       return docRef.id;
@@ -640,7 +781,7 @@ export class BaseAPI {
     try {
       const user = await this.getUser();
       const docRef = doc(this.db, collectionName, docId);
-      await updateDoc(docRef, newData);
+      await updateDoc(docRef, this.removeUndefinedFields(newData));
     } catch (error) {
       throw error;
     }
@@ -650,16 +791,38 @@ export class BaseAPI {
     try {
       const authenticatedUser = (await this.getUser()) as { uid: string };
       const targetUserId = user.uid || user.id;
+      const normalizedDisplayName = this.normalizeSearchValue(
+        user.displayName
+      );
 
       if (authenticatedUser.uid !== targetUserId) {
         throw new Error("Você só pode editar o próprio perfil.");
       }
 
+      if (!normalizedDisplayName) {
+        throw new Error("Informe um nome de usuário.");
+      }
+
       const userRef = doc(this.db, "users", targetUserId);
+      const currentUserSnapshot = await getDoc(userRef);
+      const currentUserData = currentUserSnapshot.data() as
+        | UserProps
+        | undefined;
+      const currentSearchName = this.normalizeSearchValue(
+        currentUserData?.searchName || currentUserData?.displayName
+      );
+
+      if (
+        normalizedDisplayName !== currentSearchName &&
+        !(await this.isUserNameAvailable(user.displayName, targetUserId))
+      ) {
+        throw new Error("Nome de usuário já está em uso.");
+      }
+
       await updateDoc(userRef, {
         uid: targetUserId,
         displayName: user.displayName,
-        searchName: this.normalizeSearchValue(user.displayName),
+        searchName: normalizedDisplayName,
         tag: user.tag,
         member: user.member,
         photoURL: user.photoURL,
@@ -679,6 +842,33 @@ export class BaseAPI {
           photoURL: user.photoURL || null,
         });
       }
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async isUserNameAvailable(
+    userName: string,
+    currentUserId?: string
+  ): Promise<boolean> {
+    try {
+      await this.getUser();
+      const normalizedName = this.normalizeSearchValue(userName);
+
+      if (!normalizedName) return false;
+
+      const usersQuery = query(
+        collection(this.db, "users"),
+        where("searchName", "==", normalizedName)
+      );
+      const usersSnapshot = await getDocs(usersQuery);
+
+      return usersSnapshot.docs.every((userDoc) => {
+        const userData = userDoc.data();
+        const foundUserId = userData.uid || userDoc.id;
+
+        return Boolean(currentUserId && foundUserId === currentUserId);
+      });
     } catch (error) {
       throw error;
     }
@@ -757,6 +947,7 @@ export class BaseAPI {
   async addCommentToPost(postId: string, comment: PostCommentsProps) {
     try {
       const postRef = doc(this.db, "posts", postId);
+      const postSnap = await getDoc(postRef);
       const commentsCollectionRef = collection(postRef, "comments");
 
       const docRef = await addDoc(commentsCollectionRef, comment);
@@ -766,6 +957,18 @@ export class BaseAPI {
       await updateDoc(postRef, {
         commentCount: increment(1),
       });
+
+      if (postSnap.exists()) {
+        await this.createPostNotification(
+          "comment",
+          {
+            id: postSnap.id,
+            ...postSnap.data(),
+          } as PostProps,
+          comment.user_id,
+          comment.content
+        );
+      }
     } catch (error) {
       console.error("Error adding comment: ", error);
     }
@@ -1058,6 +1261,17 @@ export class BaseAPI {
         await updateDoc(postRef, {
           likeCount: increment(1),
         });
+        const postSnap = await getDoc(postRef);
+        if (postSnap.exists()) {
+          await this.createPostNotification(
+            "like",
+            {
+              id: postSnap.id,
+              ...postSnap.data(),
+            } as PostProps,
+            userId
+          );
+        }
       }
     } catch (error) {
       throw error;
@@ -1179,11 +1393,10 @@ export class BaseAPI {
       const postsCollectionRef = collection(this.db, "posts");
       const newPostRef = doc(postsCollectionRef);
       const createdAt = new Date().toISOString();
-      const sharedPost: PostProps = {
+      const sharedPost: PostProps = this.removeUndefinedFields({
         id: newPostRef.id,
         userId,
         mediaFile: "",
-        mediaType: undefined,
         title: "",
         description,
         likeCount: 0,
@@ -1197,18 +1410,55 @@ export class BaseAPI {
         postType: "share",
         originalPostId,
         originalUserId: originalPost.userId,
-      };
+      } as PostProps);
 
       await setDoc(newPostRef, sharedPost);
       await this.addSubCollection("posts", newPostRef.id, "comments");
       await this.addSubCollection("posts", newPostRef.id, "likes");
       await this.updateCommunityPostCount(sharedPost, 1);
       await updateDoc(originalPostRef, { shareCount: increment(1) });
+      await this.createMentionNotifications(sharedPost, userId);
+      await this.createPostNotification(
+        "share",
+        originalPost,
+        userId,
+        description
+      );
       await updateDoc(doc(this.db, "users", userId), {
         posts: arrayUnion(newPostRef.id),
       });
 
       return this.hydratePost(sharedPost);
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async dismissNotification(
+    notificationId: string,
+    userId: string
+  ): Promise<void> {
+    try {
+      const authenticatedUser = (await this.getUser()) as { uid: string };
+      if (authenticatedUser.uid !== userId) {
+        throw new Error("Você só pode dispensar suas notificações.");
+      }
+
+      const notificationRef = doc(this.db, "notifications", notificationId);
+      const notificationSnap = await getDoc(notificationRef);
+
+      if (!notificationSnap.exists()) return;
+
+      const notification = {
+        id: notificationSnap.id,
+        ...notificationSnap.data(),
+      } as NotificationProps;
+
+      if (notification.recipientId !== userId) {
+        throw new Error("Você só pode dispensar suas notificações.");
+      }
+
+      await updateDoc(notificationRef, { status: "dismissed" });
     } catch (error) {
       throw error;
     }

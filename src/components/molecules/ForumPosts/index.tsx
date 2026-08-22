@@ -131,10 +131,10 @@ export const ForumPosts = ({
         shareText
       );
       setShareCount((current) => current + 1);
-      setShareModalOpen(false);
       await fetch();
     } catch (error: any) {
       console.error(error.message);
+      throw error;
     } finally {
       setIsShareDisabled(false);
     }
@@ -312,14 +312,14 @@ export const ForumPosts = ({
 
             {post.postType === "share" && post.originalPost && (
               <div
-                className="mt-3 overflow-hidden rounded-xl border border-borderDark bg-panel/70 transition-colors hover:border-accent sm:rounded-2xl"
+                className="mt-3 overflow-hidden rounded-xl border border-borderDark bg-background transition-colors hover:border-accent sm:rounded-2xl"
                 onClick={(event) => {
                   event.stopPropagation();
                   router.push(`/post/${post.originalPostId}`);
                 }}
               >
-                <div className="p-3">
-                  <div className="mb-2 flex items-center gap-2 text-sm">
+                <div className="px-3 py-2">
+                  <div className="flex min-w-0 items-center gap-2 text-sm">
                     <div className="h-6 w-6 overflow-hidden rounded-full bg-secondary">
                       <Image
                         src={
@@ -332,22 +332,22 @@ export const ForumPosts = ({
                         className="h-full w-full object-cover"
                       />
                     </div>
-                    <span className="font-semibold text-primary">
+                    <span className="truncate font-semibold text-primary">
                       {post.originalPost.user?.displayName ||
                         post.originalUser?.displayName ||
                         "Usuário"}
                     </span>
                     <span className="text-mutedText">·</span>
-                    <span className="text-mutedText">
+                    <span className="shrink-0 text-mutedText">
                       {formatDate(post.originalPost.createdAt)}
                     </span>
                   </div>
                   {post.originalPost.title && (
-                    <h3 className="text-sm font-semibold leading-5 text-primary">
+                    <h3 className="mt-1 text-sm font-semibold leading-5 text-primary">
                       {post.originalPost.title}
                     </h3>
                   )}
-                  <p className="mt-1 line-clamp-4 whitespace-pre-wrap text-sm leading-5 text-primary">
+                  <p className="mt-1 line-clamp-3 whitespace-pre-wrap text-sm leading-5 text-primary">
                     <LinkifiedText text={post.originalPost.description} />
                   </p>
                 </div>

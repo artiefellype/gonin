@@ -1,4 +1,5 @@
 import { CloudinaryServices } from "@/services/cloudinaryServices";
+import { UserServices } from "@/services/userServices";
 import { UserProps } from "@/types";
 import Image from "next/image";
 import React, { useEffect, useState } from "react";
@@ -11,6 +12,20 @@ interface EditProfileModalProps {
   onClose: () => void;
   onSave: (profile: UserProps) => Promise<void>;
 }
+
+type UserNameStatus =
+  | "idle"
+  | "checking"
+  | "available"
+  | "unavailable"
+  | "invalid";
+
+const normalizeUserName = (value?: string | null) =>
+  (value || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .trim();
 
 export const EditProfileModal = ({
   open,
@@ -28,6 +43,8 @@ export const EditProfileModal = ({
   const [bannerPreview, setBannerPreview] = useState("");
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [userNameStatus, setUserNameStatus] =
+    useState<UserNameStatus>("idle");
 
   useEffect(() => {
     if (!profile || !open) return;
@@ -40,7 +57,43 @@ export const EditProfileModal = ({
     setPhotoPreview("");
     setBannerPreview("");
     setError("");
+    setUserNameStatus("idle");
   }, [open, profile]);
+
+  useEffect(() => {
+    if (!profile || !open) return;
+
+    const cleanDisplayName = displayName.trim();
+    const currentSearchName = normalizeUserName(
+      profile.searchName || profile.displayName
+    );
+
+    if (!cleanDisplayName) {
+      setUserNameStatus("invalid");
+      return;
+    }
+
+    if (normalizeUserName(cleanDisplayName) === currentSearchName) {
+      setUserNameStatus("available");
+      return;
+    }
+
+    setUserNameStatus("checking");
+
+    const timeout = window.setTimeout(async () => {
+      try {
+        const available = await UserServices.checkUserNameAvailability(
+          cleanDisplayName,
+          profile.uid || profile.id
+        );
+        setUserNameStatus(available ? "available" : "unavailable");
+      } catch (error) {
+        setUserNameStatus("invalid");
+      }
+    }, 450);
+
+    return () => window.clearTimeout(timeout);
+  }, [displayName, open, profile]);
 
   useEffect(() => {
     return () => {
@@ -102,6 +155,16 @@ export const EditProfileModal = ({
       return;
     }
 
+    if (userNameStatus === "checking") {
+      setError("Aguarde a verificação do nome de usuário.");
+      return;
+    }
+
+    if (userNameStatus !== "available") {
+      setError("Escolha um nome de usuário disponível.");
+      return;
+    }
+
     setSubmitting(true);
     setError("");
     try {
@@ -130,6 +193,25 @@ export const EditProfileModal = ({
   };
 
   const busy = loading || submitting;
+  const userNameFeedback =
+    userNameStatus === "checking"
+      ? "Verificando disponibilidade..."
+      : userNameStatus === "available"
+      ? normalizeUserName(displayName) ===
+        normalizeUserName(profile.searchName || profile.displayName)
+        ? "Nome atual."
+        : "Nome disponível."
+      : userNameStatus === "unavailable"
+      ? "Nome já está em uso."
+      : userNameStatus === "invalid"
+      ? "Informe um nome de usuário válido."
+      : "";
+  const userNameFeedbackClass =
+    userNameStatus === "available"
+      ? "text-accent"
+      : userNameStatus === "unavailable" || userNameStatus === "invalid"
+      ? "text-coral"
+      : "text-mutedText";
 
   return (
     <div
@@ -222,6 +304,13 @@ export const EditProfileModal = ({
                 disabled={busy}
                 className="h-11 rounded-lg border border-borderDark bg-secondary px-3 text-sm font-medium text-primary placeholder:text-mutedText/70 focus:border-accent focus:outline-none disabled:opacity-60"
               />
+              {userNameFeedback && (
+                <span
+                  className={`px-1 text-xs font-semibold ${userNameFeedbackClass}`}
+                >
+                  {userNameFeedback}
+                </span>
+              )}
             </label>
 
             <label className="grid gap-1">
@@ -269,7 +358,7 @@ export const EditProfileModal = ({
               Cancelar
             </button>
             <button
-              disabled={busy}
+              disabled={busy || userNameStatus !== "available"}
               className="h-10 rounded-lg bg-accent px-4 text-sm font-semibold text-background transition-colors hover:bg-accent/90 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {busy ? "Salvando..." : "Salvar perfil"}

@@ -1,8 +1,10 @@
 import { formatDate } from "@/services/utils/formaters";
 import { PostProps } from "@/types";
 import Image from "next/image";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { FaTimes } from "react-icons/fa";
+import { FaCheck, FaSpinner } from "react-icons/fa6";
 
 interface SharePostModalProps {
   open: boolean;
@@ -20,23 +22,61 @@ export const SharePostModal = ({
   onSubmit,
 }: SharePostModalProps) => {
   const [text, setText] = useState("");
+  const [mounted, setMounted] = useState(false);
+  const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">(
+    "idle"
+  );
+  const [errorMessage, setErrorMessage] = useState("");
 
-  if (!open || !post) return null;
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!open) {
+      setStatus("idle");
+      setErrorMessage("");
+    }
+  }, [open]);
+
+  if (!mounted || !open || !post) return null;
 
   const isVideo =
     post.mediaType === "video" || post.mediaFile?.includes("/video/upload/");
 
   const handleSubmit = async () => {
-    await onSubmit(text);
-    setText("");
+    if (status === "loading" || status === "success" || loading) return;
+
+    setStatus("loading");
+    setErrorMessage("");
+    try {
+      await onSubmit(text);
+      setStatus("success");
+      setText("");
+      window.setTimeout(() => {
+        setStatus("idle");
+        setErrorMessage("");
+        onClose();
+      }, 900);
+    } catch (error: any) {
+      setStatus("error");
+      setErrorMessage(error?.message || "Não foi possível compartilhar.");
+    }
   };
 
   const handleClose = () => {
+    if (status === "loading" || status === "success") return;
+
     setText("");
+    setStatus("idle");
+    setErrorMessage("");
     onClose();
   };
 
-  return (
+  const isBusy = loading || status === "loading";
+  const isDone = status === "success";
+
+  return createPortal(
     <div
       className="fixed inset-0 z-[80] flex items-end justify-center bg-black/70 px-3 pb-3 backdrop-blur-sm sm:items-center sm:p-4"
       onClick={handleClose}
@@ -50,8 +90,10 @@ export const SharePostModal = ({
             Compartilhar conversa
           </h2>
           <button
+            type="button"
             onClick={handleClose}
-            className="grid h-9 w-9 place-items-center rounded-full text-mutedText transition-colors hover:bg-secondary hover:text-primary"
+            disabled={isBusy || isDone}
+            className="grid h-9 w-9 place-items-center rounded-full text-mutedText transition-colors hover:bg-secondary hover:text-primary disabled:cursor-not-allowed disabled:opacity-40"
             aria-label="Fechar"
           >
             <FaTimes />
@@ -62,10 +104,33 @@ export const SharePostModal = ({
           <textarea
             value={text}
             onChange={(event) => setText(event.target.value)}
+            disabled={isBusy || isDone}
             maxLength={512}
             placeholder="Adicione uma frase se quiser"
-            className="min-h-[92px] w-full resize-none rounded-xl border border-borderDark bg-secondary px-4 py-3 text-base text-primary placeholder:text-mutedText/70 focus:border-accent focus:outline-none"
+            className="min-h-[92px] w-full resize-none rounded-xl border border-borderDark bg-secondary px-4 py-3 text-base text-primary placeholder:text-mutedText/70 focus:border-accent focus:outline-none disabled:cursor-not-allowed disabled:opacity-70"
           />
+
+          {(isBusy || isDone || status === "error") && (
+            <div
+              className={`mt-3 flex items-center gap-2 rounded-xl border px-3 py-2 text-sm font-semibold ${
+                isDone
+                  ? "border-accent/40 bg-accentSoft text-accent"
+                  : status === "error"
+                    ? "border-coral/40 bg-coralSoft text-coral"
+                    : "border-borderDark bg-panel text-mutedText"
+              }`}
+            >
+              {isBusy && <FaSpinner className="animate-spin" />}
+              {isDone && <FaCheck />}
+              <span>
+                {isDone
+                  ? "Compartilhado!"
+                  : status === "error"
+                    ? errorMessage
+                    : "Compartilhando..."}
+              </span>
+            </div>
+          )}
 
           <article className="mt-4 overflow-hidden rounded-xl border border-borderDark bg-panel sm:rounded-2xl">
             <div className="p-3">
@@ -109,20 +174,24 @@ export const SharePostModal = ({
 
         <footer className="flex items-center justify-end gap-2 border-t border-borderDark px-3 py-3 sm:gap-3 sm:px-4">
           <button
+            type="button"
             onClick={handleClose}
-            className="h-10 rounded-lg px-3 text-sm font-semibold text-mutedText transition-colors hover:bg-secondary hover:text-primary sm:px-4"
+            disabled={isBusy || isDone}
+            className="h-10 rounded-lg px-3 text-sm font-semibold text-mutedText transition-colors hover:bg-secondary hover:text-primary disabled:cursor-not-allowed disabled:opacity-40 sm:px-4"
           >
             Cancelar
           </button>
           <button
+            type="button"
             onClick={handleSubmit}
-            disabled={loading}
+            disabled={isBusy || isDone}
             className="h-10 rounded-lg bg-accent px-3 text-sm font-semibold text-background transition-colors hover:bg-accent/90 disabled:cursor-not-allowed disabled:opacity-60 sm:px-4"
           >
-            {loading ? "Compartilhando..." : "Compartilhar"}
+            {isDone ? "Compartilhado" : isBusy ? "Compartilhando..." : "Compartilhar"}
           </button>
         </footer>
       </section>
-    </div>
+    </div>,
+    document.body
   );
 };
