@@ -28,6 +28,7 @@ export const ForumComposerArea = ({
   const { user } = useUserContext();
   const [userInfo, setUserInfo] = useState<UserProps>();
   const [text, setText] = useState("");
+  const composerRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [selectedFilePreview, setSelectedFilePreview] = useState("");
@@ -153,8 +154,24 @@ export const ForumComposerArea = ({
     }
   }, [text]);
 
+  useEffect(() => {
+    const focusComposer = () => {
+      composerRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+      window.setTimeout(() => textareaRef.current?.focus(), 220);
+    };
+
+    window.addEventListener("gonin:focus-composer", focusComposer);
+    return () =>
+      window.removeEventListener("gonin:focus-composer", focusComposer);
+  }, []);
+
   return (
     <div
+      ref={composerRef}
+      id="gonin-composer"
       className={
         isTimeline
           ? "w-full border-b border-borderDark bg-background/70 px-3 py-3 sm:px-4 sm:py-4 md:bg-background"

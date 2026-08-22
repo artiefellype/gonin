@@ -18,4 +18,15 @@ export class UserServices {
       throw error
     }
   }
+
+  static searchUsers = async (
+    searchTerm: string,
+    currentUserId?: string
+  ): Promise<UserProps[]> => {
+    try {
+      return await new BaseAPI().searchUsers(searchTerm, currentUserId);
+    } catch (error) {
+      throw error;
+    }
+  };
 }

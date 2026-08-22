@@ -23,6 +23,7 @@ export const TopicsPage = () => {
   const [description, setDescription] = useState("");
   const [iconFile, setIconFile] = useState<File | null>(null);
   const [iconPreview, setIconPreview] = useState("");
+  const [isPrivate, setIsPrivate] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [creating, setCreating] = useState(false);
@@ -62,7 +63,8 @@ export const TopicsPage = () => {
         title,
         description,
         user.user.uid,
-        avatar
+        avatar,
+        isPrivate ? "private" : "public"
       );
       setCommunities((current) => [newCommunity, ...current]);
       setCurrentUser((current) =>
@@ -108,6 +110,7 @@ export const TopicsPage = () => {
     setTitle("");
     setDescription("");
     setIconFile(null);
+    setIsPrivate(false);
     if (iconPreview) URL.revokeObjectURL(iconPreview);
     setIconPreview("");
     setError("");
@@ -129,6 +132,7 @@ export const TopicsPage = () => {
     link: `/topics/${community.slug}`,
     description: community.description,
     membersCount: community.membersCount,
+    isPrivate: community.visibility === "private",
   }));
 
   return (
@@ -260,6 +264,23 @@ export const TopicsPage = () => {
                   placeholder="Descrição curta"
                   className="min-h-[92px] resize-none rounded-lg border border-borderDark bg-secondary px-3 py-3 text-sm font-medium text-primary placeholder:text-mutedText/70 focus:border-accent focus:outline-none disabled:cursor-not-allowed disabled:opacity-60"
                 />
+                <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-borderDark bg-panel p-3 transition-colors hover:border-accent">
+                  <input
+                    type="checkbox"
+                    checked={isPrivate}
+                    onChange={(event) => setIsPrivate(event.target.checked)}
+                    disabled={creating}
+                    className="mt-1 h-4 w-4 accent-accent"
+                  />
+                  <span>
+                    <span className="block text-sm font-semibold text-primary">
+                      Comunidade privada
+                    </span>
+                    <span className="mt-1 block text-xs font-medium leading-5 text-mutedText">
+                      Só entra quem receber convite de um membro.
+                    </span>
+                  </span>
+                </label>
               </div>
 
               {error && (

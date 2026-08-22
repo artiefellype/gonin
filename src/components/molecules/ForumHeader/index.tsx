@@ -5,8 +5,10 @@ import Image from "next/image";
 import { MenuButton } from "@/components/atoms/MenuButton";
 import { UserServices } from "@/services/userServices";
 import { UserProps } from "@/types";
-import { FaPlus, FaSearch } from "react-icons/fa";
+import { FaPlus } from "react-icons/fa";
 import Link from "next/link";
+import { NotificationsCenter } from "../NotificationsCenter";
+import { UserSearch } from "../UserSearch";
 
 interface Props {
   isMobile: boolean;
@@ -19,6 +21,18 @@ export const ForumHeader = ({ isMobile }: Props) => {
     "/imgs/default_perfil.jpg"
   );
   const router = useRouter();
+
+  const handleNewPost = async () => {
+    if (router.pathname.startsWith("/forum")) {
+      window.dispatchEvent(new Event("gonin:focus-composer"));
+      return;
+    }
+
+    await router.push({
+      pathname: "/forum",
+      query: { compose: "1" },
+    });
+  };
 
   useEffect(() => {
     const fetchUserHeader = async () => {
@@ -55,22 +69,14 @@ export const ForumHeader = ({ isMobile }: Props) => {
           </div>
         </Link>
 
-        {!isMobile && (
-          <label className="hidden min-w-0 flex-1 items-center gap-2 rounded-lg border border-borderDark bg-secondary px-3 py-2 text-mutedText lg:flex">
-            <FaSearch size={14} />
-            <input
-              aria-label="Buscar"
-              className="min-w-0 flex-1 bg-transparent text-sm text-primary placeholder:text-mutedText focus:outline-none"
-              placeholder="Buscar conversas, tópicos ou pessoas"
-              readOnly
-            />
-          </label>
-        )}
+        {!isMobile && <UserSearch className="hidden min-w-0 flex-1 max-w-md lg:block" />}
 
         <div className="flex items-center gap-2">
+          {isMobile && <UserSearch compact />}
+          <NotificationsCenter compact />
           {!isMobile && (
             <button
-              onClick={() => router.push("/forum")}
+              onClick={handleNewPost}
               className="hidden h-10 items-center gap-2 rounded-lg bg-accent px-4 text-sm font-bold text-background transition-colors hover:bg-accent/90 md:flex"
             >
               <FaPlus size={13} />

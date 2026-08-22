@@ -14,9 +14,6 @@ export const MenuButton = ({ user, ...rest }: MenuButtonProps) => {
         <h3 className="h-5 max-w-full truncate text-sm font-bold">
           {user?.displayName || "Usuário"}
         </h3>
-        <p className="max-w-full truncate text-xs font-medium text-mutedText">
-          {user?.email}
-        </p>
       </div>
       <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full border border-borderDark bg-secondary">
         <Image

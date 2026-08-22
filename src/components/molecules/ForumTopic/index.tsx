@@ -1,7 +1,7 @@
 import React from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { FaArrowRight, FaUsers } from "react-icons/fa6";
+import { FaArrowRight, FaLock, FaUsers } from "react-icons/fa6";
 
 export interface TopicProps {
   icon: string;
@@ -9,6 +9,7 @@ export interface TopicProps {
   link: string;
   description?: string;
   membersCount?: number;
+  isPrivate?: boolean;
 }
 
 export const ForumTopic = (item: TopicProps) => {
@@ -39,9 +40,16 @@ export const ForumTopic = (item: TopicProps) => {
         </span>
       </div>
       <div>
-        <h2 className="mt-4 text-base font-semibold leading-6 text-primary sm:text-lg">
-          {item.title}
-        </h2>
+        <div className="mt-4 flex items-center gap-2">
+          <h2 className="min-w-0 truncate text-base font-semibold leading-6 text-primary sm:text-lg">
+            {item.title}
+          </h2>
+          {item.isPrivate && (
+            <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-accentSoft text-accent">
+              <FaLock size={10} />
+            </span>
+          )}
+        </div>
         <p className="mt-1 line-clamp-2 text-sm font-medium leading-5 text-mutedText">
           {item.description || "Conversas abertas para este assunto."}
         </p>

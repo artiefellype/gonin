@@ -1,16 +1,20 @@
 "use client";
 import ForumContainer from "@/components/organisms/ForumContainer";
-import { useCallback, useEffect, useState } from "react";
-import { CommunityProps, PostProps } from "@/types";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { CommunityProps, PaginatedPostsProps, PostProps } from "@/types";
 import { postsServices } from "@/services/postServices";
 import { GetServerSideProps } from "next";
 import { parseCookies } from "nookies";
 import Link from "next/link";
 import { ForumComposerArea } from "@/components/molecules/ForumComposer";
-import { FaComments, FaMagnifyingGlass, FaUsers } from "react-icons/fa6";
+import { FaComments, FaLock, FaUsers, FaXmark } from "react-icons/fa6";
 import { useUserContext } from "@/context";
 import { FriendshipServices } from "@/services/friendshipServices";
 import { CommunityServices } from "@/services/communityServices";
+import { useRouter } from "next/router";
+import { UserSearch } from "@/components/molecules/UserSearch";
+
+const POSTS_PAGE_SIZE = 10;
 
 export const ForumPage = () => {
   const [posts, setPosts] = useState<PostProps[]>([]);
@@ -18,80 +22,85 @@ export const ForumPage = () => {
     []
   );
   const [loading, setLoading] = useState<boolean>(false);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMorePosts, setHasMorePosts] = useState(false);
   const [loadingCommunities, setLoadingCommunities] = useState(false);
+  const [lockedCommunity, setLockedCommunity] =
+    useState<CommunityProps | null>(null);
   const [feedMode, setFeedMode] = useState<"all" | "friends">("all");
   const { user } = useUserContext();
+  const router = useRouter();
+  const nextCursorRef = useRef<string | null>(null);
+  const hasMorePostsRef = useRef(false);
+  const loadingMoreRef = useRef(false);
 
-  const fetchPosts = useCallback(async () => {
-    setLoading(true);
+  const mergePosts = (currentPosts: PostProps[], nextPosts: PostProps[]) => {
+    const postsMap = new Map<string, PostProps>();
+    [...currentPosts, ...nextPosts].forEach((post) => {
+      if (post.id) postsMap.set(post.id, post);
+    });
+    return Array.from(postsMap.values());
+  };
+
+  const fetchPosts = useCallback(async (reset: boolean = true) => {
+    if (reset) {
+      setLoading(true);
+      setHasMorePosts(false);
+      hasMorePostsRef.current = false;
+      nextCursorRef.current = null;
+    } else {
+      if (loadingMoreRef.current || !hasMorePostsRef.current) return;
+      setLoadingMore(true);
+      loadingMoreRef.current = true;
+    }
+
     try {
+      const cursor = reset ? null : nextCursorRef.current;
+      let response: PaginatedPostsProps;
+
       if (feedMode === "friends") {
         if (!user?.user?.uid) {
           setPosts([]);
+          setHasMorePosts(false);
+          hasMorePostsRef.current = false;
+          nextCursorRef.current = null;
           return;
         }
 
         const friendIds = await FriendshipServices.getFriendIds(user.user.uid);
-        const fetchedPosts = await postsServices.getPostsByUserIds(friendIds);
-        setPosts(fetchedPosts);
-        return;
+        response = await postsServices.getPostsByUserIdsPage(
+          friendIds,
+          cursor,
+          POSTS_PAGE_SIZE
+        );
+      } else {
+        response = await postsServices.getPostsPage(cursor, POSTS_PAGE_SIZE);
       }
 
-      const fetchedPosts = await postsServices.getPosts();
-      setPosts(fetchedPosts);
+      setPosts((currentPosts) =>
+        reset ? response.posts : mergePosts(currentPosts, response.posts)
+      );
+      nextCursorRef.current = response.nextCursor;
+      const nextHasMore = response.hasMore && !!response.nextCursor;
+      setHasMorePosts(nextHasMore);
+      hasMorePostsRef.current = nextHasMore;
     } catch (err: any) {
       console.error("ERROR: ", err.message);
     } finally {
-      setLoading(false);
+      if (reset) {
+        setLoading(false);
+      } else {
+        setLoadingMore(false);
+        loadingMoreRef.current = false;
+      }
     }
   }, [feedMode, user?.user?.uid]);
 
   const fetchActiveCommunities = useCallback(async () => {
     setLoadingCommunities(true);
     try {
-      const [communities, allPosts] = await Promise.all([
-        CommunityServices.getCommunities(),
-        postsServices.getPosts(),
-      ]);
-      const postCountByCommunity = allPosts.reduce<Map<string, number>>(
-        (acc, post) => {
-          const communityId = post.communityId || post.tags?.[0];
-          if (!communityId) return acc;
-
-          acc.set(communityId, (acc.get(communityId) || 0) + 1);
-          return acc;
-        },
-        new Map()
-      );
-      const sortedCommunities = communities
-        .map((community) => {
-          const postCount = Math.max(
-            community.postsCount || 0,
-            postCountByCommunity.get(community.slug) || 0
-          );
-
-          return {
-            ...community,
-            postsCount: postCount,
-          };
-        })
-        .filter(
-          (community) =>
-            (community.postsCount || 0) > 0 || (community.membersCount || 0) > 0
-        )
-        .sort((a, b) => {
-          const postDifference = (b.postsCount || 0) - (a.postsCount || 0);
-          if (postDifference !== 0) return postDifference;
-
-          const memberDifference =
-            (b.membersCount || 0) - (a.membersCount || 0);
-          if (memberDifference !== 0) return memberDifference;
-
-          return a.title.localeCompare(b.title);
-        })
-        .slice(0, 5);
-
-      setActiveCommunities(sortedCommunities);
+      const communities = await CommunityServices.getActiveByRecentPosts(3);
+      setActiveCommunities(communities);
     } catch (err: any) {
       console.error("ERROR: ", err.message);
     } finally {
@@ -99,13 +108,63 @@ export const ForumPage = () => {
     }
   }, []);
 
+  const refreshForum = useCallback(async () => {
+    await fetchPosts(true);
+    fetchActiveCommunities();
+  }, [fetchActiveCommunities, fetchPosts]);
+
+  const handleActiveCommunityClick = async (community: CommunityProps) => {
+    if (community.visibility !== "private") {
+      router.push(`/topics/${community.slug}`);
+      return;
+    }
+
+    if (!user?.user?.uid) {
+      setLockedCommunity(community);
+      return;
+    }
+
+    if (community.ownerId === user.user.uid) {
+      router.push(`/topics/${community.slug}`);
+      return;
+    }
+
+    try {
+      const isMember = await CommunityServices.checkMembership(
+        community.slug,
+        user.user.uid
+      );
+
+      if (isMember) {
+        router.push(`/topics/${community.slug}`);
+        return;
+      }
+
+      setLockedCommunity(community);
+    } catch (err: any) {
+      console.error("ERROR: ", err.message);
+      setLockedCommunity(community);
+    }
+  };
+
   useEffect(() => {
-    fetchPosts();
+    fetchPosts(true);
   }, [fetchPosts]);
 
   useEffect(() => {
     fetchActiveCommunities();
   }, [fetchActiveCommunities]);
+
+  useEffect(() => {
+    if (router.query.compose !== "1") return;
+
+    const timer = window.setTimeout(() => {
+      window.dispatchEvent(new Event("gonin:focus-composer"));
+      router.replace("/forum", undefined, { shallow: true });
+    }, 180);
+
+    return () => window.clearTimeout(timer);
+  }, [router]);
 
   return (
     <div className="w-full min-w-0 pb-2 md:h-full md:max-w-[620px] md:pb-0 xl:max-w-[980px]">
@@ -141,11 +200,11 @@ export const ForumPage = () => {
           <div className="min-w-0 md:min-h-0 md:flex-1 md:overflow-y-auto">
             <ForumComposerArea
               tag=""
-              fetchNewPosts={fetchPosts}
+              fetchNewPosts={refreshForum}
               variant="timeline"
             />
             <button
-              onClick={fetchPosts}
+              onClick={refreshForum}
               className="flex h-11 w-full items-center justify-center border-b border-borderDark bg-background/50 text-sm font-medium text-accent transition-colors hover:bg-secondary/50 md:bg-transparent"
             >
               Atualizar {feedMode === "friends" ? "amigos" : "conversas"}
@@ -153,7 +212,10 @@ export const ForumPage = () => {
             <ForumContainer
               posts={posts}
               loading={loading}
-              fetch={fetchPosts}
+              loadingMore={loadingMore}
+              hasMore={hasMorePosts}
+              fetch={() => fetchPosts(true)}
+              onLoadMore={() => fetchPosts(false)}
               setPosts={setPosts}
             />
           </div>
@@ -161,13 +223,7 @@ export const ForumPage = () => {
 
         <aside className="hidden min-h-0 xl:block">
           <div className="sticky top-0 flex h-screen flex-col gap-4 overflow-y-auto py-3">
-            <Link
-              href="/topics"
-              className="flex h-11 items-center gap-3 rounded-lg border border-borderDark bg-background px-4 text-sm font-semibold text-mutedText transition-colors hover:border-accent hover:text-accent"
-            >
-              <FaMagnifyingGlass size={14} />
-              <span>Explorar comunidades</span>
-            </Link>
+            <UserSearch />
 
             <section className="rounded-lg border border-borderDark bg-background p-4">
               <h2 className="text-lg font-semibold">Apoie o Gonin</h2>
@@ -196,15 +252,20 @@ export const ForumPage = () => {
                 )}
 
                 {!loadingCommunities && activeCommunities.map((community) => (
-                  <Link
+                  <button
                     key={community.slug}
-                    href={`/topics/${community.slug}`}
-                    className="flex items-start justify-between gap-3 px-4 py-3 transition-colors hover:bg-secondary/50"
+                    onClick={() => handleActiveCommunityClick(community)}
+                    className="flex w-full items-start justify-between gap-3 px-4 py-3 text-left transition-colors hover:bg-secondary/50"
                   >
                     <div className="min-w-0">
-                      <h3 className="truncate text-sm font-semibold text-primary">
-                        {community.title}
-                      </h3>
+                      <div className="flex min-w-0 items-center gap-2">
+                        <h3 className="truncate text-sm font-semibold text-primary">
+                          {community.title}
+                        </h3>
+                        {community.visibility === "private" && (
+                          <FaLock className="shrink-0 text-accent" size={10} />
+                        )}
+                      </div>
                       <p className="mt-1 line-clamp-2 text-xs leading-4 text-mutedText">
                         {community.description}
                       </p>
@@ -222,7 +283,7 @@ export const ForumPage = () => {
                     <span className="mt-1 text-xs font-semibold text-accent">
                       Abrir
                     </span>
-                  </Link>
+                  </button>
                 ))}
               </div>
               <Link
@@ -235,6 +296,50 @@ export const ForumPage = () => {
           </div>
         </aside>
       </div>
+
+      {lockedCommunity && (
+        <div
+          className="fixed inset-0 z-[90] flex items-end justify-center bg-black/70 px-3 pb-3 backdrop-blur-sm sm:items-center sm:p-4"
+          onClick={() => setLockedCommunity(null)}
+        >
+          <section
+            className="w-full max-w-md overflow-hidden rounded-2xl border border-borderDark bg-background shadow-2xl"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <header className="flex h-14 items-center justify-between border-b border-borderDark px-4">
+              <div className="flex items-center gap-2">
+                <FaLock className="text-accent" />
+                <h2 className="text-base font-semibold text-primary">
+                  Comunidade privada
+                </h2>
+              </div>
+              <button
+                onClick={() => setLockedCommunity(null)}
+                className="grid h-9 w-9 place-items-center rounded-full text-mutedText transition-colors hover:bg-secondary hover:text-primary"
+                aria-label="Fechar"
+              >
+                <FaXmark />
+              </button>
+            </header>
+
+            <div className="p-4">
+              <h3 className="text-lg font-semibold text-primary">
+                {lockedCommunity.title}
+              </h3>
+              <p className="mt-2 text-sm leading-6 text-mutedText">
+                Para entrar nessa comunidade, você precisa receber um convite
+                enviado por alguém que já participa dela.
+              </p>
+              <button
+                onClick={() => setLockedCommunity(null)}
+                className="mt-5 h-10 w-full rounded-lg bg-accent px-4 text-sm font-semibold text-background transition-colors hover:bg-accent/90"
+              >
+                Entendi
+              </button>
+            </div>
+          </section>
+        </div>
+      )}
     </div>
   );
 };

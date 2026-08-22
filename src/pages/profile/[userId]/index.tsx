@@ -207,9 +207,11 @@ const ProfilePage = () => {
                     <h1 className="text-xl font-semibold text-primary sm:text-2xl">
                       {loading ? "Carregando..." : profile?.displayName}
                     </h1>
-                    <p className="mt-1 text-sm text-mutedText">
-                      {profile?.location || profile?.email || "Gonin"}
-                    </p>
+                    {profile?.location ? (
+                      <p className="mt-1 text-sm text-mutedText">
+                        {profile.location}
+                      </p>
+                    ) : null}
                   </div>
                 </div>
 

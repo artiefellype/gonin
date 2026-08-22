@@ -26,7 +26,9 @@ import {
 import { fireApp, storage } from "@/firebase/firebase";
 import {
   CommunityProps,
+  CommunityInviteProps,
   FriendshipProps,
+  PaginatedPostsProps,
   PostCommentsProps,
   PostCommentWithUserProps,
   PostProps,
@@ -74,6 +76,14 @@ export class BaseAPI {
       console.error("Error fetching community: ", error);
       return null;
     }
+  }
+
+  private normalizeSearchValue(value?: string | null) {
+    return (value || "")
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase()
+      .trim();
   }
 
   private async hydratePost(
@@ -133,6 +143,149 @@ export class BaseAPI {
     return [firstUserId, secondUserId].sort().join("_");
   }
 
+  private async canViewCommunity(
+    communityId: string | undefined,
+    userId: string
+  ) {
+    if (!communityId) return true;
+
+    const communityRef = doc(this.db, "communities", communityId);
+    const communitySnap = await getDoc(communityRef);
+
+    if (!communitySnap.exists()) return true;
+
+    const community = {
+      id: communitySnap.id,
+      ...communitySnap.data(),
+    } as CommunityProps;
+
+    if (community.visibility !== "private") return true;
+    if (community.ownerId === userId) return true;
+
+    const memberSnap = await getDoc(doc(communityRef, "members", userId));
+    return memberSnap.exists();
+  }
+
+  private getPostCommunityIds(postData: PostProps) {
+    const communityIds = new Set<string>();
+
+    if (postData.communityId) communityIds.add(postData.communityId);
+    postData.tags?.forEach((tag) => {
+      if (tag) communityIds.add(tag);
+    });
+
+    return Array.from(communityIds);
+  }
+
+  private isPostLinkedToCommunity(postData: PostProps, communityId: string) {
+    return this.getPostCommunityIds(postData).includes(communityId);
+  }
+
+  private async canViewPost(
+    postData: PostProps,
+    userId: string
+  ): Promise<boolean> {
+    const communityIds = this.getPostCommunityIds(postData);
+    const canViewOwnPostCommunities = await Promise.all(
+      communityIds.map((communityId) =>
+        this.canViewCommunity(communityId, userId)
+      )
+    );
+
+    if (canViewOwnPostCommunities.some((canView) => !canView)) return false;
+
+    if (postData.postType === "share" && postData.originalPostId) {
+      const originalRef = doc(this.db, "posts", postData.originalPostId);
+      const originalSnap = await getDoc(originalRef);
+
+      if (originalSnap.exists()) {
+        return this.canViewPost(
+          {
+            id: originalSnap.id,
+            ...originalSnap.data(),
+          } as PostProps,
+          userId
+        );
+      }
+    }
+
+    return true;
+  }
+
+  private async isPrivateCommunity(communityId: string): Promise<boolean> {
+    const community = await this.getCommunityByIdSafe(communityId);
+    return community?.visibility === "private";
+  }
+
+  private async belongsToPrivateCommunity(
+    postData: PostProps
+  ): Promise<boolean> {
+    const communityIds = this.getPostCommunityIds(postData);
+    const privateChecks = await Promise.all(
+      communityIds.map((communityId) => this.isPrivateCommunity(communityId))
+    );
+
+    if (privateChecks.some(Boolean)) return true;
+
+    if (postData.postType === "share" && postData.originalPostId) {
+      const originalRef = doc(this.db, "posts", postData.originalPostId);
+      const originalSnap = await getDoc(originalRef);
+
+      if (originalSnap.exists()) {
+        return this.belongsToPrivateCommunity({
+          id: originalSnap.id,
+          ...originalSnap.data(),
+        } as PostProps);
+      }
+    }
+
+    return false;
+  }
+
+  private async canShowPostOutsideCommunity(postData: PostProps) {
+    return !(await this.belongsToPrivateCommunity(postData));
+  }
+
+  private getPostCursor(postData: PostProps) {
+    return postData.createdAt || null;
+  }
+
+  private async updateCommunityPostCount(
+    postData: PostProps,
+    amount: number
+  ) {
+    const communityIds = this.getPostCommunityIds(postData);
+
+    await Promise.all(
+      communityIds.map(async (communityId) => {
+        const communityRef = doc(this.db, "communities", communityId);
+        const communitySnap = await getDoc(communityRef);
+
+        if (!communitySnap.exists()) return;
+        await updateDoc(communityRef, { postsCount: increment(amount) });
+      })
+    );
+  }
+
+  private async canPostInCommunity(communityId: string, userId: string) {
+    const communityRef = doc(this.db, "communities", communityId);
+    const communitySnap = await getDoc(communityRef);
+
+    if (!communitySnap.exists()) {
+      throw new Error("Comunidade não encontrada.");
+    }
+
+    const community = {
+      id: communitySnap.id,
+      ...communitySnap.data(),
+    } as CommunityProps;
+
+    if (community.ownerId === userId) return true;
+
+    const memberSnap = await getDoc(doc(communityRef, "members", userId));
+    return memberSnap.exists();
+  }
+
   async get(collectionName: string, subcollectionName?: string) {
     try {
       const user = await this.getUser();
@@ -169,18 +322,29 @@ export class BaseAPI {
 
   async getPostsWithDetails(): Promise<PostProps[]> {
     try {
-      await this.getUser();
+      const authenticatedUser = (await this.getUser()) as { uid: string };
       const postsCollectionRef = collection(this.db, "posts");
       const postsQuery = query(postsCollectionRef, orderBy("createdAt", "desc"));
       const querySnapshot = await getDocs(postsQuery);
+      const visiblePosts = (
+        await Promise.all(
+          querySnapshot.docs.map(async (postDoc) => {
+            const postData = {
+              id: postDoc.id,
+              ...postDoc.data(),
+            } as PostProps;
+
+            const canShow = await this.canViewPost(
+              postData,
+              authenticatedUser.uid
+            );
+            return canShow ? postData : null;
+          })
+        )
+      ).filter(Boolean) as PostProps[];
 
       const posts = await Promise.all(
-        querySnapshot.docs.map((postDoc) =>
-          this.hydratePost({
-            id: postDoc.id,
-            ...postDoc.data(),
-          } as PostProps)
-        )
+        visiblePosts.map((postData) => this.hydratePost(postData))
       );
 
       return posts;
@@ -189,9 +353,69 @@ export class BaseAPI {
     }
   }
 
+  async getPostsWithDetailsPage(
+    cursor: string | null = null,
+    pageSize: number = 10
+  ): Promise<PaginatedPostsProps> {
+    try {
+      const authenticatedUser = (await this.getUser()) as { uid: string };
+      const postsCollectionRef = collection(this.db, "posts");
+      const queryLimit = pageSize + 1;
+      const postsQuery = cursor
+        ? query(
+            postsCollectionRef,
+            where("createdAt", "<", cursor),
+            orderBy("createdAt", "desc"),
+            limit(queryLimit)
+          )
+        : query(
+            postsCollectionRef,
+            orderBy("createdAt", "desc"),
+            limit(queryLimit)
+          );
+      const querySnapshot = await getDocs(postsQuery);
+      const pageDocs = querySnapshot.docs.slice(0, pageSize);
+      const visiblePosts = (
+        await Promise.all(
+          pageDocs.map(async (postDoc) => {
+            const postData = {
+              id: postDoc.id,
+              ...postDoc.data(),
+            } as PostProps;
+
+            const canShow = await this.canViewPost(
+              postData,
+              authenticatedUser.uid
+            );
+            return canShow ? postData : null;
+          })
+        )
+      ).filter(Boolean) as PostProps[];
+
+      const posts = await Promise.all(
+        visiblePosts.map((postData) => this.hydratePost(postData))
+      );
+      const lastRawPost = pageDocs[pageDocs.length - 1];
+      const lastRawData = lastRawPost
+        ? ({
+            id: lastRawPost.id,
+            ...lastRawPost.data(),
+          } as PostProps)
+        : null;
+
+      return {
+        posts,
+        nextCursor: lastRawData ? this.getPostCursor(lastRawData) : null,
+        hasMore: querySnapshot.docs.length > pageSize,
+      };
+    } catch (error) {
+      throw error;
+    }
+  }
+
   async getPostWithDetails(postId: string): Promise<PostProps> {
     try {
-      await this.getUser();
+      const authenticatedUser = (await this.getUser()) as { uid: string };
       const postRef = doc(this.db, "posts", postId);
       const postSnap = await getDoc(postRef);
 
@@ -199,10 +423,17 @@ export class BaseAPI {
         throw new Error(`No document found with id: ${postId}`);
       }
 
-      return await this.hydratePost({
+      const postData = {
         id: postSnap.id,
         ...postSnap.data(),
-      } as PostProps);
+      } as PostProps;
+      const canView = await this.canViewPost(postData, authenticatedUser.uid);
+
+      if (!canView) {
+        throw new Error("Você precisa participar da comunidade para ver este post.");
+      }
+
+      return await this.hydratePost(postData);
     } catch (error) {
       throw error;
     }
@@ -210,7 +441,7 @@ export class BaseAPI {
 
   async getPostsByUserIds(userIds: string[]): Promise<PostProps[]> {
     try {
-      await this.getUser();
+      const authenticatedUser = (await this.getUser()) as { uid: string };
       if (userIds.length === 0) return [];
 
       const uniqueIds = Array.from(new Set(userIds));
@@ -241,9 +472,20 @@ export class BaseAPI {
           } as PostProps);
         });
       });
+      const visiblePosts = (
+        await Promise.all(
+          Array.from(postsMap.values()).map(async (postData) => {
+            const canShow = await this.canViewPost(
+              postData,
+              authenticatedUser.uid
+            );
+            return canShow ? postData : null;
+          })
+        )
+      ).filter(Boolean) as PostProps[];
 
       const posts = await Promise.all(
-        Array.from(postsMap.values()).map((post) => this.hydratePost(post))
+        visiblePosts.map((post) => this.hydratePost(post))
       );
 
       return posts.sort(
@@ -255,16 +497,121 @@ export class BaseAPI {
     }
   }
 
+  async getPostsByUserIdsPage(
+    userIds: string[],
+    cursor: string | null = null,
+    pageSize: number = 10
+  ): Promise<PaginatedPostsProps> {
+    try {
+      const authenticatedUser = (await this.getUser()) as { uid: string };
+      if (userIds.length === 0) {
+        return { posts: [], nextCursor: null, hasMore: false };
+      }
+
+      const uniqueIds = Array.from(new Set(userIds));
+      const chunks = [];
+
+      for (let i = 0; i < uniqueIds.length; i += 10) {
+        chunks.push(uniqueIds.slice(i, i + 10));
+      }
+
+      const postSnapshots = await Promise.all(
+        chunks.map((chunk) => {
+          const postsCollectionRef = collection(this.db, "posts");
+          const queryLimit = pageSize + 1;
+          const postsQuery = cursor
+            ? query(
+                postsCollectionRef,
+                where("userId", "in", chunk),
+                where("createdAt", "<", cursor),
+                orderBy("createdAt", "desc"),
+                limit(queryLimit)
+              )
+            : query(
+                postsCollectionRef,
+                where("userId", "in", chunk),
+                orderBy("createdAt", "desc"),
+                limit(queryLimit)
+              );
+          return getDocs(postsQuery);
+        })
+      );
+
+      const postsMap = new Map<string, PostProps>();
+
+      postSnapshots.forEach((snapshot) => {
+        snapshot.docs.forEach((postDoc) => {
+          postsMap.set(postDoc.id, {
+            id: postDoc.id,
+            ...postDoc.data(),
+          } as PostProps);
+        });
+      });
+
+      const visiblePosts = (
+        await Promise.all(
+          Array.from(postsMap.values()).map(async (postData) => {
+            const canShow = await this.canViewPost(
+              postData,
+              authenticatedUser.uid
+            );
+            return canShow ? postData : null;
+          })
+        )
+      )
+        .filter(Boolean)
+        .sort(
+          (a, b) =>
+            new Date((b as PostProps).createdAt).getTime() -
+            new Date((a as PostProps).createdAt).getTime()
+        ) as PostProps[];
+      const pagePosts = visiblePosts.slice(0, pageSize);
+      const posts = await Promise.all(
+        pagePosts.map((post) => this.hydratePost(post))
+      );
+      const lastPost = pagePosts[pagePosts.length - 1];
+
+      return {
+        posts,
+        nextCursor: lastPost ? this.getPostCursor(lastPost) : null,
+        hasMore:
+          visiblePosts.length > pageSize ||
+          postSnapshots.some((snapshot) => snapshot.docs.length > pageSize),
+      };
+    } catch (error) {
+      throw error;
+    }
+  }
+
   async getPostsByUserId(userId: string): Promise<PostProps[]> {
     return this.getPostsByUserIds([userId]);
   }
 
   async add(collectionName: string, newData: any) {
     try {
-      const user = await this.getUser();
+      const user = (await this.getUser()) as { uid: string };
+      if (collectionName === "posts") {
+        const postData = newData as PostProps;
+        const communityId = postData.communityId || postData.tags?.[0];
+
+        if (communityId) {
+          const canPost = await this.canPostInCommunity(communityId, user.uid);
+          if (!canPost) {
+            throw new Error(
+              "Você precisa participar da comunidade para postar."
+            );
+          }
+        }
+      }
+
       const collectionRef = collection(this.db, collectionName);
       const docRef = doc(collectionRef);
       await setDoc(docRef, newData);
+
+      if (collectionName === "posts") {
+        await this.updateCommunityPostCount(newData as PostProps, 1);
+      }
+
       return docRef.id;
     } catch (error) {
       throw error;
@@ -312,6 +659,7 @@ export class BaseAPI {
       await updateDoc(userRef, {
         uid: targetUserId,
         displayName: user.displayName,
+        searchName: this.normalizeSearchValue(user.displayName),
         tag: user.tag,
         member: user.member,
         photoURL: user.photoURL,
@@ -346,6 +694,10 @@ export class BaseAPI {
         throw new Error("Documento não encontrado");
       }
 
+      const removedData = {
+        id: docSnapshot.id,
+        ...docSnapshot.data(),
+      } as PostProps;
       const imageData = docSnapshot.data().mediaFile;
 
       await this.removeSubCollection(docRef, "comments");
@@ -362,6 +714,10 @@ export class BaseAPI {
       }
 
       await deleteDoc(docRef);
+
+      if (collectionName === "posts") {
+        await this.updateCommunityPostCount(removedData, -1);
+      }
     } catch (error) {
       throw error;
     }
@@ -486,12 +842,152 @@ export class BaseAPI {
     }
   }
 
+  async searchUsers(
+    searchTerm: string,
+    currentUserId?: string
+  ): Promise<UserProps[]> {
+    try {
+      await this.getUser();
+      const normalizedTerm = this.normalizeSearchValue(searchTerm);
+
+      if (normalizedTerm.length < 2) return [];
+
+      const usersSnapshot = await getDocs(collection(this.db, "users"));
+      const users = usersSnapshot.docs.map((userDoc) => ({
+        id: userDoc.id,
+        ...userDoc.data(),
+      })) as UserProps[];
+
+      return users
+        .filter((foundUser) => {
+          const userId = foundUser.uid || foundUser.id;
+          if (currentUserId && userId === currentUserId) return false;
+
+          const searchableText = [
+            foundUser.searchName,
+            foundUser.displayName,
+            foundUser.tag,
+          ]
+            .map((value) => this.normalizeSearchValue(value))
+            .join(" ");
+
+          return searchableText.includes(normalizedTerm);
+        })
+        .sort((a, b) => {
+          const aName = this.normalizeSearchValue(a.displayName);
+          const bName = this.normalizeSearchValue(b.displayName);
+          const aStarts = aName.startsWith(normalizedTerm);
+          const bStarts = bName.startsWith(normalizedTerm);
+
+          if (aStarts !== bStarts) return aStarts ? -1 : 1;
+          return aName.localeCompare(bName);
+        })
+        .slice(0, 10);
+    } catch (error) {
+      throw error;
+    }
+  }
+
   async countPostsByTag(tag: string) {
     try {
       const postsRef = collection(this.db, "posts");
       const q = query(postsRef, where("tags", "array-contains", tag));
       const querySnapshot = await getDocs(q);
       return querySnapshot.size;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async countPostsByCommunity(communityId: string): Promise<number> {
+    try {
+      await this.getUser();
+      const postsRef = collection(this.db, "posts");
+      const byCommunityQuery = query(
+        postsRef,
+        where("communityId", "==", communityId)
+      );
+      const byTagQuery = query(
+        postsRef,
+        where("tags", "array-contains", communityId)
+      );
+      const [communitySnapshot, tagSnapshot] = await Promise.all([
+        getDocs(byCommunityQuery),
+        getDocs(byTagQuery),
+      ]);
+      const postIds = new Set<string>();
+
+      communitySnapshot.docs.forEach((postDoc) => postIds.add(postDoc.id));
+      tagSnapshot.docs.forEach((postDoc) => postIds.add(postDoc.id));
+
+      return postIds.size;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async getActiveCommunitiesByRecentPosts(
+    maxCommunities: number = 3,
+    scanLimit: number = 100
+  ): Promise<CommunityProps[]> {
+    try {
+      await this.getUser();
+      const postsRef = collection(this.db, "posts");
+      const postsQuery = query(
+        postsRef,
+        orderBy("createdAt", "desc"),
+        limit(scanLimit)
+      );
+      const postsSnapshot = await getDocs(postsQuery);
+      const recentCommunityIds = new Map<string, string>();
+
+      postsSnapshot.docs.forEach((postDoc) => {
+        const postData = {
+          id: postDoc.id,
+          ...postDoc.data(),
+        } as PostProps;
+
+        this.getPostCommunityIds(postData).forEach((communityId) => {
+          if (!recentCommunityIds.has(communityId)) {
+            recentCommunityIds.set(communityId, postData.createdAt);
+          }
+        });
+      });
+
+      const communities = await Promise.all(
+        Array.from(recentCommunityIds.entries()).map(
+          async ([communityId, latestPostAt]) => {
+            const community = await this.getCommunityByIdSafe(communityId);
+            if (!community) return null;
+
+            let postsCount = community.postsCount || 0;
+            try {
+              postsCount = await this.countPostsByCommunity(communityId);
+            } catch (error) {
+              console.error("Error counting community posts: ", error);
+            }
+
+            return {
+              ...community,
+              postsCount,
+              latestPostAt,
+            } as CommunityProps & { latestPostAt: string };
+          }
+        )
+      );
+      const activeCommunities = communities.filter(
+        (community): community is CommunityProps & { latestPostAt: string } =>
+          Boolean(community)
+      );
+
+      return activeCommunities
+        .sort(
+          (a, b) =>
+            new Date(b.latestPostAt).getTime() -
+            new Date(a.latestPostAt).getTime()
+        )
+        .slice(0, maxCommunities)
+        .map(({ latestPostAt, ...community }) => community) as CommunityProps[];
     } catch (error) {
       throw error;
     }
@@ -706,6 +1202,7 @@ export class BaseAPI {
       await setDoc(newPostRef, sharedPost);
       await this.addSubCollection("posts", newPostRef.id, "comments");
       await this.addSubCollection("posts", newPostRef.id, "likes");
+      await this.updateCommunityPostCount(sharedPost, 1);
       await updateDoc(originalPostRef, { shareCount: increment(1) });
       await updateDoc(doc(this.db, "users", userId), {
         posts: arrayUnion(newPostRef.id),
@@ -816,12 +1313,43 @@ export class BaseAPI {
 
   async joinCommunity(communityId: string, userId: string): Promise<boolean> {
     try {
-      await this.getUser();
+      const authenticatedUser = (await this.getUser()) as { uid: string };
+      if (authenticatedUser.uid !== userId) {
+        throw new Error("Você só pode entrar usando a própria conta.");
+      }
+
       const communityRef = doc(this.db, "communities", communityId);
+      const communitySnap = await getDoc(communityRef);
+
+      if (!communitySnap.exists()) {
+        throw new Error("Comunidade não encontrada.");
+      }
+
+      const community = {
+        id: communitySnap.id,
+        ...communitySnap.data(),
+      } as CommunityProps;
       const memberRef = doc(communityRef, "members", userId);
       const memberSnap = await getDoc(memberRef);
 
       if (memberSnap.exists()) return true;
+
+      const inviteId = `${communityId}_${userId}`;
+      const inviteRef = doc(this.db, "communityInvites", inviteId);
+      const inviteSnap = await getDoc(inviteRef);
+
+      if (community.visibility === "private") {
+        const invite = inviteSnap.exists()
+          ? ({
+              id: inviteSnap.id,
+              ...inviteSnap.data(),
+            } as CommunityInviteProps)
+          : null;
+
+        if (!invite || invite.status !== "pending") {
+          throw new Error("Esta comunidade é privada e exige convite.");
+        }
+      }
 
       await setDoc(memberRef, {
         userId,
@@ -832,6 +1360,12 @@ export class BaseAPI {
       await updateDoc(doc(this.db, "users", userId), {
         communities: arrayUnion(communityId),
       });
+      if (inviteSnap.exists()) {
+        await updateDoc(inviteRef, {
+          status: "accepted",
+          updatedAt: new Date().toISOString(),
+        });
+      }
 
       return true;
     } catch (error) {
@@ -939,7 +1473,139 @@ export class BaseAPI {
         )
       );
 
+      const invitesQuery = query(
+        collection(this.db, "communityInvites"),
+        where("communityId", "==", communityId)
+      );
+      const invitesSnapshot = await getDocs(invitesQuery);
+      await Promise.all(
+        invitesSnapshot.docs.map((inviteDoc) => deleteDoc(inviteDoc.ref))
+      );
+
       await deleteDoc(communityRef);
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async inviteToCommunity(
+    communityId: string,
+    inviterId: string,
+    inviteeId: string
+  ): Promise<CommunityInviteProps> {
+    try {
+      const authenticatedUser = (await this.getUser()) as { uid: string };
+      if (authenticatedUser.uid !== inviterId) {
+        throw new Error("Você só pode enviar convites usando a própria conta.");
+      }
+
+      if (inviterId === inviteeId) {
+        throw new Error("Você já participa dessa comunidade.");
+      }
+
+      const communityRef = doc(this.db, "communities", communityId);
+      const communitySnap = await getDoc(communityRef);
+
+      if (!communitySnap.exists()) {
+        throw new Error("Comunidade não encontrada.");
+      }
+
+      const community = {
+        id: communitySnap.id,
+        ...communitySnap.data(),
+      } as CommunityProps;
+
+      const inviterMemberSnap = await getDoc(
+        doc(communityRef, "members", inviterId)
+      );
+      const canInvite =
+        community.ownerId === inviterId || inviterMemberSnap.exists();
+
+      if (!canInvite) {
+        throw new Error("Apenas membros podem convidar para esta comunidade.");
+      }
+
+      const inviteeMemberSnap = await getDoc(
+        doc(communityRef, "members", inviteeId)
+      );
+      if (inviteeMemberSnap.exists()) {
+        throw new Error("Esse usuário já está na comunidade.");
+      }
+
+      const inviteId = `${communityId}_${inviteeId}`;
+      const inviteRef = doc(this.db, "communityInvites", inviteId);
+      const inviteSnap = await getDoc(inviteRef);
+
+      if (inviteSnap.exists()) {
+        const existingInvite = {
+          id: inviteSnap.id,
+          ...inviteSnap.data(),
+        } as CommunityInviteProps;
+
+        if (existingInvite.status === "pending") return existingInvite;
+      }
+
+      const invite: CommunityInviteProps = {
+        id: inviteId,
+        communityId,
+        communityTitle: community.title,
+        inviterId,
+        inviteeId,
+        status: "pending",
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+
+      await setDoc(inviteRef, invite);
+      return invite;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async getPendingCommunityInvites(
+    userId: string
+  ): Promise<CommunityInviteProps[]> {
+    try {
+      await this.getUser();
+      const invitesRef = collection(this.db, "communityInvites");
+      const invitesQuery = query(
+        invitesRef,
+        where("inviteeId", "==", userId),
+        where("status", "==", "pending")
+      );
+      const invitesSnapshot = await getDocs(invitesQuery);
+
+      return invitesSnapshot.docs.map((inviteDoc) => ({
+        id: inviteDoc.id,
+        ...inviteDoc.data(),
+      })) as CommunityInviteProps[];
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async declineCommunityInvite(inviteId: string, userId: string): Promise<void> {
+    try {
+      await this.getUser();
+      const inviteRef = doc(this.db, "communityInvites", inviteId);
+      const inviteSnap = await getDoc(inviteRef);
+
+      if (!inviteSnap.exists()) return;
+
+      const invite = {
+        id: inviteSnap.id,
+        ...inviteSnap.data(),
+      } as CommunityInviteProps;
+
+      if (invite.inviteeId !== userId) {
+        throw new Error("Apenas quem recebeu o convite pode recusá-lo.");
+      }
+
+      await updateDoc(inviteRef, {
+        status: "declined",
+        updatedAt: new Date().toISOString(),
+      });
     } catch (error) {
       throw error;
     }
@@ -967,7 +1633,16 @@ export class BaseAPI {
 
   async getPostsByCommunity(communityId: string): Promise<PostProps[]> {
     try {
-      await this.getUser();
+      const authenticatedUser = (await this.getUser()) as { uid: string };
+      const canViewCommunity = await this.canViewCommunity(
+        communityId,
+        authenticatedUser.uid
+      );
+
+      if (!canViewCommunity) {
+        throw new Error("Você precisa de convite para ver esta comunidade.");
+      }
+
       const postsCollectionRef = collection(this.db, "posts");
       const byCommunityQuery = query(
         postsCollectionRef,
@@ -1005,6 +1680,98 @@ export class BaseAPI {
         (a, b) =>
           new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
       );
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async getPostsByCommunityPage(
+    communityId: string,
+    cursor: string | null = null,
+    pageSize: number = 10
+  ): Promise<PaginatedPostsProps> {
+    try {
+      const authenticatedUser = (await this.getUser()) as { uid: string };
+      const canViewCommunity = await this.canViewCommunity(
+        communityId,
+        authenticatedUser.uid
+      );
+
+      if (!canViewCommunity) {
+        throw new Error("Você precisa de convite para ver esta comunidade.");
+      }
+
+      const postsCollectionRef = collection(this.db, "posts");
+      const queryLimit = Math.max(pageSize * 4, 24);
+      const postsMap = new Map<string, PostProps>();
+      let scanCursor = cursor;
+      let lastScannedCursor: string | null = null;
+      let hasMoreScannablePosts = false;
+
+      while (postsMap.size < pageSize) {
+        const postsQuery = scanCursor
+          ? query(
+              postsCollectionRef,
+              where("createdAt", "<", scanCursor),
+              orderBy("createdAt", "desc"),
+              limit(queryLimit)
+            )
+          : query(
+              postsCollectionRef,
+              orderBy("createdAt", "desc"),
+              limit(queryLimit)
+            );
+        const postsSnapshot = await getDocs(postsQuery);
+
+        if (postsSnapshot.empty) {
+          hasMoreScannablePosts = false;
+          break;
+        }
+
+        postsSnapshot.docs.forEach((postDoc) => {
+          const postData = {
+            id: postDoc.id,
+            ...postDoc.data(),
+          } as PostProps;
+
+          if (this.isPostLinkedToCommunity(postData, communityId)) {
+            postsMap.set(postDoc.id, postData);
+          }
+        });
+
+        const lastScannedPost =
+          postsSnapshot.docs[postsSnapshot.docs.length - 1];
+        const lastScannedPostData = {
+          id: lastScannedPost.id,
+          ...lastScannedPost.data(),
+        } as PostProps;
+        lastScannedCursor = this.getPostCursor(lastScannedPostData);
+        hasMoreScannablePosts = postsSnapshot.docs.length === queryLimit;
+
+        if (!lastScannedCursor || !hasMoreScannablePosts) break;
+        scanCursor = lastScannedCursor;
+      }
+
+      const pagePosts = Array.from(postsMap.values())
+        .sort(
+        (a, b) =>
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        )
+        .slice(0, pageSize);
+      const posts = await Promise.all(
+        pagePosts.map((post) => this.hydratePost(post))
+      );
+      const lastPost = pagePosts[pagePosts.length - 1];
+      const nextCursor =
+        pagePosts.length >= pageSize && lastPost
+          ? this.getPostCursor(lastPost)
+          : lastScannedCursor;
+
+      return {
+        posts,
+        nextCursor,
+        hasMore: hasMoreScannablePosts && !!nextCursor,
+      };
     } catch (error) {
       throw error;
     }
@@ -1069,6 +1836,10 @@ export class BaseAPI {
 
       if (friendship.addresseeId !== userId) {
         throw new Error("Apenas quem recebeu o convite pode responder.");
+      }
+
+      if (friendship.status !== "pending") {
+        return friendship;
       }
 
       if (!accept) {

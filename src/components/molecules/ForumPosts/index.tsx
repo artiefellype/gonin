@@ -21,6 +21,7 @@ import { postsServices } from "@/services/postServices";
 import { SharePostModal } from "@/components/molecules/SharePostModal";
 import { FriendActionButton } from "@/components/molecules/FriendActionButton";
 import Link from "next/link";
+import { LinkifiedText } from "@/components/atoms/LinkifiedText";
 
 export interface PostCardProps {
   post: PostProps;
@@ -304,7 +305,7 @@ export const ForumPosts = ({
               </h2>
             )}
             <p className="whitespace-pre-wrap text-[15px] font-normal leading-5 text-primary">
-              {post.description}
+              <LinkifiedText text={post.description} />
             </p>
 
             {renderMedia(post)}
@@ -347,7 +348,7 @@ export const ForumPosts = ({
                     </h3>
                   )}
                   <p className="mt-1 line-clamp-4 whitespace-pre-wrap text-sm leading-5 text-primary">
-                    {post.originalPost.description}
+                    <LinkifiedText text={post.originalPost.description} />
                   </p>
                 </div>
                 {renderMedia(post.originalPost, true)}

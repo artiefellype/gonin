@@ -5,6 +5,7 @@ import { useRouter } from "next/router";
 import React, { useMemo } from "react";
 import { IconType } from "react-icons";
 import { TbLogin as LogoutIcon } from "react-icons/tb";
+import { NotificationsCenter } from "../NotificationsCenter";
 
 export interface MenuItemsProps {
   label: React.ReactNode;
@@ -34,6 +35,18 @@ export const SideOptions = ({ children, items }: Props) => {
   const handleLogout = async () => {
     await signOut();
     router.push("/login");
+  };
+
+  const handleNewConversation = async () => {
+    if (activePath === "forum") {
+      window.dispatchEvent(new Event("gonin:focus-composer"));
+      return;
+    }
+
+    await router.push({
+      pathname: "/forum",
+      query: { compose: "1" },
+    });
   };
 
   return (
@@ -72,10 +85,11 @@ export const SideOptions = ({ children, items }: Props) => {
                     </Link>
                   );
                 })}
+                <NotificationsCenter label />
               </nav>
 
               <button
-                onClick={() => router.push("/forum")}
+                onClick={handleNewConversation}
                 className="mt-6 flex h-12 w-12 items-center justify-center rounded-full bg-primary text-base font-semibold text-background transition-colors hover:bg-primary/90 md:mx-auto lg:w-full"
               >
                 <span className="lg:hidden">+</span>
@@ -99,12 +113,7 @@ export const SideOptions = ({ children, items }: Props) => {
                 </div>
                 <div className="hidden min-w-0 flex-1 lg:block">
                   <p className="truncate text-sm font-semibold text-primary">
-                    {user?.user?.displayName ||
-                      user?.user?.email?.split("@")[0] ||
-                      "Gonin"}
-                  </p>
-                  <p className="truncate text-xs text-mutedText">
-                    {user?.user?.email || "Sessão ativa"}
+                    {user?.user?.displayName || "Gonin"}
                   </p>
                 </div>
               </Link>

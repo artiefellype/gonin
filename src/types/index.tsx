@@ -7,6 +7,7 @@ export interface UserProps {
   posts: string[];
   member: boolean;
   tag: string;
+  searchName?: string;
   uid: string;
   bio?: string;
   location?: string;
@@ -29,6 +30,7 @@ export interface CommunityProps {
   postsCount: number;
   createdAt: string;
   isSystem?: boolean;
+  visibility?: "public" | "private";
 }
 
 export interface FriendshipProps {
@@ -37,6 +39,17 @@ export interface FriendshipProps {
   addresseeId: string;
   participants: string[];
   status: "pending" | "accepted";
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CommunityInviteProps {
+  id: string;
+  communityId: string;
+  communityTitle: string;
+  inviterId: string;
+  inviteeId: string;
+  status: "pending" | "accepted" | "declined";
   createdAt: string;
   updatedAt: string;
 }
@@ -65,6 +78,12 @@ export interface PostProps {
   originalPost?: PostProps | null;
   originalUser?: UserProps | null;
   sharedByText?: string;
+}
+
+export interface PaginatedPostsProps {
+  posts: PostProps[];
+  nextCursor: string | null;
+  hasMore: boolean;
 }
 
 export interface PostCommentsProps {

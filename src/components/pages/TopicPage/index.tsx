@@ -5,33 +5,63 @@ import ForumContainer from "@/components/organisms/ForumContainer";
 import { useUserContext } from "@/context";
 import { CommunityServices } from "@/services/communityServices";
 import { postsServices } from "@/services/postServices";
-import { CommunityProps, PostProps } from "@/types";
+import { UserServices } from "@/services/userServices";
+import { CommunityProps, PostProps, UserProps } from "@/types";
 import { GetServerSideProps } from "next";
+import Image from "next/image";
 import { useRouter } from "next/router";
 import { parseCookies } from "nookies";
-import React, { useEffect, useState } from "react";
-import { FaTrash, FaTriangleExclamation, FaXmark } from "react-icons/fa6";
+import React, { useCallback, useEffect, useRef, useState } from "react";
+import {
+  FaLock,
+  FaPaperPlane,
+  FaTrash,
+  FaTriangleExclamation,
+  FaUserPlus,
+  FaXmark,
+} from "react-icons/fa6";
 
 interface TopicPageProps {
   tag: string;
 }
 
+const POSTS_PAGE_SIZE = 10;
+
 export const TopicPage = ({ tag }: TopicPageProps) => {
   const [posts, setPosts] = useState<PostProps[]>([]);
   const [community, setCommunity] = useState<CommunityProps | null>(null);
   const [isMember, setIsMember] = useState(false);
+  const [membershipLoading, setMembershipLoading] = useState(false);
+  const [membershipConfirmation, setMembershipConfirmation] = useState("");
   const [loading, setLoading] = useState(false);
   const [communityLoading, setCommunityLoading] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [inviteModalOpen, setInviteModalOpen] = useState(false);
+  const [inviteSearch, setInviteSearch] = useState("");
+  const [inviteResults, setInviteResults] = useState<UserProps[]>([]);
+  const [inviteLoading, setInviteLoading] = useState(false);
+  const [inviteMessage, setInviteMessage] = useState("");
+  const [invitingUserId, setInvitingUserId] = useState("");
   const [deletingCommunity, setDeletingCommunity] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMorePosts, setHasMorePosts] = useState(false);
   const { user } = useUserContext();
   const router = useRouter();
+  const nextCursorRef = useRef<string | null>(null);
+  const hasMorePostsRef = useRef(false);
+  const loadingMoreRef = useRef(false);
   const isCommunityOwner =
     !!community &&
     !community.isSystem &&
     !!user?.user?.uid &&
     community.ownerId === user.user.uid;
+  const isPrivateCommunity = community?.visibility === "private";
+  const canAccessCommunity =
+    !isPrivateCommunity || isMember || isCommunityOwner;
+  const canCreateCommunityPost = isMember || isCommunityOwner;
+  const canInviteToCommunity =
+    !!user?.user?.uid && !!community && isPrivateCommunity && canAccessCommunity;
 
   const fetchCommunity = async () => {
     setCommunityLoading(true);
@@ -53,22 +83,58 @@ export const TopicPage = ({ tag }: TopicPageProps) => {
     }
   };
 
-  const fetchPosts = async () => {
-    setLoading(true);
+  const mergePosts = (currentPosts: PostProps[], nextPosts: PostProps[]) => {
+    const postsMap = new Map<string, PostProps>();
+    [...currentPosts, ...nextPosts].forEach((post) => {
+      if (post.id) postsMap.set(post.id, post);
+    });
+    return Array.from(postsMap.values());
+  };
+
+  const fetchPosts = useCallback(async (reset: boolean = true) => {
+    if (reset) {
+      setLoading(true);
+      setHasMorePosts(false);
+      hasMorePostsRef.current = false;
+      nextCursorRef.current = null;
+    } else {
+      if (loadingMoreRef.current || !hasMorePostsRef.current) return;
+      setLoadingMore(true);
+      loadingMoreRef.current = true;
+    }
+
     try {
-      const newPosts = await postsServices.getPostsByCommunity(tag);
-      setPosts(newPosts);
+      const response = await postsServices.getPostsByCommunityPage(
+        tag,
+        reset ? null : nextCursorRef.current,
+        POSTS_PAGE_SIZE
+      );
+      setPosts((currentPosts) =>
+        reset ? response.posts : mergePosts(currentPosts, response.posts)
+      );
+      nextCursorRef.current = response.nextCursor;
+      const nextHasMore = response.hasMore && !!response.nextCursor;
+      setHasMorePosts(nextHasMore);
+      hasMorePostsRef.current = nextHasMore;
       setError(null);
     } catch (err: any) {
       setError(err.message);
     } finally {
-      setLoading(false);
+      if (reset) {
+        setLoading(false);
+      } else {
+        setLoadingMore(false);
+        loadingMoreRef.current = false;
+      }
     }
-  };
+  }, [tag]);
 
   const handleToggleMembership = async () => {
-    if (!user?.user?.uid || !community) return;
+    if (!user?.user?.uid || !community || membershipLoading) return;
 
+    setMembershipLoading(true);
+    setMembershipConfirmation("");
+    setError(null);
     try {
       if (isMember) {
         const nextState = await CommunityServices.leaveCommunity(
@@ -100,10 +166,30 @@ export const TopicPage = ({ tag }: TopicPageProps) => {
             }
           : current
       );
+      setMembershipConfirmation("Agora você é membro");
+      window.setTimeout(() => {
+        setMembershipConfirmation("");
+      }, 1800);
     } catch (err: any) {
       setError(err.message);
+    } finally {
+      setMembershipLoading(false);
     }
   };
+
+  const membershipButtonText = membershipLoading
+    ? isMember
+      ? "Saindo..."
+      : "Entrando..."
+    : membershipConfirmation ||
+      (isMember
+        ? "Participando"
+        : isPrivateCommunity
+          ? "Convite necessário"
+          : "Participar");
+
+  const joinCommunityButtonText =
+    membershipLoading ? "Entrando..." : membershipConfirmation || "Participar";
 
   const handleDeleteCommunity = async () => {
     if (!user?.user?.uid || !community || !isCommunityOwner) return;
@@ -123,8 +209,62 @@ export const TopicPage = ({ tag }: TopicPageProps) => {
 
   useEffect(() => {
     fetchCommunity();
-    fetchPosts();
   }, [tag, user?.user?.uid]);
+
+  useEffect(() => {
+    if (!community) return;
+
+    if (!canAccessCommunity) {
+      setPosts([]);
+      return;
+    }
+
+    fetchPosts(true);
+  }, [community?.slug, canAccessCommunity, fetchPosts]);
+
+  useEffect(() => {
+    if (!inviteModalOpen || inviteSearch.trim().length < 2) {
+      setInviteResults([]);
+      setInviteLoading(false);
+      return;
+    }
+
+    setInviteLoading(true);
+    const timer = window.setTimeout(async () => {
+      try {
+        const users = await UserServices.searchUsers(
+          inviteSearch,
+          user?.user?.uid
+        );
+        setInviteResults(users);
+      } catch (err: any) {
+        setInviteMessage(err.message || "Não foi possível buscar usuários.");
+      } finally {
+        setInviteLoading(false);
+      }
+    }, 280);
+
+    return () => window.clearTimeout(timer);
+  }, [inviteModalOpen, inviteSearch, user?.user?.uid]);
+
+  const handleInviteUser = async (targetUserId: string) => {
+    if (!community || !user?.user?.uid || invitingUserId) return;
+
+    setInvitingUserId(targetUserId);
+    setInviteMessage("");
+    try {
+      await CommunityServices.inviteToCommunity(
+        community.slug,
+        user.user.uid,
+        targetUserId
+      );
+      setInviteMessage("Convite enviado.");
+    } catch (err: any) {
+      setInviteMessage(err.message || "Não foi possível enviar o convite.");
+    } finally {
+      setInvitingUserId("");
+    }
+  };
 
   return (
     <div className="w-full px-3 pb-24 md:h-full md:min-h-0 md:overflow-y-auto md:overscroll-contain md:px-4 md:pb-8">
@@ -150,6 +290,7 @@ export const TopicPage = ({ tag }: TopicPageProps) => {
                   {communityLoading
                     ? "Carregando participação..."
                     : `${community?.membersCount || 0} membros`}
+                  {isPrivateCommunity ? " · privada" : ""}
                 </p>
               </div>
               <div className="flex w-full flex-col gap-2 sm:w-auto sm:items-end">
@@ -165,35 +306,97 @@ export const TopicPage = ({ tag }: TopicPageProps) => {
                       <FaTrash size={13} />
                       Apagar comunidade
                     </button>
+                    {canInviteToCommunity && (
+                      <button
+                        onClick={() => setInviteModalOpen(true)}
+                        className="flex h-10 w-full items-center justify-center gap-2 rounded-lg border border-accent/50 bg-accentSoft px-4 text-sm font-semibold text-accent transition-colors hover:border-accent sm:w-auto"
+                      >
+                        <FaUserPlus size={13} />
+                        Convidar
+                      </button>
+                    )}
                   </>
                 ) : (
-                  <button
-                    onClick={handleToggleMembership}
-                    className="h-10 w-full rounded-lg border border-accent bg-accent px-4 text-sm font-semibold text-background transition-colors hover:bg-accent/90 sm:w-auto"
-                  >
-                    {isMember ? "Participando" : "Participar"}
-                  </button>
+                  <>
+                    {canInviteToCommunity && (
+                      <button
+                        onClick={() => setInviteModalOpen(true)}
+                        className="flex h-10 w-full items-center justify-center gap-2 rounded-lg border border-accent/50 bg-accentSoft px-4 text-sm font-semibold text-accent transition-colors hover:border-accent sm:w-auto"
+                      >
+                        <FaUserPlus size={13} />
+                        Convidar
+                      </button>
+                    )}
+                    <button
+                      onClick={handleToggleMembership}
+                      disabled={
+                        membershipLoading ||
+                        !!membershipConfirmation ||
+                        (isPrivateCommunity && !isMember)
+                      }
+                      className="h-10 w-full rounded-lg border border-accent bg-accent px-4 text-sm font-semibold text-background transition-colors hover:bg-accent/90 disabled:cursor-not-allowed disabled:border-borderDark disabled:bg-secondary disabled:text-mutedText sm:w-auto"
+                    >
+                      {membershipButtonText}
+                    </button>
+                  </>
                 )}
               </div>
             </div>
           </section>
           <div className="flex flex-col gap-3 md:gap-4">
-            <ForumComposerArea
-              tag={tag}
-              fetchNewPosts={fetchPosts}
-              lockCommunity
-            />
+            {canCreateCommunityPost ? (
+              <ForumComposerArea
+                tag={tag}
+                fetchNewPosts={() => fetchPosts(true)}
+                lockCommunity
+              />
+            ) : !canAccessCommunity ? (
+              <section className="rounded-xl border border-borderDark bg-panel/90 p-5 text-center shadow-lg">
+                <span className="mx-auto grid h-12 w-12 place-items-center rounded-full bg-accentSoft text-accent">
+                  <FaLock />
+                </span>
+                <h2 className="mt-3 text-lg font-semibold text-primary">
+                  Comunidade privada
+                </h2>
+                <p className="mt-2 text-sm leading-6 text-mutedText">
+                  Você precisa receber um convite de um membro para participar
+                  e ver as conversas daqui.
+                </p>
+              </section>
+            ) : (
+              <section className="rounded-xl border border-borderDark bg-panel/90 p-5 text-center shadow-lg">
+                <h2 className="text-lg font-semibold text-primary">
+                  Participe para publicar
+                </h2>
+                <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-mutedText">
+                  Entre na comunidade para criar posts, responder melhor ao
+                  assunto e acompanhar as próximas conversas.
+                </p>
+                <button
+                  onClick={handleToggleMembership}
+                  disabled={membershipLoading || !!membershipConfirmation}
+                  className="mt-4 h-10 rounded-lg bg-accent px-4 text-sm font-semibold text-background transition-colors hover:bg-accent/90 disabled:cursor-wait disabled:opacity-70"
+                >
+                  {joinCommunityButtonText}
+                </button>
+              </section>
+            )}
             {error && (
               <div className="rounded-lg border border-coral/40 bg-coralSoft p-4 text-sm font-semibold text-coral">
                 {error}
               </div>
             )}
-            <ForumContainer
-              posts={posts}
-              loading={loading}
-              fetch={fetchPosts}
-              setPosts={setPosts}
-            />
+            {canAccessCommunity && (
+              <ForumContainer
+                posts={posts}
+                loading={loading}
+                loadingMore={loadingMore}
+                hasMore={hasMorePosts}
+                fetch={() => fetchPosts(true)}
+                onLoadMore={() => fetchPosts(false)}
+                setPosts={setPosts}
+              />
+            )}
           </div>
         </main>
 
@@ -282,6 +485,109 @@ export const TopicPage = ({ tag }: TopicPageProps) => {
                   {deletingCommunity ? "Apagando..." : "Apagar"}
                 </button>
               </footer>
+            </div>
+          </section>
+        </div>
+      )}
+
+      {inviteModalOpen && community && (
+        <div
+          className="fixed inset-0 z-[90] flex items-end justify-center bg-black/70 px-3 pb-3 backdrop-blur-sm sm:items-center sm:p-4"
+          onClick={() => setInviteModalOpen(false)}
+        >
+          <section
+            className="flex max-h-[86svh] w-full max-w-lg flex-col overflow-hidden rounded-2xl border border-borderDark bg-background shadow-2xl"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <header className="flex h-14 items-center justify-between border-b border-borderDark px-4">
+              <div className="flex items-center gap-2">
+                <FaUserPlus className="text-accent" />
+                <h2 className="text-base font-semibold text-primary">
+                  Convidar para {community.title}
+                </h2>
+              </div>
+              <button
+                onClick={() => setInviteModalOpen(false)}
+                className="grid h-9 w-9 place-items-center rounded-full text-mutedText transition-colors hover:bg-secondary hover:text-primary"
+                aria-label="Fechar"
+              >
+                <FaXmark />
+              </button>
+            </header>
+
+            <div className="border-b border-borderDark p-4">
+              <input
+                value={inviteSearch}
+                onChange={(event) => setInviteSearch(event.target.value)}
+                placeholder="Buscar usuário por nome"
+                className="h-11 w-full rounded-lg border border-borderDark bg-secondary px-3 text-sm font-medium text-primary placeholder:text-mutedText/70 focus:border-accent focus:outline-none"
+              />
+              {inviteMessage && (
+                <p className="mt-3 rounded-lg border border-borderDark bg-panel px-3 py-2 text-sm text-mutedText">
+                  {inviteMessage}
+                </p>
+              )}
+            </div>
+
+            <div className="min-h-0 flex-1 overflow-y-auto p-2">
+              {inviteSearch.trim().length < 2 && (
+                <p className="px-3 py-8 text-center text-sm text-mutedText">
+                  Digite pelo menos duas letras.
+                </p>
+              )}
+              {inviteLoading && (
+                <div className="space-y-2 p-2">
+                  {[0, 1, 2].map((item) => (
+                    <div
+                      key={item}
+                      className="h-14 animate-pulse rounded-xl bg-secondary"
+                    />
+                  ))}
+                </div>
+              )}
+              {!inviteLoading &&
+                inviteSearch.trim().length >= 2 &&
+                inviteResults.length === 0 && (
+                  <p className="px-3 py-8 text-center text-sm text-mutedText">
+                    Nenhum usuário encontrado.
+                  </p>
+                )}
+              {!inviteLoading &&
+                inviteResults.map((foundUser) => {
+                  const profileId = foundUser.uid || foundUser.id;
+                  return (
+                    <div
+                      key={profileId}
+                      className="flex items-center gap-3 rounded-xl px-3 py-2 transition-colors hover:bg-secondary/70"
+                    >
+                      <div className="h-10 w-10 shrink-0 overflow-hidden rounded-full bg-secondary">
+                        <Image
+                          src={foundUser.photoURL || "/imgs/default_perfil.jpg"}
+                          alt={foundUser.displayName || "Usuário"}
+                          width={40}
+                          height={40}
+                          className="h-full w-full object-cover"
+                        />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-semibold text-primary">
+                          {foundUser.displayName || "Usuário do Gonin"}
+                        </p>
+                        <p className="truncate text-xs text-mutedText">
+                          {foundUser.bio || foundUser.location || "Perfil"}
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => handleInviteUser(profileId)}
+                        disabled={invitingUserId === profileId}
+                        className="inline-flex h-9 items-center gap-2 rounded-full bg-accent px-3 text-xs font-semibold text-background transition-colors hover:bg-accent/90 disabled:cursor-wait disabled:opacity-70"
+                      >
+                        <FaPaperPlane size={12} />
+                        Convidar
+                      </button>
+                    </div>
+                  );
+                })}
             </div>
           </section>
         </div>
