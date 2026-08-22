@@ -76,6 +76,14 @@ export class BaseAPI {
     }
   }
 
+  private normalizeSearchValue(value?: string | null) {
+    return (value || "")
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase()
+      .trim();
+  }
+
   private async hydratePost(
     postData: PostProps,
     includeOriginal: boolean = true
@@ -312,6 +320,7 @@ export class BaseAPI {
       await updateDoc(userRef, {
         uid: targetUserId,
         displayName: user.displayName,
+        searchName: this.normalizeSearchValue(user.displayName || user.email),
         tag: user.tag,
         member: user.member,
         photoURL: user.photoURL,
@@ -481,6 +490,53 @@ export class BaseAPI {
       } else {
         throw new Error(`No user found with id: ${userId}`);
       }
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async searchUsers(
+    searchTerm: string,
+    currentUserId?: string
+  ): Promise<UserProps[]> {
+    try {
+      await this.getUser();
+      const normalizedTerm = this.normalizeSearchValue(searchTerm);
+
+      if (normalizedTerm.length < 2) return [];
+
+      const usersSnapshot = await getDocs(collection(this.db, "users"));
+      const users = usersSnapshot.docs.map((userDoc) => ({
+        id: userDoc.id,
+        ...userDoc.data(),
+      })) as UserProps[];
+
+      return users
+        .filter((foundUser) => {
+          const userId = foundUser.uid || foundUser.id;
+          if (currentUserId && userId === currentUserId) return false;
+
+          const searchableText = [
+            foundUser.searchName,
+            foundUser.displayName,
+            foundUser.tag,
+            foundUser.email,
+          ]
+            .map((value) => this.normalizeSearchValue(value))
+            .join(" ");
+
+          return searchableText.includes(normalizedTerm);
+        })
+        .sort((a, b) => {
+          const aName = this.normalizeSearchValue(a.displayName || a.email);
+          const bName = this.normalizeSearchValue(b.displayName || b.email);
+          const aStarts = aName.startsWith(normalizedTerm);
+          const bStarts = bName.startsWith(normalizedTerm);
+
+          if (aStarts !== bStarts) return aStarts ? -1 : 1;
+          return aName.localeCompare(bName);
+        })
+        .slice(0, 10);
     } catch (error) {
       throw error;
     }
@@ -1069,6 +1125,10 @@ export class BaseAPI {
 
       if (friendship.addresseeId !== userId) {
         throw new Error("Apenas quem recebeu o convite pode responder.");
+      }
+
+      if (friendship.status !== "pending") {
+        return friendship;
       }
 
       if (!accept) {

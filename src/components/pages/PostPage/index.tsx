@@ -29,6 +29,7 @@ import { ForumCommentsArea } from "@/components/organisms/ForumCommentsArea";
 import { getTitleFromTag, tagStyleMap } from "@/services/utils/mappers";
 import { SharePostModal } from "@/components/molecules/SharePostModal";
 import { FriendActionButton } from "@/components/molecules/FriendActionButton";
+import { LinkifiedText } from "@/components/atoms/LinkifiedText";
 
 export interface PostPageProps {
   postIdUrl: string;
@@ -425,7 +426,7 @@ export const PostPage = ({ postIdUrl }: PostPageProps) => {
                 )}
 
                 <p className="whitespace-pre-wrap text-base font-normal leading-7 text-primary sm:text-lg">
-                  {post.description}
+                  <LinkifiedText text={post.description} />
                 </p>
 
                 <div className="mt-4">{renderPostMedia(post)}</div>
@@ -458,7 +459,7 @@ export const PostPage = ({ postIdUrl }: PostPageProps) => {
                         </span>
                       </div>
                       <p className="whitespace-pre-wrap text-base leading-6 text-primary">
-                        {post.originalPost.description}
+                        <LinkifiedText text={post.originalPost.description} />
                       </p>
                     </div>
                     {renderPostMedia(post.originalPost, true)}

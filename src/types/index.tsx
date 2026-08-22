@@ -7,6 +7,7 @@ export interface UserProps {
   posts: string[];
   member: boolean;
   tag: string;
+  searchName?: string;
   uid: string;
   bio?: string;
   location?: string;

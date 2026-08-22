@@ -7,10 +7,12 @@ import { GetServerSideProps } from "next";
 import { parseCookies } from "nookies";
 import Link from "next/link";
 import { ForumComposerArea } from "@/components/molecules/ForumComposer";
-import { FaComments, FaMagnifyingGlass, FaUsers } from "react-icons/fa6";
+import { FaComments, FaUsers } from "react-icons/fa6";
 import { useUserContext } from "@/context";
 import { FriendshipServices } from "@/services/friendshipServices";
 import { CommunityServices } from "@/services/communityServices";
+import { useRouter } from "next/router";
+import { UserSearch } from "@/components/molecules/UserSearch";
 
 export const ForumPage = () => {
   const [posts, setPosts] = useState<PostProps[]>([]);
@@ -21,6 +23,7 @@ export const ForumPage = () => {
   const [loadingCommunities, setLoadingCommunities] = useState(false);
   const [feedMode, setFeedMode] = useState<"all" | "friends">("all");
   const { user } = useUserContext();
+  const router = useRouter();
 
   const fetchPosts = useCallback(async () => {
     setLoading(true);
@@ -107,6 +110,17 @@ export const ForumPage = () => {
     fetchActiveCommunities();
   }, [fetchActiveCommunities]);
 
+  useEffect(() => {
+    if (router.query.compose !== "1") return;
+
+    const timer = window.setTimeout(() => {
+      window.dispatchEvent(new Event("gonin:focus-composer"));
+      router.replace("/forum", undefined, { shallow: true });
+    }, 180);
+
+    return () => window.clearTimeout(timer);
+  }, [router]);
+
   return (
     <div className="w-full min-w-0 pb-2 md:h-full md:max-w-[620px] md:pb-0 xl:max-w-[980px]">
       <div className="grid h-full w-full grid-cols-1 xl:grid-cols-[minmax(0,620px)_minmax(280px,320px)] xl:gap-5">
@@ -161,13 +175,7 @@ export const ForumPage = () => {
 
         <aside className="hidden min-h-0 xl:block">
           <div className="sticky top-0 flex h-screen flex-col gap-4 overflow-y-auto py-3">
-            <Link
-              href="/topics"
-              className="flex h-11 items-center gap-3 rounded-lg border border-borderDark bg-background px-4 text-sm font-semibold text-mutedText transition-colors hover:border-accent hover:text-accent"
-            >
-              <FaMagnifyingGlass size={14} />
-              <span>Explorar comunidades</span>
-            </Link>
+            <UserSearch />
 
             <section className="rounded-lg border border-borderDark bg-background p-4">
               <h2 className="text-lg font-semibold">Apoie o Gonin</h2>

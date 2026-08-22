@@ -20,6 +20,13 @@ import { fireApp as app, firestore } from "@/firebase/firebase";
 import { destroyCookie, parseCookies, setCookie } from "nookies";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 
+const normalizeSearchName = (value?: string | null) =>
+  (value || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .trim();
+
 export type User = {
   isAuth: boolean;
   auth?: Auth;
@@ -66,6 +73,9 @@ export const UserContextProvider = ({ children }: { children: ReactNode }) => {
         await setDoc(userDocRef, {
           uid: credential.user.uid,
           displayName: credential.user.displayName,
+          searchName: normalizeSearchName(
+            credential.user.displayName || credential.user.email
+          ),
           email: credential.user.email,
           photoURL: credential.user.photoURL,
           createdAt: new Date().toISOString(),
@@ -132,6 +142,9 @@ export const UserContextProvider = ({ children }: { children: ReactNode }) => {
       await setDoc(userDocRef, {
         uid: credential.user.uid,
         displayName: credential.user.displayName || userName || tempName || "",
+        searchName: normalizeSearchName(
+          userName || tempName || credential.user.email
+        ),
         email: credential.user.email,
         photoURL: credential.user.photoURL || "",
         createdAt: new Date().toISOString(),

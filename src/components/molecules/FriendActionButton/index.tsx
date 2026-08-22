@@ -58,6 +58,44 @@ export const FriendActionButton = ({
     fetchFriendship();
   }, [isOwnUser, loggedUserId, targetUserId]);
 
+  useEffect(() => {
+    if (!loggedUserId || !targetUserId || isOwnUser) return;
+
+    const handleFriendshipUpdate = (event: Event) => {
+      const friendship = (event as CustomEvent<{
+        friendship: FriendshipProps | null;
+      }>).detail?.friendship;
+
+      if (
+        friendship &&
+        (!friendship.participants.includes(loggedUserId) ||
+          !friendship.participants.includes(targetUserId))
+      ) {
+        return;
+      }
+
+      const cacheKey = getCacheKey(loggedUserId, targetUserId);
+      friendshipCache.delete(cacheKey);
+      setLoaded(false);
+
+      FriendshipServices.getFriendshipBetween(loggedUserId, targetUserId)
+        .then((response) => {
+          friendshipCache.set(cacheKey, response);
+          setFriendship(response);
+          onChanged?.(response);
+        })
+        .catch((error: any) => console.error(error.message))
+        .finally(() => setLoaded(true));
+    };
+
+    window.addEventListener("gonin:friendship-updated", handleFriendshipUpdate);
+    return () =>
+      window.removeEventListener(
+        "gonin:friendship-updated",
+        handleFriendshipUpdate
+      );
+  }, [isOwnUser, loggedUserId, onChanged, targetUserId]);
+
   const updateFriendship = (nextFriendship: FriendshipProps | null) => {
     const cacheKey = getCacheKey(loggedUserId, targetUserId);
     friendshipCache.set(cacheKey, nextFriendship);
