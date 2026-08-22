@@ -5,7 +5,7 @@ export const SpinLoad = () => {
     <div role="status">
       <svg
         aria-hidden="true"
-        className="w-5 h-7 text-slate-900 animate-spin dark:text-slate-800 fill-whiteColor"
+        className="h-7 w-5 animate-spin fill-accent text-secondary"
         viewBox="0 0 100 101"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"

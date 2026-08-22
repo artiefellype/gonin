@@ -1,7 +1,5 @@
 import React, { ButtonHTMLAttributes } from "react";
 import Image from "next/image";
-import { FaEllipsisH as Dots } from "react-icons/fa";
-import { User } from "@/context";
 import { UserProps } from "@/types";
 
 export interface MenuButtonProps
@@ -12,25 +10,23 @@ export interface MenuButtonProps
 export const MenuButton = ({ user, ...rest }: MenuButtonProps) => {
   return (
     <button {...rest}>
-      <div className="flex flex-col justify-center items-end text-primary">
-        <h3 className="font-semibold h-5 text-base">{user?.displayName}</h3>
-        <p className="font-extralight text-sm">{user?.email}</p>
+      <div className="hidden max-w-[170px] flex-col items-end justify-center text-primary lg:flex">
+        <h3 className="h-5 max-w-full truncate text-sm font-bold">
+          {user?.displayName || "Usuário"}
+        </h3>
+        <p className="max-w-full truncate text-xs font-medium text-mutedText">
+          {user?.email}
+        </p>
       </div>
-      <div className="w-10 h-10 flex justify-center items-center">
+      <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full border border-borderDark bg-secondary">
         <Image
           src={user?.photoURL || "/imgs/default_perfil.jpg"}
           alt={"perfil photo"}
           width={40}
           height={40}
-          className="rounded-full"
+          className="h-full w-full object-cover"
         />
       </div>
-
-      
-
-      {/* <div className=' flex justify-center items-center'>
-          <Dots className='fill-primary' size={20}/>
-        </div> */}
     </button>
   );
 };

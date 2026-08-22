@@ -75,7 +75,7 @@ const ForumContainer = ({ posts, loading, fetch, setPosts }: HomeProps) => {
   }, [posts]);
 
   return (
-    <div className="flex min-h-screen w-full flex-col gap-4 pb-5">
+    <div className="flex w-full min-w-0 flex-col pb-5">
       {loading && posts.length === 0 && <CardSkeleton />}
       {!loading && foundPosts.length !== 0 &&
         foundPosts.map((item) => {
@@ -91,17 +91,17 @@ const ForumContainer = ({ posts, loading, fetch, setPosts }: HomeProps) => {
           );
         })}
       {!loading && foundPosts.length === 0 && (
-        <div className="rounded-lg bg-whiteColor p-8 text-center shadow-sm">
-          <h2 className="text-lg font-bold text-primary">
+        <div className="border-b border-borderDark bg-background/70 p-6 text-center sm:p-8 md:bg-background">
+          <h2 className="text-base font-semibold text-primary">
             Nenhuma conversa por aqui ainda.
           </h2>
-          <p className="mt-2 text-sm font-light text-slate-600">
+          <p className="mt-2 text-sm font-medium text-mutedText">
             Seja a primeira pessoa a abrir uma ideia no feed.
           </p>
         </div>
       )}
       {!loading && foundPosts.length !== 0 && (
-        <div className="py-6 text-center text-sm font-semibold text-slate-500">
+        <div className="py-6 text-center text-sm font-semibold text-mutedText">
           Você chegou ao fim por enquanto.
         </div>
       )}

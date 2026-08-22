@@ -6,6 +6,7 @@ import {
 } from "@/types";
 import React, { useEffect, useState } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { useRouter } from "next/router";
 import { formatDate } from "@/services/utils/formaters";
 import { useUserContext } from "@/context";
@@ -15,6 +16,9 @@ import {
   FaHeart as LikeIcon,
   FaComment as CommentIcon,
   FaArrowLeft,
+  FaRegBookmark,
+  FaBookmark,
+  FaShareNodes,
   FaRocket,
 } from "react-icons/fa6";
 import { FaEllipsisH as Dots } from "react-icons/fa";
@@ -23,6 +27,8 @@ import { UserServices } from "@/services/userServices";
 import { ForumCommentComposerArea } from "@/components/molecules/ForumCommentComposer";
 import { ForumCommentsArea } from "@/components/organisms/ForumCommentsArea";
 import { getTitleFromTag, tagStyleMap } from "@/services/utils/mappers";
+import { SharePostModal } from "@/components/molecules/SharePostModal";
+import { FriendActionButton } from "@/components/molecules/FriendActionButton";
 
 export interface PostPageProps {
   postIdUrl: string;
@@ -36,7 +42,13 @@ export const PostPage = ({ postIdUrl }: PostPageProps) => {
   const [loadingComments, setLoadingComments] = useState(true);
   const [liked, setLiked] = useState<boolean>();
   const [likedCount, setLikedCount] = useState(0);
+  const [saved, setSaved] = useState(false);
+  const [savedCount, setSavedCount] = useState(0);
+  const [shareCount, setShareCount] = useState(0);
+  const [shareModalOpen, setShareModalOpen] = useState(false);
   const [isLikeDisabled, setIsLikeDisabled] = useState(false);
+  const [isSaveDisabled, setIsSaveDisabled] = useState(false);
+  const [isShareDisabled, setIsShareDisabled] = useState(false);
   const [userOwnerInfo, setUserOwnerInfo] = useState<UserProps>(
     {} as UserProps
   );
@@ -85,6 +97,8 @@ export const PostPage = ({ postIdUrl }: PostPageProps) => {
       setUserInfo(fetchedUserInfo);
       setUserOwnerPhotoURL(fetchedUserOwner.photoURL);
       setLikedCount(fetchedPost.likeCount);
+      setSavedCount(fetchedPost.savedCount || 0);
+      setShareCount(fetchedPost.shareCount || 0);
     } catch (error: any) {
       console.error("Error fetching post:", error.message);
     } finally {
@@ -115,6 +129,41 @@ export const PostPage = ({ postIdUrl }: PostPageProps) => {
       setTimeout(() => setIsLikeDisabled(false), 500);
     } catch (error: any) {
       console.error(error.message);
+    }
+  };
+
+  const handleSavePost = async () => {
+    try {
+      setIsSaveDisabled(true);
+      const nextSavedState = await postsServices.toggleSavedPost(
+        post?.id!!,
+        user as string
+      );
+      setSaved(nextSavedState);
+      setSavedCount((current) =>
+        nextSavedState ? current + 1 : Math.max(0, current - 1)
+      );
+    } catch (error: any) {
+      console.error(error.message);
+    } finally {
+      setIsSaveDisabled(false);
+    }
+  };
+
+  const handleSharePost = async (shareText: string) => {
+    try {
+      setIsShareDisabled(true);
+      await postsServices.sharePost(
+        post?.originalPostId || post?.id!!,
+        user as string,
+        shareText
+      );
+      setShareCount((current) => current + 1);
+      setShareModalOpen(false);
+    } catch (error: any) {
+      console.error(error.message);
+    } finally {
+      setIsShareDisabled(false);
     }
   };
 
@@ -189,51 +238,108 @@ export const PostPage = ({ postIdUrl }: PostPageProps) => {
       };
 
       handleHasUserLiked();
+
+      const handleHasUserSaved = async () => {
+        try {
+          const response = await postsServices.hasUserSavedPost(
+            post.id,
+            user as string
+          );
+          setSaved(response);
+        } catch (error: any) {
+          console.error(error.message);
+        }
+      };
+
+      handleHasUserSaved();
     }
   }, [post]);
 
   const tagStyle = post?.tags?.[0]
     ? tagStyleMap[post.tags[0]] || {
-        backgroundColor: "#E8E4DA",
-        color: "#5B554B",
+        backgroundColor: "#111B3E",
+        color: "#82ABFF",
       }
     : undefined;
 
   const defaultImageContainerOnError = (
-    <div className="flex h-56 w-full flex-col items-center justify-center gap-3 rounded-md bg-slate-400 p-4">
-      <span className="text-center text-xs font-medium text-whiteColor">
+    <div className="flex h-56 w-full flex-col items-center justify-center gap-3 rounded-lg border border-borderDark bg-secondary p-4">
+      <span className="text-center text-xs font-medium text-mutedText">
         Não foi possível carregar a imagem.
       </span>
     </div>
   );
 
+  const renderPostMedia = (targetPost: PostProps, compact = false) => {
+    if (!targetPost.mediaFile) return null;
+
+    const isVideo =
+      targetPost.mediaType === "video" ||
+      targetPost.mediaFile.includes("/video/upload/");
+
+    if (isVideo) {
+      return (
+        <video
+          className={`w-full border-borderDark object-cover ${
+            compact
+              ? "max-h-[320px] border-t sm:max-h-[380px]"
+              : "max-h-[560px] rounded-xl border sm:max-h-[720px] sm:rounded-2xl"
+          }`}
+          src={targetPost.mediaFile}
+          poster={targetPost.thumbnailUrl}
+          controls
+          preload="metadata"
+        />
+      );
+    }
+
+    if (errorImage && !compact) return defaultImageContainerOnError;
+
+    return (
+      <Image
+        className={`w-full border-borderDark object-cover ${
+          compact ? "max-h-[320px] border-t sm:max-h-[380px]" : "max-h-[560px] rounded-xl border sm:max-h-[720px] sm:rounded-2xl"
+        }`}
+        src={targetPost.mediaFile}
+        alt={"post media"}
+        width={compact ? 640 : 920}
+        height={compact ? 380 : 720}
+        onError={(e: React.SyntheticEvent<HTMLImageElement, Event>) => {
+          const target = e.target as HTMLImageElement;
+          target.style.display = "none";
+          if (!compact) setErrorImage(true);
+        }}
+      />
+    );
+  };
+
   return (
-    <div className="h-full min-h-0 w-full overflow-y-auto px-0 pb-20 pt-3 text-primary md:px-4 md:pb-8 md:pt-6">
-      <div className="mx-auto grid w-full max-w-6xl grid-cols-1 gap-4 lg:grid-cols-[minmax(0,760px)_280px]">
-        <div className="flex min-w-0 flex-col gap-4">
-        <div className="sticky top-0 z-20 border-b border-slate-300/70 bg-background/95 px-3 py-3 backdrop-blur md:rounded-lg md:border md:bg-whiteColor/95 md:shadow-sm">
+    <div className="w-full pb-24 text-primary md:h-full md:min-h-0 md:overflow-y-auto md:overscroll-contain md:pb-8">
+      <main className="mx-auto min-h-full w-full max-w-[820px] bg-background/75 md:border-x md:border-borderDark md:bg-background/80 2xl:max-w-[920px]">
+        <header className="sticky top-14 z-20 flex h-14 items-center gap-4 border-b border-borderDark bg-background/95 px-3 backdrop-blur-xl sm:top-[72px] sm:px-5 md:top-0">
           <button
             onClick={() => router.push("/forum")}
-            className="flex items-center gap-2 rounded-full px-3 py-2 text-sm font-semibold text-primary transition-colors hover:bg-accentSoft"
+            className="grid h-9 w-9 place-items-center rounded-full text-primary transition-colors hover:bg-secondary"
+            aria-label="Voltar"
           >
-            <FaArrowLeft size={14} />
-            Voltar para o fórum
+            <FaArrowLeft size={18} />
           </button>
-        </div>
+          <h1 className="text-xl font-semibold">Post</h1>
+        </header>
 
-        <article className="rounded-lg border border-slate-200 bg-whiteColor p-4 shadow-sm md:p-5">
+        <article className="border-b border-borderDark px-3 py-4 sm:px-5">
           {loading && (
             <div className="animate-pulse space-y-4">
               <div className="flex gap-3">
-                <div className="h-10 w-10 rounded-full bg-slate-400" />
+                <div className="h-10 w-10 rounded-full bg-secondary" />
                 <div className="flex-1 space-y-3">
-                  <div className="h-4 w-40 rounded bg-slate-400" />
-                  <div className="h-4 w-24 rounded bg-slate-400" />
+                  <div className="h-4 w-40 rounded bg-secondary" />
+                  <div className="h-4 w-24 rounded bg-secondary" />
                 </div>
               </div>
-              <div className="h-5 w-3/4 rounded bg-slate-400" />
-              <div className="h-4 w-full rounded bg-slate-400" />
-              <div className="h-4 w-5/6 rounded bg-slate-400" />
+              <div className="h-5 w-3/4 rounded bg-secondary" />
+              <div className="h-4 w-full rounded bg-secondary" />
+              <div className="h-4 w-5/6 rounded bg-secondary" />
             </div>
           )}
 
@@ -241,198 +347,212 @@ export const PostPage = ({ postIdUrl }: PostPageProps) => {
             <>
               <div className="mb-4 flex items-start justify-between gap-3">
                 <div className="flex min-w-0 gap-3">
-                  <div className="flex h-10 w-10 shrink-0 rounded-full bg-gray-500">
+                  <Link
+                    href={`/profile/${post.userId}`}
+                    className="flex h-12 w-12 shrink-0 overflow-hidden rounded-full border border-borderDark bg-secondary"
+                  >
                     <Image
-                      className="rounded-full object-cover"
+                      className="h-full w-full object-cover"
                       src={userOwnerPhotoURL || "/imgs/default_perfil.jpg"}
                       alt={"user photo"}
-                      width={40}
-                      height={40}
+                      width={48}
+                      height={48}
                     />
-                  </div>
+                  </Link>
                   <div className="min-w-0">
-                    <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                      <h1 className="flex items-center gap-1 text-base font-bold text-primary">
-                        {userOwnerInfo?.displayName}
-                        {userOwnerInfo?.tag ? (
-                          <span className="mt-1">
-                            <FaRocket className="animate-blinkAnimation" />
-                          </span>
-                        ) : (
-                          ""
-                        )}
-                      </h1>
-                      <p className="text-xs font-light text-slate-500">
-                        {formatDate(post.createdAt)}
-                      </p>
-                    </div>
-                    {post.tags?.[0] && (
-                      <span
-                        style={tagStyle}
-                        className="mt-2 inline-flex rounded-full px-2.5 py-1 text-xs font-medium"
-                      >
-                        {getTitleFromTag(post.tags[0])}
-                      </span>
-                    )}
+                    <Link
+                      href={`/profile/${post.userId}`}
+                      className="flex items-center gap-1 text-base font-semibold text-primary transition-colors hover:text-accent"
+                    >
+                      {userOwnerInfo?.displayName}
+                      {userOwnerInfo?.tag ? (
+                        <FaRocket className="animate-blinkAnimation" />
+                      ) : null}
+                    </Link>
+                    <p className="text-sm text-mutedText">
+                      {userOwnerInfo?.email?.split("@")[0]
+                        ? `@${userOwnerInfo.email.split("@")[0]}`
+                        : "Gonin"}
+                    </p>
                   </div>
                 </div>
 
-                {(user as string) === post.userId && (
-                  <CustomPopover
-                    trigger={
-                      <button className="flex h-8 w-8 items-center justify-center rounded-full hover:bg-accentSoft">
-                        <Dots className="fill-primary" size={18} />
-                      </button>
-                    }
-                    content={
-                      <div className="flex flex-col rounded-md bg-primary">
-                        <button
-                          className="flex flex-row items-center justify-start gap-2 rounded-md px-4 py-2 text-whiteColor hover:bg-slate-600"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleDeleteUniquePost(post.id);
-                          }}
-                        >
-                          <TrashIcon size={12} className="fill-whiteColor" />
-                          <p>Excluir</p>
+                <div className="flex shrink-0 items-center gap-2">
+                  {(user as string) !== post.userId && (
+                    <FriendActionButton targetUserId={post.userId} compact />
+                  )}
+
+                  {(user as string) === post.userId && (
+                    <CustomPopover
+                      trigger={
+                        <button className="flex h-8 w-8 items-center justify-center rounded-full text-mutedText hover:bg-secondary hover:text-primary">
+                          <Dots className="fill-current" size={18} />
                         </button>
-                      </div>
-                    }
-                  />
-                )}
+                      }
+                      content={
+                        <div className="flex flex-col rounded-lg border border-borderDark bg-panel">
+                          <button
+                            className="flex flex-row items-center justify-start gap-2 rounded-lg px-4 py-2 text-coral hover:bg-coralSoft"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeleteUniquePost(post.id);
+                            }}
+                          >
+                            <TrashIcon size={12} className="fill-current" />
+                            <p>Excluir</p>
+                          </button>
+                        </div>
+                      }
+                    />
+                  )}
+                </div>
               </div>
+
+              {post.tags?.[0] && (
+                <span
+                  style={tagStyle}
+                  className="mb-3 inline-flex rounded-full px-2.5 py-1 text-xs font-bold"
+                >
+                  {getTitleFromTag(post.tags[0])}
+                </span>
+              )}
 
               <div className="break-words">
                 {post.title && (
-                  <h2 className="mb-3 text-xl font-bold leading-7 text-gray-800 md:text-2xl">
+                  <h2 className="mb-2 text-lg font-semibold leading-7 text-primary sm:text-xl">
                     {post.title}
                   </h2>
                 )}
 
-                <p className="mb-4 whitespace-pre-wrap text-base font-normal leading-7 text-gray-600">
+                <p className="whitespace-pre-wrap text-base font-normal leading-7 text-primary sm:text-lg">
                   {post.description}
                 </p>
 
-                {!errorImage && post.mediaFile && (
-                  <Image
-                    className="max-h-[680px] w-full rounded-md object-cover"
-                    src={post.mediaFile}
-                    alt={"post media"}
-                    width={720}
-                    height={680}
-                    onError={(
-                      e: React.SyntheticEvent<HTMLImageElement, Event>
-                    ) => {
-                      const target = e.target as HTMLImageElement;
-                      target.style.display = "none";
-                      setErrorImage(true);
-                    }}
-                  />
-                )}
+                <div className="mt-4">{renderPostMedia(post)}</div>
 
-                {errorImage && defaultImageContainerOnError}
+                {post.postType === "share" && post.originalPost && (
+                  <button
+                    onClick={() => router.push(`/post/${post.originalPostId}`)}
+                    className="mt-4 w-full overflow-hidden rounded-xl border border-borderDark bg-panel/70 text-left transition-colors hover:border-accent sm:rounded-2xl"
+                  >
+                    <div className="p-3">
+                      <div className="mb-2 flex items-center gap-2 text-sm">
+                        <div className="h-7 w-7 overflow-hidden rounded-full bg-secondary">
+                          <Image
+                            src={
+                              post.originalPost.user?.photoURL ||
+                              "/imgs/default_perfil.jpg"
+                            }
+                            alt="Autor original"
+                            width={28}
+                            height={28}
+                            className="h-full w-full object-cover"
+                          />
+                        </div>
+                        <span className="font-semibold text-primary">
+                          {post.originalPost.user?.displayName || "Usuário"}
+                        </span>
+                        <span className="text-mutedText">·</span>
+                        <span className="text-mutedText">
+                          {formatDate(post.originalPost.createdAt)}
+                        </span>
+                      </div>
+                      <p className="whitespace-pre-wrap text-base leading-6 text-primary">
+                        {post.originalPost.description}
+                      </p>
+                    </div>
+                    {renderPostMedia(post.originalPost, true)}
+                  </button>
+                )}
               </div>
 
-              <div className="mt-5 flex flex-row items-center gap-6 border-t border-slate-200 pt-4">
+              <div className="mt-5 flex flex-wrap gap-x-2 gap-y-1 border-y border-borderDark py-3 text-sm text-mutedText">
+                <span>{formatDate(post.createdAt)}</span>
+                <span className="mx-2">·</span>
+                <span className="font-semibold text-primary">{likedCount}</span>{" "}
+                curtidas
+                <span className="mx-2">·</span>
+                <span className="font-semibold text-primary">{shareCount}</span>{" "}
+                compartilhamentos
+              </div>
+
+              <div className="flex h-12 items-center justify-around border-b border-borderDark text-mutedText">
                 <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleLikePost();
-                  }}
-                  className="z-10 flex flex-row items-center gap-2 rounded-full px-2 py-1 text-gray-600 transition-colors hover:bg-red-50 hover:text-red-600"
+                  onClick={handleLikePost}
+                  className="flex items-center gap-2 rounded-full px-3 py-2 transition-colors hover:text-coral"
                   disabled={isLikeDisabled}
                 >
                   <LikeIcon
                     size={18}
-                    className={
-                      liked
-                        ? "fill-current text-red-600 transition-transform hover:scale-110"
-                        : "transition-transform hover:scale-110"
-                    }
+                    className={liked ? "fill-current text-coral" : ""}
                   />
-                  <span className="text-sm font-medium">{likedCount}</span>
+                  <span>{likedCount}</span>
                 </button>
-
-                <div className="flex flex-row items-center gap-2 rounded-full px-2 py-1 text-gray-600">
+                <div className="flex items-center gap-2 px-3 py-2">
                   <CommentIcon size={18} />
-                  <span className="text-sm font-medium">
-                    {post.commentCount}
-                  </span>
+                  <span>{post.commentCount}</span>
                 </div>
+                <button
+                  onClick={handleSavePost}
+                  className="flex items-center gap-2 rounded-full px-3 py-2 transition-colors hover:text-accent"
+                  disabled={isSaveDisabled}
+                >
+                  {saved ? (
+                    <FaBookmark size={18} className="fill-current text-accent" />
+                  ) : (
+                    <FaRegBookmark size={18} />
+                  )}
+                  <span>{savedCount}</span>
+                </button>
+                <button
+                  onClick={() => setShareModalOpen(true)}
+                  className="flex items-center gap-2 rounded-full px-3 py-2 transition-colors hover:text-accent"
+                  disabled={isShareDisabled}
+                >
+                  <FaShareNodes size={18} />
+                  <span>{shareCount}</span>
+                </button>
               </div>
             </>
           )}
         </article>
 
-        <ForumCommentComposerArea
-          handleSubmit={handleSubmitComment}
-          userInfo={userInfo as UserProps}
-          loading={loading}
-        />
+        <div className="border-b border-borderDark p-3 sm:p-5">
+          <ForumCommentComposerArea
+            handleSubmit={handleSubmitComment}
+            userInfo={userInfo as UserProps}
+            loading={loading}
+          />
+        </div>
 
         {!loadingComments &&
           (comments.length > 0 ? (
             <ForumCommentsArea comments={comments} loading={loading} />
           ) : (
-            <section className="rounded-lg border border-slate-200 bg-whiteColor p-8 text-center shadow-sm">
-              <h3 className="text-lg font-bold text-primary">
+            <section className="border-b border-borderDark p-8 text-center">
+              <h3 className="text-lg font-semibold text-primary">
                 Sem comentários ainda
               </h3>
-              <p className="mt-2 text-sm font-light text-slate-600">
+              <p className="mt-2 text-sm font-medium text-mutedText">
                 Seja a primeira pessoa a continuar essa conversa.
               </p>
             </section>
           ))}
 
         {loadingComments && <ForumCommentsArea comments={[]} loading={true} />}
-        </div>
+      </main>
 
-        <aside className="hidden lg:block">
-          <div className="sticky top-6 flex flex-col gap-4">
-            <section className="rounded-lg border border-slate-200 bg-whiteColor p-4 shadow-sm">
-              <h2 className="text-base font-bold text-primary">
-                Nesta conversa
-              </h2>
-              <div className="mt-4 flex flex-col gap-3 text-sm">
-                <div className="flex items-center justify-between gap-3">
-                  <span className="font-light text-slate-500">Categoria</span>
-                  <span className="max-w-[150px] truncate font-semibold text-primary">
-                    {post?.tags?.[0] ? getTitleFromTag(post.tags[0]) : "-"}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between gap-3">
-                  <span className="font-light text-slate-500">Curtidas</span>
-                  <span className="font-semibold text-primary">
-                    {loading ? "-" : likedCount}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between gap-3">
-                  <span className="font-light text-slate-500">Respostas</span>
-                  <span className="font-semibold text-primary">
-                    {loading ? "-" : post?.commentCount || 0}
-                  </span>
-                </div>
-              </div>
-            </section>
-
-            <section className="rounded-lg border border-slate-200 bg-whiteColor p-4 shadow-sm">
-              <h2 className="text-base font-bold text-primary">
-                Continue no ritmo
-              </h2>
-              <p className="mt-2 text-sm font-light leading-6 text-slate-600">
-                Leia o post, responda com contexto e volte ao feed quando quiser
-                descobrir outras conversas.
-              </p>
-              <button
-                onClick={() => router.push("/forum")}
-                className="mt-4 flex h-10 w-full items-center justify-center rounded-full bg-accent text-sm font-bold text-whiteColor transition-colors hover:bg-primary"
-              >
-                Ver mais posts
-              </button>
-            </section>
-          </div>
-        </aside>
-      </div>
+      <SharePostModal
+        open={shareModalOpen}
+        post={
+          post?.postType === "share" && post.originalPost
+            ? post.originalPost
+            : post || null
+        }
+        loading={isShareDisabled}
+        onClose={() => setShareModalOpen(false)}
+        onSubmit={handleSharePost}
+      />
     </div>
   );
 };

@@ -9,23 +9,28 @@ const config: Config = {
   theme: {
     extend: {
       backgroundImage: {
-        'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
-        'gradient-conic':
-          'conic-gradient(from 180deg at 50% 50%, var(--tw-gradient-stops))',
         'animb': "url('/imgs/cute-four-leaf.png')"
       },
       colors: {
-        primary: '#2D2B26',
-        secondary: '#DED4C2',
-        whiteColor: '#FFFDF6',
-        background: '#F1EBDD',
-        accent: '#52665A',
-        accentSoft: '#E4E9DD',
+        primary: '#EEF7F5',
+        secondary: '#1A2931',
+        whiteColor: '#121D23',
+        background: '#080D10',
+        accent: '#82ABFF',
+        accentSoft: '#111B3E',
+        mutedText: '#9EB2B1',
+        panel: '#10191F',
+        borderDark: '#263943',
+        coral: '#FF947D',
+        coralSoft: '#3D2420',
+        blueAccent: '#82ABFF',
+        blueSoft: '#111B3E',
+        goldAccent: '#F2C96D',
       },
       keyframes: {
         blink: {
-          '0%, 100%': { fill: '#52665A' },
-          '50%': { fill: '#8A6F45' },
+          '0%, 100%': { fill: '#82ABFF' },
+          '50%': { fill: '#A9BDFF' },
         },
       },
       animation: {

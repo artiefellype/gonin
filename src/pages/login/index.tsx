@@ -44,10 +44,11 @@ const Login = () => {
     <>
       <Head>
         <title>GONIN</title>
+        <meta name="robots" content="noindex,follow" />
       </Head>
-      <div className="bg-secondary bg-center w-screen h-screen flex justify-center items-center">
+      <div className="flex min-h-[100svh] w-full items-center justify-center bg-transparent bg-center">
         <Image
-          className="animate-bounce duration-3000 ease-in-out infinite"
+          className="motion-safe:animate-bounce"
           src={"/imgs/fivechan_logo.png"}
           alt={"Logo loading"}
           width={100}
@@ -56,9 +57,10 @@ const Login = () => {
       </div>
     </>
   ) : (
-    <div className="flex min-h-screen bg-background justify-center items-center">
+    <div className="flex min-h-[100svh] items-center justify-center bg-transparent">
       <Head>
         <title>Login</title>
+        <meta name="robots" content="noindex,follow" />
       </Head>
       <SignInScreen loading={setIsLoading} loginWithGoogle={handleSignIn} />
     </div>

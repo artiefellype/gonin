@@ -16,22 +16,33 @@ export class postsServices {
   static getPosts = async (): Promise<any[]> => {
     try {
       const baseAPI = new BaseAPI();
-      const posts = await baseAPI.get("posts");
+      return await baseAPI.getPostsWithDetails();
+    } catch (error) {
+      throw error;
+    }
+  };
 
-      const postsWithUserDetails = await Promise.all(
-        posts.map(async (post) => {
-          // Verifique se post.userId está definido antes de usá-lo
-          if (post.userId) {
-            const user = await baseAPI.getUserById(post.userId);
-            return { ...post, user };
-          } else {
-            console.error(`Post with id ${post.id} does not have a userId`);
-            return post;
-          }
-        })
-      );
+  static getPostsByUserIds = async (userIds: string[]): Promise<PostProps[]> => {
+    try {
+      return await new BaseAPI().getPostsByUserIds(userIds);
+    } catch (error) {
+      throw error;
+    }
+  };
 
-      return postsWithUserDetails;
+  static getPostsByUserId = async (userId: string): Promise<PostProps[]> => {
+    try {
+      return await new BaseAPI().getPostsByUserId(userId);
+    } catch (error) {
+      throw error;
+    }
+  };
+
+  static getPostsByCommunity = async (
+    communityId: string
+  ): Promise<PostProps[]> => {
+    try {
+      return await new BaseAPI().getPostsByCommunity(communityId);
     } catch (error) {
       throw error;
     }
@@ -81,7 +92,7 @@ export class postsServices {
 
   static getPostById = async (docId: string): Promise<any> => {
     try {
-      const response = await new BaseAPI().getDocById("posts", docId);
+      const response = await new BaseAPI().getPostWithDetails(docId);
       return response as any;
     } catch (error) {
       throw error;
@@ -166,4 +177,46 @@ export class postsServices {
       throw error
     }
   }
+
+  static toggleSavedPost = async (
+    postId: string,
+    userId: string
+  ): Promise<boolean> => {
+    try {
+      return await new BaseAPI().toggleSavedPost(postId, userId);
+    } catch (error) {
+      throw error;
+    }
+  };
+
+  static hasUserSavedPost = async (
+    postId: string,
+    userId: string
+  ): Promise<boolean> => {
+    try {
+      return await new BaseAPI().checkIfUserSavedPost(postId, userId);
+    } catch (error) {
+      throw error;
+    }
+  };
+
+  static getSavedPostsByUser = async (userId: string): Promise<PostProps[]> => {
+    try {
+      return await new BaseAPI().getSavedPostsByUser(userId);
+    } catch (error) {
+      throw error;
+    }
+  };
+
+  static sharePost = async (
+    originalPostId: string,
+    userId: string,
+    description: string = ""
+  ): Promise<PostProps> => {
+    try {
+      return await new BaseAPI().sharePost(originalPostId, userId, description);
+    } catch (error) {
+      throw error;
+    }
+  };
 }

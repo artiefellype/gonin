@@ -3,21 +3,33 @@ import { FaPaperclip } from "react-icons/fa";
 
 interface FileInputProps {
     onFileSelect: (file: File) => void;
+    onFileError?: (message: string) => void;
+    accept?: string;
   }
 
-export const InputFile = ({onFileSelect}:FileInputProps) => {
+export const InputFile = ({
+  onFileSelect,
+  onFileError,
+  accept = "image/*,video/*",
+}:FileInputProps) => {
     const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
-          const validImageTypes = ['image/jpeg', 'image/png', 'image/gif'];
-          if (!validImageTypes.includes(file.type)) {
-            alert('Por favor escolha um arquivo válido (jpeg, png, gif)');
+          const isImage = file.type.startsWith("image/");
+          const isVideo = file.type.startsWith("video/");
+
+          if (!isImage && !isVideo) {
+            onFileError?.('Por favor escolha uma imagem ou vídeo válido.');
             return;
           }
     
-          const maxSizeInBytes = 2 * 1024 * 1024;
+          const maxSizeInBytes = isVideo ? 50 * 1024 * 1024 : 5 * 1024 * 1024;
           if (file.size > maxSizeInBytes) {
-            alert('Por favor selecione um arquivo menor que 2MB');
+            onFileError?.(
+              isVideo
+                ? 'Por favor selecione um vídeo menor que 50MB.'
+                : 'Por favor selecione uma imagem menor que 5MB.'
+            );
             return;
           }
     
@@ -26,14 +38,14 @@ export const InputFile = ({onFileSelect}:FileInputProps) => {
       };
     
       return (
-        <label className="cursor-pointer flex items-center space-x-2">
+        <label className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-lg border border-borderDark bg-secondary text-mutedText transition-colors hover:border-accent hover:text-accent">
           <FaPaperclip
                 size={18}
-                className="fill-slate-500 hover:fill-slate-600"
+                className="fill-current"
               />
           <input
             type="file"
-            accept="image/*"
+            accept={accept}
             onChange={handleFileChange}
             className="hidden"
           />

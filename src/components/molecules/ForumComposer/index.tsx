@@ -5,21 +5,24 @@ import { PostProps, UserProps } from "@/types";
 import { useUserContext } from "@/context";
 import { UserServices } from "@/services/userServices";
 import { FaTimes } from "react-icons/fa";
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
-import { storage } from "@/firebase/firebase";
 import { postsServices } from "@/services/postServices";
 import { SpinLoad } from "@/components/atoms/SpinLoad";
 import { InputFile } from "@/components/atoms/InputFile";
 import { TbSend2 as SendIcon } from "react-icons/tb";
+import { CloudinaryServices } from "@/services/cloudinaryServices";
 
 interface ForumComposerProps {
   tag: string;
   fetchNewPosts: () => Promise<void>;
+  variant?: "card" | "timeline";
+  lockCommunity?: boolean;
 }
 
 export const ForumComposerArea = ({
   tag,
   fetchNewPosts,
+  variant = "card",
+  lockCommunity = false,
 }: ForumComposerProps) => {
   const [loadingUser, setLoadingUser] = useState(false);
   const { user } = useUserContext();
@@ -27,11 +30,16 @@ export const ForumComposerArea = ({
   const [text, setText] = useState("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [selectedFilePreview, setSelectedFilePreview] = useState("");
+  const [fileError, setFileError] = useState("");
   const [title, setTitle] = useState<string>("");
   const [hasTitle, setHasTitle] = useState<boolean>(false);
   const [userPhotoUrl, setUserPhotoUrl] = useState("/imgs/default_perfil.jpg");
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const remainingCharacters = 4096 - text.length;
+  const isTimeline = variant === "timeline";
+  const communityTag = lockCommunity ? tag : "";
+  const postContextLabel = communityTag ? "Post na comunidade" : "Post livre";
 
   const fetchUserLoggedInfo = async (id: string) => {
     setLoadingUser(true);
@@ -48,11 +56,15 @@ export const ForumComposerArea = ({
   };
 
   const handleFileSelect = (file: File) => {
+    setFileError("");
     setSelectedFile(file);
+    setSelectedFilePreview(URL.createObjectURL(file));
   };
 
   const handleFileRemove = () => {
     setSelectedFile(null);
+    if (selectedFilePreview) URL.revokeObjectURL(selectedFilePreview);
+    setSelectedFilePreview("");
   };
 
   const handleOptionalTitle = () => {
@@ -67,28 +79,33 @@ export const ForumComposerArea = ({
   const handleSubmit = async () => {
     setIsSubmitting(true);
     let mediaFileUrl = "";
-    const uniqueId = Date.now();
+    let mediaType: PostProps["mediaType"] = undefined;
+    let thumbnailUrl = "";
 
     try {
       if (selectedFile) {
-        const fileRef = ref(
-          storage,
-          `forum-images/${uniqueId}-${selectedFile.name}`
-        );
-        await uploadBytes(fileRef, selectedFile);
-        mediaFileUrl = await getDownloadURL(fileRef);
+        const media = await CloudinaryServices.uploadMedia(selectedFile);
+        mediaFileUrl = media.mediaUrl;
+        mediaType = media.mediaType;
+        thumbnailUrl = media.thumbnailUrl || "";
       }
 
       const post: PostProps = {
         id: "",
         userId: user?.user?.uid!!,
         mediaFile: mediaFileUrl,
+        mediaType,
+        thumbnailUrl,
         title: title,
         description: text,
         likeCount: 0,
         commentCount: 0,
-        tags: [tag],
+        savedCount: 0,
+        shareCount: 0,
+        tags: communityTag ? [communityTag] : [],
+        communityId: communityTag || undefined,
         pinned: false,
+        postType: "original",
         createdAt: new Date().toISOString(),
       };
 
@@ -103,12 +120,12 @@ export const ForumComposerArea = ({
       await postsServices.addPostEmptyLikesCollection(postDocRef);
 
       if (userInfo) {
-        userInfo.posts.push(postId);
+        userInfo.posts = [...(userInfo.posts || []), postId];
         await UserServices.updateUser(userInfo);
       }
 
       setText("");
-      setSelectedFile(null);
+      handleFileRemove();
       setTitle("");
       setHasTitle(false);
       fetchNewPosts();
@@ -124,6 +141,12 @@ export const ForumComposerArea = ({
   }, [user]);
 
   useEffect(() => {
+    return () => {
+      if (selectedFilePreview) URL.revokeObjectURL(selectedFilePreview);
+    };
+  }, [selectedFilePreview]);
+
+  useEffect(() => {
     if (textareaRef.current) {
       textareaRef.current.style.height = "auto";
       textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
@@ -131,28 +154,36 @@ export const ForumComposerArea = ({
   }, [text]);
 
   return (
-    <div className="w-full rounded-lg border border-slate-200 bg-whiteColor p-3 shadow-sm md:p-4">
-      <div className="mb-4 flex items-start justify-between gap-3 border-b border-slate-200 pb-3">
-        <div>
-          <div className="mb-1 flex flex-wrap items-center gap-2">
-            <h2 className="text-base font-bold text-primary">
-              Abrir conversa
-            </h2>
-            <span className="rounded-full bg-accentSoft px-2 py-1 text-[11px] font-semibold text-accent">
-              Espaço livre
-            </span>
+    <div
+      className={
+        isTimeline
+          ? "w-full border-b border-borderDark bg-background/70 px-3 py-3 sm:px-4 sm:py-4 md:bg-background"
+          : "w-full rounded-xl border border-borderDark bg-panel/90 p-3 shadow-lg md:rounded-lg md:p-4"
+      }
+    >
+      {!isTimeline && (
+        <div className="mb-4 flex items-start justify-between gap-3 border-b border-borderDark pb-3">
+          <div>
+            <div className="mb-1 flex flex-wrap items-center gap-2">
+              <h2 className="text-base font-semibold text-primary">
+                Abrir conversa
+              </h2>
+              <span className="rounded-full bg-accentSoft px-2 py-1 text-[11px] font-bold text-accent">
+                {postContextLabel}
+              </span>
+            </div>
+            <p className="text-xs font-medium text-mutedText">
+              Compartilhe uma ideia pequena. Ela pode crescer com as respostas.
+            </p>
           </div>
-          <p className="text-xs font-light text-slate-500">
-            Compartilhe uma ideia pequena. Ela pode crescer com as respostas.
-          </p>
         </div>
-      </div>
+      )}
 
       <div className="flex flex-row gap-3">
-        <div className="flex h-10 w-10 shrink-0 rounded-full bg-gray-500">
+        <div className="flex h-9 w-9 shrink-0 overflow-hidden rounded-full border border-borderDark bg-secondary sm:h-10 sm:w-10">
           {!loadingUser && (
             <Image
-              className="rounded-full object-cover"
+              className="h-full w-full object-cover"
               src={userPhotoUrl}
               alt={"user photo"}
               width={40}
@@ -161,7 +192,7 @@ export const ForumComposerArea = ({
             />
           )}
           {loadingUser && (
-            <div className="h-10 w-10 animate-pulse rounded-full bg-slate-400" />
+            <div className="h-10 w-10 animate-pulse rounded-full bg-secondary" />
           )}
         </div>
 
@@ -170,7 +201,7 @@ export const ForumComposerArea = ({
             {hasTitle && (
               <div className="mb-3 flex flex-row items-center gap-2">
                 <input
-                  className="h-10 w-full rounded-md border border-slate-300 bg-white px-3 text-base font-medium text-gray-700 focus:border-slate-500 focus:outline-none"
+                  className="h-10 w-full rounded-lg border border-borderDark bg-secondary px-3 text-base font-medium text-primary placeholder:text-mutedText/70 focus:border-accent focus:outline-none"
                   id="title"
                   placeholder="Insira um título chamativo..."
                   type="text"
@@ -182,86 +213,111 @@ export const ForumComposerArea = ({
                 />
                 <button
                   onClick={handleOptionalTitleRemove}
-                  className="flex h-9 w-9 items-center justify-center rounded-full hover:bg-slate-200"
+                  className="flex h-9 w-9 items-center justify-center rounded-lg text-mutedText hover:bg-secondary hover:text-primary"
                   aria-label="Remover título"
                 >
-                  <FaTimes
-                    size={20}
-                    className="fill-slate-500 hover:fill-slate-600"
-                  />
+                  <FaTimes size={20} className="fill-current" />
                 </button>
               </div>
             )}
             <textarea
               ref={textareaRef}
-              placeholder="O que vale conversar hoje?"
-              className="min-h-[4.5rem] w-full resize-none overflow-hidden border-none bg-transparent text-base font-medium text-gray-700 placeholder:text-slate-400 focus:outline-none"
+              placeholder={
+                communityTag
+                  ? "Compartilhe uma ideia nesta comunidade"
+                  : isTimeline
+                    ? "Compartilhe uma ideia no Gonin"
+                    : "O que vale conversar hoje?"
+              }
+              className={`w-full resize-none overflow-hidden border-none bg-transparent font-medium text-primary placeholder:text-mutedText/70 focus:outline-none ${
+                isTimeline
+                  ? "min-h-[3rem] text-base"
+                  : "min-h-[4.5rem] text-base"
+              }`}
               value={text}
               onChange={(e) => setText(e.target.value)}
               maxLength={4096}
             />
             {selectedFile && (
               <div className="mt-4 flex flex-row items-start gap-2">
-                <div className="flex max-w-[280px] flex-col items-start rounded-md border border-slate-200 bg-white p-2">
-                  <Image
-                    className="rounded-md object-cover"
-                    src={URL.createObjectURL(selectedFile)}
-                    alt="Selected"
-                    width={250}
-                    height={300}
-                    priority
-                  />
-                  <p className="mt-2 max-w-full truncate text-xs font-medium text-slate-500">
+                <div className="flex min-w-0 flex-1 flex-col items-start rounded-xl border border-borderDark bg-secondary p-2 sm:max-w-[360px]">
+                  {selectedFile.type.startsWith("video/") ? (
+                    <video
+                      className="max-h-[260px] w-full rounded-lg object-cover sm:max-h-[320px]"
+                      src={selectedFilePreview}
+                      controls
+                    />
+                  ) : (
+                    <Image
+                      className="max-h-[260px] w-full rounded-lg object-cover sm:max-h-[320px]"
+                      src={selectedFilePreview}
+                      alt="Selected"
+                      width={340}
+                      height={320}
+                      priority
+                    />
+                  )}
+                  <p className="mt-2 max-w-full truncate text-xs font-medium text-mutedText">
                     {selectedFile.name}
                   </p>
                 </div>
                 <button
                   onClick={handleFileRemove}
-                  className="mt-1 flex h-9 w-9 items-center justify-center rounded-full hover:bg-slate-200"
+                  className="mt-1 flex h-9 w-9 items-center justify-center rounded-lg text-mutedText hover:bg-secondary hover:text-primary"
                   aria-label="Remover imagem"
                 >
-                  <FaTimes
-                    size={20}
-                    className="fill-slate-500 hover:fill-slate-600"
-                  />
+                  <FaTimes size={20} className="fill-current" />
                 </button>
               </div>
             )}
+            {fileError && (
+              <p className="mt-3 rounded-lg border border-coral/30 bg-coralSoft px-3 py-2 text-sm font-semibold text-coral">
+                {fileError}
+              </p>
+            )}
           </div>
 
-          <div className="mt-2 flex w-full flex-col gap-3 border-t border-slate-200 pt-3 sm:flex-row sm:items-center sm:justify-between">
+          <div
+            className={`mt-2 flex w-full flex-col gap-3 pt-3 sm:flex-row sm:items-center sm:justify-between ${
+              isTimeline ? "" : "border-t border-borderDark"
+            }`}
+          >
             <div className="flex flex-row items-center gap-2">
-              <InputFile onFileSelect={handleFileSelect} />
+              <InputFile
+                onFileSelect={handleFileSelect}
+                onFileError={setFileError}
+              />
               <button
                 onClick={(e) => {
                   e.stopPropagation();
                   handleOptionalTitle();
                 }}
-                className={`z-10 flex h-8 items-center justify-center gap-2 rounded-full px-3 text-xs font-semibold transition-colors ${
+                className={`z-10 flex h-9 items-center justify-center gap-2 rounded-lg border px-3 text-xs font-bold transition-colors ${
                   hasTitle
-                    ? "bg-accentSoft text-accent"
-                    : "text-slate-600 hover:bg-accentSoft"
+                    ? "border-accent bg-accentSoft text-accent"
+                    : "border-borderDark text-mutedText hover:border-accent hover:text-accent"
                 }`}
                 aria-label="Adicionar título"
               >
-                <FaMarker
-                  size={14}
-                  className="fill-slate-500 hover:fill-slate-600"
-                />
+                <FaMarker size={14} className="fill-current" />
                 <span>Título</span>
               </button>
             </div>
             <div className="flex flex-row items-center justify-between gap-3 sm:justify-end">
               <span
                 className={`text-xs font-medium ${
-                  remainingCharacters < 120 ? "text-red-500" : "text-slate-500"
+                  remainingCharacters < 120 ? "text-coral" : "text-mutedText"
                 }`}
               >
                 {remainingCharacters}
               </span>
               {isSubmitting && <SpinLoad />}
               <button
-                className="z-10 flex h-9 flex-row items-center justify-center gap-2 rounded-full bg-accent px-4 text-sm font-bold text-whiteColor transition-colors delay-75 hover:bg-primary disabled:cursor-not-allowed disabled:opacity-50"
+                className={`z-10 flex h-9 flex-row items-center justify-center gap-2 px-4 text-sm font-semibold transition-colors delay-75 disabled:cursor-not-allowed disabled:opacity-50 ${
+                  isTimeline
+                    ? "rounded-full bg-primary text-background hover:bg-primary/90"
+                    : "rounded-lg bg-accent text-background hover:bg-accent/90"
+                }`}
                 disabled={isSubmitting || !(text.trim() || selectedFile)}
                 onClick={handleSubmit}
               >

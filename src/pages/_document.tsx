@@ -20,7 +20,7 @@ const MyDocument = () => (
       <meta httpEquiv="X-UA-Compatible" content="IE=edge" />
       <meta name="HandheldFriendly" content="true" />
       <meta name="MobileOptimized" content="320" />
-      <meta name="theme-color" content="#2D2B26" />
+      <meta name="theme-color" content="#080D10" />
 
       <link rel="icon" href="/imgs/fivechan_logo.png" />
 

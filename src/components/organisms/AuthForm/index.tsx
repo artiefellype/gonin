@@ -28,26 +28,26 @@ export const AuthForm = ({
         <CustomInput label={item.title} {...item} key={idx} />
       ))}
 
-      {error && <p className="text-red-500 text-xs px-2">{error}</p>}
+      {error && <p className="px-2 text-xs font-medium text-coral">{error}</p>}
 
       {!isRegistered && (
         <button
           type="submit"
-          className="mt-4 flex h-10 w-full max-w-[320px] flex-row items-center justify-center gap-2 rounded-full border-2 border-solid border-accent bg-accent text-base font-semibold text-whiteColor transition-all duration-400 ease-in-out hover:bg-primary"
+          className="mt-4 flex h-11 w-full max-w-[320px] flex-row items-center justify-center gap-2 rounded-lg border border-accent bg-accent text-base font-bold text-background transition-all duration-300 ease-in-out hover:bg-accent/90 disabled:cursor-not-allowed disabled:opacity-60"
           disabled={OnSubmitLoading}
         >
           {!OnSubmitLoading ? (
             formTitle
           ) : (
             <div className="flex items-center justify-center">
-              <div className="w-5 h-5 border-4 border-t-whiteColor border-r-whiteColor border-b-slate-500 border-l-slate-500 rounded-full animate-spin"></div>
+              <div className="h-5 w-5 animate-spin rounded-full border-4 border-background/20 border-t-background"></div>
             </div>
           )}
         </button>
       )}
 
       {isRegistered && (
-        <div className="border-green-400 mt-4 text-base lg:max-w-[320px] border-solid border-2 w-full h-11 rounded-3xl flex flex-row justify-center items-center gap-2 transition-all duration-400 ease-in-out font-semibold bg-green-400">
+        <div className="mt-4 flex h-11 w-full flex-row items-center justify-center gap-2 rounded-lg border border-accent bg-accentSoft text-base font-semibold text-accent transition-all duration-300 ease-in-out lg:max-w-[320px]">
           OK
         </div>
       )}

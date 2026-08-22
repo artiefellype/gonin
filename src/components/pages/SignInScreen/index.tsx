@@ -59,19 +59,15 @@ export const SignInScreen = ({
   ];
 
   return (
-    <div className="flex min-h-screen w-screen justify-center bg-background px-4 text-primary">
-      <div className="grid min-h-screen w-full max-w-7xl grid-cols-1 items-center gap-8 py-8 lg:grid-cols-[0.9fr_1.1fr] lg:py-0">
+    <div className="flex min-h-[100svh] w-full justify-center bg-transparent px-3 text-primary sm:px-4">
+      <div className="grid min-h-[100svh] w-full max-w-7xl grid-cols-1 items-center gap-8 py-6 sm:py-8 lg:grid-cols-[0.9fr_1.1fr] lg:py-0">
         <section className="flex justify-center lg:justify-start">
-          <div className="w-full max-w-[380px] rounded-lg bg-whiteColor p-6 shadow-lg md:p-8">
-            <Link href="/" className="mb-10 flex items-center gap-3">
-              <Image
-                src="/imgs/fivechan_logo.png"
-                alt="Gonin"
-                width={40}
-                height={40}
-                priority
-              />
-              <span className="text-3xl font-extrabold">GONIN</span>
+          <div className="w-full max-w-[390px] rounded-2xl border border-borderDark bg-panel/95 p-5 shadow-lg sm:p-6 md:p-8">
+            <Link href="/" className="mb-8 flex items-center gap-3 sm:mb-10">
+              <span className="grid h-10 w-10 place-items-center rounded-lg bg-accent text-lg font-black text-background">
+                G
+              </span>
+              <span className="text-2xl font-semibold">GONIN</span>
             </Link>
 
             <AuthTitle title="Explore" description="Entre para continuar." />
@@ -85,44 +81,44 @@ export const SignInScreen = ({
                 OnSubmitLoading={loginLoading}
               />
               <div className="flex w-full max-w-[320px] justify-end">
-                <p className="px-2 text-[12px]">
+                <p className="px-2 text-[12px] text-mutedText">
                   Não tem uma conta?{" "}
                   <Link
                     href="/register"
-                    className="text-accent hover:cursor-pointer hover:text-primary"
+                    className="font-bold text-accent hover:cursor-pointer hover:text-primary"
                   >
                     Registre-se
                   </Link>
                 </p>
               </div>
               <div className="flex w-full max-w-[320px] flex-row items-center justify-center">
-                <div className="h-[1px] w-full bg-slate-400"></div>
-                <div className="p-2 text-sm text-slate-600">ou</div>
-                <div className="h-[1px] w-full bg-slate-400"></div>
+                <div className="h-[1px] w-full bg-borderDark"></div>
+                <div className="p-2 text-sm text-mutedText">ou</div>
+                <div className="h-[1px] w-full bg-borderDark"></div>
               </div>
               <button
                 onClick={() => {
                   loginWithGoogle();
                   loading(true);
                 }}
-                className="flex h-10 w-full max-w-[320px] flex-row items-center justify-center gap-2 rounded-full border-2 border-solid border-slate-300 bg-white text-base font-semibold transition-all duration-400 ease-in-out hover:border-accent hover:bg-accentSoft"
+                className="flex h-11 w-full max-w-[320px] flex-row items-center justify-center gap-2 rounded-lg border border-borderDark bg-secondary text-base font-bold text-primary transition-all duration-300 ease-in-out hover:border-accent hover:bg-accentSoft"
               >
-                <FcGoogle className="mb-[1px] rounded-full bg-slate-100" />
+                <FcGoogle className="mb-[1px] rounded-full bg-white" />
                 Continue com o Google
               </button>
             </div>
           </div>
         </section>
 
-        <section className="hidden h-full min-h-screen items-center justify-center lg:flex">
+        <section className="hidden h-full min-h-[100svh] items-center justify-center lg:flex">
           <div className="grid w-full max-w-2xl gap-4">
-            <div className="rounded-lg bg-whiteColor p-6 shadow-lg">
+            <div className="rounded-2xl border border-borderDark bg-panel/95 p-6 shadow-lg">
               <div className="mb-6 flex items-start justify-between">
                 <div>
-                  <p className="text-sm font-light text-slate-600">
+                  <p className="text-sm font-bold uppercase tracking-wide text-accent">
                     Fórum aberto
                   </p>
-                  <h2 className="text-3xl font-extrabold">
+                  <h2 className="text-2xl font-semibold">
                     Conversas sem complicação.
                   </h2>
                 </div>
@@ -134,22 +130,22 @@ export const SignInScreen = ({
                 />
               </div>
               <div className="grid grid-cols-3 gap-3">
-                <div className="rounded-md bg-white p-4">
-                  <p className="text-xs font-light text-slate-600">Tópicos</p>
+                <div className="rounded-xl border border-borderDark bg-secondary p-4">
+                  <p className="text-xs font-medium text-mutedText">Tópicos</p>
                   <p className="text-lg font-bold">Diversos</p>
                 </div>
-                <div className="rounded-md bg-white p-4">
-                  <p className="text-xs font-light text-slate-600">Entrada</p>
+                <div className="rounded-xl border border-borderDark bg-secondary p-4">
+                  <p className="text-xs font-medium text-mutedText">Entrada</p>
                   <p className="text-lg font-bold">Fácil</p>
                 </div>
-                <div className="rounded-md bg-white p-4">
-                  <p className="text-xs font-light text-slate-600">Status</p>
+                <div className="rounded-xl border border-borderDark bg-secondary p-4">
+                  <p className="text-xs font-medium text-mutedText">Status</p>
                   <p className="text-lg font-bold">Beta</p>
                 </div>
               </div>
             </div>
 
-            <div className="rounded-lg bg-white p-4 shadow-sm">
+            <div className="rounded-lg border border-borderDark bg-panel p-4 shadow-lg">
               <div className="mb-3 flex items-center gap-3">
                 <Image
                   src="/imgs/default_perfil.jpg"
@@ -160,7 +156,7 @@ export const SignInScreen = ({
                 />
                 <div>
                   <p className="text-base font-bold">Novo usuário</p>
-                  <p className="text-xs font-light text-slate-600">
+                  <p className="text-xs font-medium text-mutedText">
                     agora mesmo
                   </p>
                 </div>
@@ -168,7 +164,7 @@ export const SignInScreen = ({
               <h3 className="mb-2 text-base font-semibold">
                 Qual assunto você quer abrir hoje?
               </h3>
-              <p className="text-sm font-light leading-6 text-slate-600">
+              <p className="text-sm font-medium leading-6 text-mutedText">
                 Compartilhe uma ideia, peça recomendações, participe de um
                 tópico ou ajude o Gonin a melhorar com feedback.
               </p>

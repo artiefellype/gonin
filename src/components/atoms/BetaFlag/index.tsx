@@ -1,10 +1,9 @@
 export const BetaFlag: React.FC = () => {
     return (
       <div
-        className="fixed top-4 right-4 bg-[#333333] text-white font-bold px-2 py-1 rounded-md z-50 animate-pulse"
+        className="fixed right-3 top-3 z-50 rounded-full border border-borderDark bg-accentSoft px-3 py-1 text-xs font-bold text-accent shadow-lg sm:right-4 sm:top-4"
       >
         BETA
       </div>
     );
   };
-  
