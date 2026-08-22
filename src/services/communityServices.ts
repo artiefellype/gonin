@@ -91,6 +91,7 @@ export class CommunityServices {
         postsCount: 0,
         createdAt: "2026-01-01T00:00:00.000Z",
         isSystem: true,
+        visibility: "public" as const,
       }));
       const communityMap = new Map<string, CommunityProps>();
 
@@ -134,6 +135,7 @@ export class CommunityServices {
         postsCount: 0,
         createdAt: "2026-01-01T00:00:00.000Z",
         isSystem: true,
+        visibility: "public",
       };
     } catch (error) {
       throw error;
@@ -144,7 +146,8 @@ export class CommunityServices {
     title: string,
     description: string,
     ownerId: string,
-    avatar = ""
+    avatar = "",
+    visibility: "public" | "private" = "public"
   ): Promise<CommunityProps> => {
     try {
       const slug = CommunityServices.slugify(title);
@@ -159,6 +162,7 @@ export class CommunityServices {
         ownerId,
         avatar,
         banner: "",
+        visibility,
         createdAt: new Date().toISOString(),
         isSystem: false,
       });
@@ -212,6 +216,56 @@ export class CommunityServices {
     }
   };
 
+  static countPosts = async (communityId: string): Promise<number> => {
+    try {
+      return await new BaseAPI().countPostsByCommunity(communityId);
+    } catch (error) {
+      throw error;
+    }
+  };
+
+  static getActiveByRecentPosts = async (
+    limit: number = 3
+  ): Promise<CommunityProps[]> => {
+    try {
+      return await new BaseAPI().getActiveCommunitiesByRecentPosts(limit);
+    } catch (error) {
+      throw error;
+    }
+  };
+
+  static inviteToCommunity = async (
+    communityId: string,
+    inviterId: string,
+    inviteeId: string
+  ) => {
+    try {
+      return await new BaseAPI().inviteToCommunity(
+        communityId,
+        inviterId,
+        inviteeId
+      );
+    } catch (error) {
+      throw error;
+    }
+  };
+
+  static getPendingInvites = async (userId: string) => {
+    try {
+      return await new BaseAPI().getPendingCommunityInvites(userId);
+    } catch (error) {
+      throw error;
+    }
+  };
+
+  static declineInvite = async (inviteId: string, userId: string) => {
+    try {
+      await new BaseAPI().declineCommunityInvite(inviteId, userId);
+    } catch (error) {
+      throw error;
+    }
+  };
+
   static ensureDefaultCommunity = async (
     communityId: string
   ): Promise<CommunityProps | null> => {
@@ -233,6 +287,7 @@ export class CommunityServices {
       postsCount: 0,
       createdAt: "2026-01-01T00:00:00.000Z",
       isSystem: true,
+      visibility: "public",
     });
   };
 

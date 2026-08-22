@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { ForumPosts } from "../../molecules/ForumPosts";
 import CardSkeleton from "../../atoms/CardSkeleton";
 import { postsServices } from "@/services/postServices";
@@ -9,12 +9,24 @@ import { useUserContext } from "@/context";
 interface HomeProps {
   posts: PostProps[];
   loading?: boolean;
+  loadingMore?: boolean;
+  hasMore?: boolean;
   fetch: () => Promise<void>;
+  onLoadMore?: () => Promise<void>;
   setPosts: (posts: PostProps[]) => void;
 }
 
-const ForumContainer = ({ posts, loading, fetch, setPosts }: HomeProps) => {
+const ForumContainer = ({
+  posts,
+  loading,
+  loadingMore = false,
+  hasMore = false,
+  fetch,
+  onLoadMore,
+  setPosts,
+}: HomeProps) => {
   const [foundPosts, setFoundPosts] = useState(posts);
+  const loadMoreRef = useRef<HTMLDivElement | null>(null);
   const { user } = useUserContext();
 
   const handleDeletePost = async (id: string) => {
@@ -74,6 +86,29 @@ const ForumContainer = ({ posts, loading, fetch, setPosts }: HomeProps) => {
     setFoundPosts(sortedPosts);
   }, [posts]);
 
+  useEffect(() => {
+    if (!onLoadMore || !hasMore || loading || loadingMore) return;
+
+    const sentinel = loadMoreRef.current;
+    if (!sentinel) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting) {
+          onLoadMore();
+        }
+      },
+      {
+        root: null,
+        rootMargin: "360px 0px",
+        threshold: 0,
+      }
+    );
+
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [hasMore, loading, loadingMore, onLoadMore]);
+
   return (
     <div className="flex w-full min-w-0 flex-col pb-5">
       {loading && posts.length === 0 && <CardSkeleton />}
@@ -100,11 +135,17 @@ const ForumContainer = ({ posts, loading, fetch, setPosts }: HomeProps) => {
           </p>
         </div>
       )}
-      {!loading && foundPosts.length !== 0 && (
+      {!loading && loadingMore && (
+        <div className="py-5 text-center text-sm font-semibold text-mutedText">
+          Carregando mais conversas...
+        </div>
+      )}
+      {!loading && foundPosts.length !== 0 && !hasMore && (
         <div className="py-6 text-center text-sm font-semibold text-mutedText">
           Você chegou ao fim por enquanto.
         </div>
       )}
+      <div ref={loadMoreRef} className="h-1 w-full" aria-hidden="true" />
     </div>
   );
 };

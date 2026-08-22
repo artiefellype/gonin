@@ -1,4 +1,4 @@
-import { PostCommentsProps, PostProps } from "@/types";
+import { PaginatedPostsProps, PostCommentsProps, PostProps } from "@/types";
 import { BaseAPI } from "./baseAPI";
 import { DocumentData } from "firebase/firestore";
 
@@ -22,9 +22,37 @@ export class postsServices {
     }
   };
 
+  static getPostsPage = async (
+    cursor: string | null = null,
+    pageSize: number = 10
+  ): Promise<PaginatedPostsProps> => {
+    try {
+      const baseAPI = new BaseAPI();
+      return await baseAPI.getPostsWithDetailsPage(cursor, pageSize);
+    } catch (error) {
+      throw error;
+    }
+  };
+
   static getPostsByUserIds = async (userIds: string[]): Promise<PostProps[]> => {
     try {
       return await new BaseAPI().getPostsByUserIds(userIds);
+    } catch (error) {
+      throw error;
+    }
+  };
+
+  static getPostsByUserIdsPage = async (
+    userIds: string[],
+    cursor: string | null = null,
+    pageSize: number = 10
+  ): Promise<PaginatedPostsProps> => {
+    try {
+      return await new BaseAPI().getPostsByUserIdsPage(
+        userIds,
+        cursor,
+        pageSize
+      );
     } catch (error) {
       throw error;
     }
@@ -43,6 +71,22 @@ export class postsServices {
   ): Promise<PostProps[]> => {
     try {
       return await new BaseAPI().getPostsByCommunity(communityId);
+    } catch (error) {
+      throw error;
+    }
+  };
+
+  static getPostsByCommunityPage = async (
+    communityId: string,
+    cursor: string | null = null,
+    pageSize: number = 10
+  ): Promise<PaginatedPostsProps> => {
+    try {
+      return await new BaseAPI().getPostsByCommunityPage(
+        communityId,
+        cursor,
+        pageSize
+      );
     } catch (error) {
       throw error;
     }

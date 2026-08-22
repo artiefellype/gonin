@@ -1,8 +1,9 @@
 import { useUserContext } from "@/context";
 import { firestore } from "@/firebase/firebase";
+import { CommunityServices } from "@/services/communityServices";
 import { FriendshipServices } from "@/services/friendshipServices";
 import { UserServices } from "@/services/userServices";
-import { FriendshipProps, UserProps } from "@/types";
+import { CommunityInviteProps, FriendshipProps, UserProps } from "@/types";
 import {
   collection,
   onSnapshot,
@@ -16,6 +17,10 @@ import { FaBell, FaCheck, FaTimes, FaUserFriends } from "react-icons/fa";
 
 type RequestWithUser = FriendshipProps & {
   requester?: UserProps | null;
+};
+
+type CommunityInviteWithUser = CommunityInviteProps & {
+  inviter?: UserProps | null;
 };
 
 interface NotificationsCenterProps {
@@ -40,16 +45,22 @@ export const NotificationsCenter = ({
   const loggedUserId = user?.user?.uid || "";
   const [open, setOpen] = useState(false);
   const [requests, setRequests] = useState<RequestWithUser[]>([]);
+  const [communityInvites, setCommunityInvites] = useState<
+    CommunityInviteWithUser[]
+  >([]);
   const [loading, setLoading] = useState(true);
+  const [invitesLoading, setInvitesLoading] = useState(true);
   const [actionId, setActionId] = useState<string | null>(null);
   const [message, setMessage] = useState("");
 
-  const pendingCount = requests.length;
+  const pendingCount = requests.length + communityInvites.length;
 
   useEffect(() => {
     if (!loggedUserId) {
       setRequests([]);
+      setCommunityInvites([]);
       setLoading(false);
+      setInvitesLoading(false);
       return;
     }
 
@@ -102,6 +113,59 @@ export const NotificationsCenter = ({
   }, [loggedUserId]);
 
   useEffect(() => {
+    if (!loggedUserId) {
+      setCommunityInvites([]);
+      setInvitesLoading(false);
+      return;
+    }
+
+    setInvitesLoading(true);
+    const invitesQuery = query(
+      collection(firestore, "communityInvites"),
+      where("inviteeId", "==", loggedUserId),
+      where("status", "==", "pending")
+    );
+
+    const unsubscribe = onSnapshot(
+      invitesQuery,
+      async (snapshot) => {
+        const pendingInvites = snapshot.docs
+          .map((inviteDoc) => ({
+            id: inviteDoc.id,
+            ...inviteDoc.data(),
+          }))
+          .sort(
+            (a, b) =>
+              new Date((b as CommunityInviteProps).createdAt).getTime() -
+              new Date((a as CommunityInviteProps).createdAt).getTime()
+          ) as CommunityInviteProps[];
+
+        const hydratedInvites = await Promise.all(
+          pendingInvites.map(async (invite) => {
+            try {
+              const inviter = await UserServices.getUserById(invite.inviterId);
+              return { ...invite, inviter };
+            } catch (error) {
+              console.error("Erro ao carregar convite:", error);
+              return { ...invite, inviter: null };
+            }
+          })
+        );
+
+        setCommunityInvites(hydratedInvites);
+        setInvitesLoading(false);
+      },
+      (error) => {
+        console.error("Erro ao carregar convites:", error);
+        setMessage("Não foi possível carregar seus convites agora.");
+        setInvitesLoading(false);
+      }
+    );
+
+    return () => unsubscribe();
+  }, [loggedUserId]);
+
+  useEffect(() => {
     if (!open) return;
 
     const closeOnEscape = (event: KeyboardEvent) => {
@@ -114,8 +178,8 @@ export const NotificationsCenter = ({
 
   const title = useMemo(() => {
     if (pendingCount === 0) return "Notificações";
-    if (pendingCount === 1) return "1 pedido de amizade";
-    return `${pendingCount} pedidos de amizade`;
+    if (pendingCount === 1) return "1 notificação pendente";
+    return `${pendingCount} notificações pendentes`;
   }, [pendingCount]);
 
   const handleAccept = async (request: RequestWithUser) => {
@@ -156,6 +220,46 @@ export const NotificationsCenter = ({
     } catch (error) {
       console.error("Erro ao recusar pedido:", error);
       setMessage("Não foi possível recusar esse pedido.");
+    } finally {
+      setActionId(null);
+    }
+  };
+
+  const handleAcceptCommunityInvite = async (invite: CommunityInviteWithUser) => {
+    if (!loggedUserId || actionId) return;
+
+    setActionId(invite.id);
+    setMessage("");
+    try {
+      await CommunityServices.joinCommunity(invite.communityId, loggedUserId);
+      setCommunityInvites((current) =>
+        current.filter((item) => item.id !== invite.id)
+      );
+      setMessage("Convite aceito.");
+    } catch (error) {
+      console.error("Erro ao aceitar convite:", error);
+      setMessage("Não foi possível aceitar esse convite.");
+    } finally {
+      setActionId(null);
+    }
+  };
+
+  const handleDeclineCommunityInvite = async (
+    invite: CommunityInviteWithUser
+  ) => {
+    if (!loggedUserId || actionId) return;
+
+    setActionId(invite.id);
+    setMessage("");
+    try {
+      await CommunityServices.declineInvite(invite.id, loggedUserId);
+      setCommunityInvites((current) =>
+        current.filter((item) => item.id !== invite.id)
+      );
+      setMessage("Convite recusado.");
+    } catch (error) {
+      console.error("Erro ao recusar convite:", error);
+      setMessage("Não foi possível recusar esse convite.");
     } finally {
       setActionId(null);
     }
@@ -203,7 +307,7 @@ export const NotificationsCenter = ({
                   Notificações
                 </h2>
                 <p className="mt-1 text-sm text-mutedText">
-                  Pedidos de amizade recebidos.
+                  Pedidos de amizade e convites.
                 </p>
               </div>
               <button
@@ -223,7 +327,7 @@ export const NotificationsCenter = ({
                 </p>
               )}
 
-              {loading && (
+              {(loading || invitesLoading) && (
                 <div className="space-y-3">
                   {[0, 1].map((item) => (
                     <div
@@ -234,7 +338,10 @@ export const NotificationsCenter = ({
                 </div>
               )}
 
-              {!loading && requests.length === 0 && (
+              {!loading &&
+                !invitesLoading &&
+                requests.length === 0 &&
+                communityInvites.length === 0 && (
                 <div className="flex flex-col items-center justify-center py-12 text-center">
                   <span className="grid h-14 w-14 place-items-center rounded-full bg-accentSoft text-accent">
                     <FaUserFriends size={22} />
@@ -243,7 +350,7 @@ export const NotificationsCenter = ({
                     Nada pendente por enquanto
                   </h3>
                   <p className="mt-1 max-w-xs text-sm text-mutedText">
-                    Quando alguém pedir amizade, você decide por aqui.
+                    Quando chegarem pedidos ou convites, você decide por aqui.
                   </p>
                 </div>
               )}
@@ -305,6 +412,87 @@ export const NotificationsCenter = ({
                                 type="button"
                                 onClick={() => handleDecline(request)}
                                 disabled={actionId === request.id}
+                                className="inline-flex h-9 items-center gap-2 rounded-full border border-borderDark px-4 text-sm font-semibold text-mutedText transition-colors hover:border-coral hover:text-coral disabled:cursor-wait disabled:opacity-70"
+                              >
+                                <FaTimes size={12} />
+                                Recusar
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      </article>
+                    );
+                  })}
+                </div>
+              )}
+
+              {!invitesLoading && communityInvites.length > 0 && (
+                <div className="mt-3 space-y-3">
+                  {communityInvites.map((invite) => {
+                    const inviterName =
+                      invite.inviter?.displayName || "Usuário do Gonin";
+
+                    return (
+                      <article
+                        key={invite.id}
+                        className="rounded-xl border border-borderDark bg-background p-3"
+                      >
+                        <div className="flex gap-3">
+                          <Link
+                            href={`/profile/${invite.inviterId}`}
+                            onClick={() => setOpen(false)}
+                            className="h-11 w-11 shrink-0 overflow-hidden rounded-full bg-secondary"
+                          >
+                            <Image
+                              src={
+                                invite.inviter?.photoURL ||
+                                "/imgs/default_perfil.jpg"
+                              }
+                              alt={inviterName}
+                              width={44}
+                              height={44}
+                              className="h-full w-full object-cover"
+                            />
+                          </Link>
+
+                          <div className="min-w-0 flex-1">
+                            <Link
+                              href={`/profile/${invite.inviterId}`}
+                              onClick={() => setOpen(false)}
+                              className="block truncate text-sm font-semibold text-primary hover:text-accent"
+                            >
+                              {inviterName}
+                            </Link>
+                            <p className="mt-1 text-sm text-mutedText">
+                              convidou você para{" "}
+                              <Link
+                                href={`/topics/${invite.communityId}`}
+                                onClick={() => setOpen(false)}
+                                className="font-semibold text-accent hover:underline"
+                              >
+                                {invite.communityTitle}
+                              </Link>
+                              .
+                            </p>
+
+                            <div className="mt-3 flex flex-wrap gap-2">
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  handleAcceptCommunityInvite(invite)
+                                }
+                                disabled={actionId === invite.id}
+                                className="inline-flex h-9 items-center gap-2 rounded-full bg-accent px-4 text-sm font-semibold text-background transition-colors hover:bg-accent/90 disabled:cursor-wait disabled:opacity-70"
+                              >
+                                <FaCheck size={12} />
+                                Aceitar
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  handleDeclineCommunityInvite(invite)
+                                }
+                                disabled={actionId === invite.id}
                                 className="inline-flex h-9 items-center gap-2 rounded-full border border-borderDark px-4 text-sm font-semibold text-mutedText transition-colors hover:border-coral hover:text-coral disabled:cursor-wait disabled:opacity-70"
                               >
                                 <FaTimes size={12} />
